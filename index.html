@@ -210,6 +210,24 @@
   .scroll-cue .bar{width:1px; height:34px; background:linear-gradient(to bottom, var(--accent), transparent); animation:scrollbar 1.8s ease-in-out infinite;}
   @keyframes scrollbar{0%{transform:scaleY(0); transform-origin:top;}50%{transform:scaleY(1); transform-origin:top;}50.01%{transform-origin:bottom;}100%{transform:scaleY(0); transform-origin:bottom;}}
 
+  /* ---------- motto quote ---------- */
+  .motto{
+    position:relative; z-index:3; padding:64px 6vw; text-align:center;
+    background:var(--bg-soft); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  }
+  .motto-pt{
+    font-size:clamp(1.4rem, 3vw, 2.1rem); font-weight:700; letter-spacing:-0.01em; line-height:1.35;
+    max-width:26ch; margin:0 auto;
+  }
+  .motto-pt .accent-text{
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .motto-en{
+    margin-top:14px; font-family:var(--mono); font-size:0.85rem; color:var(--text-dim);
+    letter-spacing:0.03em;
+  }
+
   /* ---------- marquee (skills / projects) ---------- */
   .marquee-wrap{
     border-top:1px solid var(--line); border-bottom:1px solid var(--line);
@@ -414,6 +432,11 @@
 
   <div class="scroll-cue"><div class="bar"></div> scroll</div>
 </section>
+
+<div class="motto reveal">
+  <p class="motto-pt">Meu foco é construir <span class="accent-text">riqueza</span>. Mulheres vêm depois.</p>
+  <p class="motto-en">My focus is building wealth. Women come after.</p>
+</div>
 
 <div class="marquee-wrap">
   <div class="marquee-row">
