@@ -143,13 +143,41 @@ Não existe nenhum admin por padrão. Para criar o primeiro:
    `ADMIN_BOOTSTRAP_SECRET` como comprometido e rode-o
    (`firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET` de novo).
 
-### 5. Desenvolvimento local (emuladores)
+### 5. Desenvolvimento local (emuladores) — sem precisar do plano Blaze
 
-```bash
-firebase emulators:start --only auth,firestore,functions,hosting
-# noutro terminal:
-cd web && npm run dev
-```
+Storage (e chamadas externas nas Functions) exigem o plano Blaze no
+projeto real. Para testar tudo — incluindo upload de fotos/PDFs — sem
+vincular cartão nenhum, use os emuladores locais:
+
+1. Em `web/.env.local`, adicione:
+   ```
+   VITE_USE_FIREBASE_EMULATORS=true
+   ```
+2. Abra duas sessões do Termux (deslize da borda esquerda para abrir uma
+   nova, ou `tmux`/`screen` se preferir):
+
+   ```bash
+   # sessão 1 — na raiz do repo
+   firebase emulators:start --only auth,firestore,functions,storage
+   ```
+   ```bash
+   # sessão 2 — dentro de web/
+   npm run dev
+   ```
+3. Abra o endereço que o Vite mostrar (ex: `http://localhost:5173`) no
+   Chrome do telemóvel — tudo (login, upload, produtos, pagamentos
+   simulados) roda 100% local, sem tocar no projeto `chaquil` real nem
+   precisar do Blaze. A UI dos emuladores (dados, Firestore, etc.) fica em
+   `http://localhost:4000`.
+4. Quando quiser voltar a apontar para o projeto real, comente/apague a
+   linha `VITE_USE_FIREBASE_EMULATORS` do `.env.local`.
+
+As funções que chamam a Debito Pay (`purchaseProduct`, `submitPayment`,
+etc.) só funcionam no emulador se você criar `functions/.secret.local` com
+`DEBITO_PAY_API_KEY=...` / `DEBITO_PAY_WEBHOOK_SECRET=...` /
+`ADMIN_BOOTSTRAP_SECRET=...` (esse ficheiro é só para o emulador, nunca é
+deployado nem commitado). Sem ele, upload de produtos/fotos e o resto do
+dashboard funcionam normalmente — só a cobrança real fica indisponível.
 
 ## Hospedagem do frontend (Vercel)
 
