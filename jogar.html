@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <title>Jogar — Asfalto Rival</title>
+    <link rel="stylesheet" href="/src/game.css" />
+  </head>
+  <body>
+    <div id="game-root">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- HUD -->
+      <div class="hud" id="hud" hidden>
+        <a class="hud__back" href="/index.html" aria-label="Voltar">←</a>
+        <div class="hud__top">
+          <div class="hud__progress">
+            <span class="hud__label">DISTÂNCIA</span>
+            <span class="hud__value" id="hud-distance">0 m</span>
+          </div>
+          <div class="hud__nitro">
+            <span class="hud__label">NITRO</span>
+            <div class="nitro-bar"><i id="hud-nitro-fill"></i></div>
+          </div>
+        </div>
+        <div class="hud__bottom">
+          <div class="speedo">
+            <div class="speedo__value" id="hud-speed">0</div>
+            <div class="speedo__unit">KM/H</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Touch controls -->
+      <div class="touch-controls" id="touch-controls" hidden>
+        <button class="touch-btn" id="btn-left" aria-label="Esquerda">◀</button>
+        <button class="touch-btn touch-btn--nitro" id="btn-nitro" aria-label="Nitro">🔥</button>
+        <button class="touch-btn" id="btn-right" aria-label="Direita">▶</button>
+      </div>
+
+      <!-- Start overlay -->
+      <div class="overlay" id="overlay-start">
+        <div class="overlay__card">
+          <div class="overlay__icon">🏎️</div>
+          <h1>Asfalto Rival</h1>
+          <p>Desvie do trânsito, colete nitro e vá o mais longe possível.</p>
+          <div class="controls-help">
+            <div><kbd>◀</kbd><kbd>▶</kbd> ou <kbd>A</kbd><kbd>D</kbd> — Trocar de faixa</div>
+            <div><kbd>Espaço</kbd> — Usar nitro</div>
+          </div>
+          <button class="btn btn--primary btn--large" id="btn-start">▶ Iniciar corrida</button>
+        </div>
+      </div>
+
+      <!-- Game over overlay -->
+      <div class="overlay" id="overlay-gameover" hidden>
+        <div class="overlay__card">
+          <div class="overlay__icon">💥</div>
+          <h1>Batida!</h1>
+          <p>Você percorreu</p>
+          <div class="final-score" id="final-distance">0 m</div>
+          <div class="overlay__actions">
+            <button class="btn btn--primary btn--large" id="btn-retry">↻ Tentar novamente</button>
+            <a class="btn btn--outline btn--large" id="btn-download-full" href="/index.html">⬇ Baixar o jogo completo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/game.js"></script>
+  </body>
+</html>

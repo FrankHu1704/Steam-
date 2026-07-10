@@ -1,0 +1,319 @@
+:root {
+  --bg: #0a0d16;
+  --surface: #161a29;
+  --surface-2: #1d2233;
+  --text: #f2f4fb;
+  --text-dim: #9aa1b8;
+  --accent: #00e0ff;
+  --accent-2: #ff5f2e;
+  --accent-3: #ffd23f;
+  --border: #262c42;
+  font-family: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: var(--text);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#game-root {
+  position: fixed;
+  inset: 0;
+}
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* ---------- Buttons (shared look with landing page) ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0.7em 1.4em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent-2), #ff8a3d);
+  color: #170a02;
+  box-shadow: 0 8px 24px -8px rgba(255, 95, 46, 0.6);
+}
+
+.btn--outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn--outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn--large {
+  padding: 0.9em 1.8em;
+  font-size: 1.05rem;
+}
+
+/* ---------- HUD ---------- */
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  padding: env(safe-area-inset-top, 0.75rem) 1rem 0;
+}
+
+.hud__back {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  left: 1rem;
+  pointer-events: auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(10, 13, 22, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 1.1rem;
+  backdrop-filter: blur(4px);
+}
+
+.hud__top {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+}
+
+.hud__label {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-align: right;
+  margin-bottom: 0.2rem;
+}
+
+.hud__value {
+  display: block;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__nitro {
+  width: 110px;
+}
+
+.nitro-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.nitro-bar i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00e0ff, #7cf7ff);
+  transition: width 0.1s linear;
+}
+
+.nitro-bar.is-active i {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent-3));
+}
+
+.hud__bottom {
+  position: absolute;
+  right: 1rem;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 108px);
+}
+
+@media (min-width: 900px) and (pointer: fine) {
+  .hud__bottom {
+    bottom: env(safe-area-inset-bottom, 1rem);
+  }
+}
+
+.speedo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(10, 13, 22, 0.55);
+  border: 3px solid rgba(0, 224, 255, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.speedo__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.speedo__unit {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+
+/* ---------- Touch controls ---------- */
+.touch-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: env(safe-area-inset-bottom, 1rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 1rem;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.touch-btn {
+  pointer-events: auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(22, 26, 41, 0.7);
+  color: var(--text);
+  font-size: 1.3rem;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-btn:active {
+  background: rgba(0, 224, 255, 0.25);
+}
+
+.touch-btn--nitro {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 8px;
+  border-color: var(--accent-2);
+}
+
+@media (min-width: 900px) and (pointer: fine) {
+  .touch-controls {
+    display: none;
+  }
+}
+
+/* ---------- Overlays ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 6, 12, 0.78);
+  backdrop-filter: blur(6px);
+  padding: 1rem;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay__card {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.25rem 1.75rem;
+}
+
+.overlay__icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.overlay__card h1 {
+  margin: 0 0 0.4em;
+  font-size: 1.5rem;
+}
+
+.overlay__card p {
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  margin: 0 0 1rem;
+}
+
+.controls-help {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #000;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.final-score {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.overlay__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

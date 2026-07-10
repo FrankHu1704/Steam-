@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Asfalto Rival — corrida arcade de ruas. Jogue no navegador ou baixe o app." />
+    <title>Asfalto Rival — Corrida de Ruas</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Sticky top bar (mobile app-install style) -->
+    <div id="top-banner" class="top-banner" role="banner" hidden>
+      <div class="top-banner__icon" aria-hidden="true">🏎️</div>
+      <div class="top-banner__text">
+        <strong>Asfalto Rival</strong>
+        <span>Baixe o app para a experiência completa</span>
+      </div>
+      <button class="btn btn--small btn--primary" id="btn-banner-download">Baixar</button>
+      <button class="icon-btn" id="btn-banner-close" aria-label="Fechar">✕</button>
+    </div>
+
+    <header class="nav">
+      <a href="/" class="nav__brand">
+        <span class="nav__logo">🏎️</span>
+        <span>Asfalto Rival</span>
+      </a>
+      <nav class="nav__links">
+        <a href="#screenshots">Capturas</a>
+        <a href="#sobre">Sobre</a>
+        <a href="#avaliacoes">Avaliações</a>
+      </nav>
+      <div class="nav__cta">
+        <a class="btn btn--ghost" href="/jogar.html">Jogar no navegador</a>
+        <button class="btn btn--primary" id="btn-nav-download">Baixar</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero__bg" aria-hidden="true">
+          <div class="hero__road"></div>
+          <div class="hero__glow"></div>
+        </div>
+        <div class="hero__content">
+          <p class="eyebrow">Corrida arcade de ruas</p>
+          <h1>Domine as ruas.<br />Corra sem limites.</h1>
+          <p class="hero__subtitle">
+            Drift, nitro e rivais em cada esquina. Personalize sua máquina e prove que
+            ninguém corre igual a você — direto no navegador ou no seu celular.
+          </p>
+          <div class="hero__actions">
+            <button class="btn btn--primary btn--large" id="btn-hero-download">
+              <span>⬇</span> Baixar o jogo
+            </button>
+            <a class="btn btn--outline btn--large" href="/jogar.html">
+              <span>▶</span> Jogar agora no navegador
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- App info strip, Play-Store style -->
+      <section class="app-strip">
+        <div class="app-strip__icon">🏎️</div>
+        <div class="app-strip__info">
+          <h2>Asfalto Rival</h2>
+          <p class="app-strip__dev">Rival Games Studio</p>
+        </div>
+        <div class="app-strip__stats">
+          <div class="stat">
+            <div class="stat__value">4,6 <span class="star">★</span></div>
+            <div class="stat__label">128 mil avaliações</div>
+          </div>
+          <div class="stat">
+            <div class="stat__value">12+</div>
+            <div class="stat__label">Classificação</div>
+          </div>
+          <div class="stat">
+            <div class="stat__value">1 M+</div>
+            <div class="stat__label">Downloads</div>
+          </div>
+        </div>
+        <button class="btn btn--primary" id="btn-strip-download">Instalar</button>
+      </section>
+
+      <!-- Screenshots -->
+      <section class="section" id="screenshots">
+        <h3 class="section__title">Capturas de tela</h3>
+        <div class="screens" id="screens-track"></div>
+      </section>
+
+      <!-- About -->
+      <section class="section" id="sobre">
+        <h3 class="section__title">Sobre este jogo</h3>
+        <p class="about__text">
+          Supere rivais, escape da polícia e domine cada avenida da cidade em corridas
+          eletrizantes. Colecione carros lendários, personalize cada detalhe e use o
+          nitro na hora certa para cruzar a linha de chegada em primeiro lugar.
+        </p>
+        <div class="tags">
+          <span class="tag">Corrida de carros</span>
+          <span class="tag">Drift</span>
+          <span class="tag">Carro esportivo</span>
+          <span class="tag">Multijogador competitivo</span>
+          <span class="tag">Um jogador</span>
+          <span class="tag">Realista</span>
+        </div>
+        <div class="features">
+          <div class="feature">
+            <div class="feature__icon">🏁</div>
+            <h4>Corridas de rua</h4>
+            <p>Circuitos urbanos cheios de curvas, atalhos e tráfego para desviar.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🔥</div>
+            <h4>Nitro &amp; Drift</h4>
+            <p>Encha o tanque de nitro derrapando e use no momento certo para vencer.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🚗</div>
+            <h4>Garagem própria</h4>
+            <p>Desbloqueie e personalize carros com pintura, rodas e upgrades.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🌐</div>
+            <h4>Multijogador</h4>
+            <p>Desafie rivais em tempo real e suba no ranking global.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reviews -->
+      <section class="section" id="avaliacoes">
+        <h3 class="section__title">Avaliações</h3>
+        <div class="rating-summary">
+          <div class="rating-summary__score">
+            <div class="rating-summary__big">4,6</div>
+            <div class="stars" aria-hidden="true">★★★★★</div>
+            <div class="rating-summary__count">128.432</div>
+          </div>
+          <div class="rating-summary__bars">
+            <div class="bar-row"><span>5</span><div class="bar"><i style="width:78%"></i></div></div>
+            <div class="bar-row"><span>4</span><div class="bar"><i style="width:12%"></i></div></div>
+            <div class="bar-row"><span>3</span><div class="bar"><i style="width:5%"></i></div></div>
+            <div class="bar-row"><span>2</span><div class="bar"><i style="width:2%"></i></div></div>
+            <div class="bar-row"><span>1</span><div class="bar"><i style="width:3%"></i></div></div>
+          </div>
+        </div>
+        <div class="reviews" id="reviews-track"></div>
+      </section>
+
+      <!-- Final CTA -->
+      <section class="final-cta">
+        <h3>Pronto para acelerar?</h3>
+        <p>Jogue agora mesmo no navegador ou baixe o app para a experiência completa.</p>
+        <div class="hero__actions">
+          <button class="btn btn--primary btn--large" id="btn-final-download">⬇ Baixar o jogo</button>
+          <a class="btn btn--outline btn--large" href="/jogar.html">▶ Jogar no navegador</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Asfalto Rival é um projeto de demonstração inspirado em jogos de corrida arcade.</p>
+    </footer>
+
+    <!-- Download modal -->
+    <div class="modal-backdrop" id="download-modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button class="icon-btn modal__close" id="modal-close" aria-label="Fechar">✕</button>
+        <div class="modal__icon">🏎️</div>
+        <h2 id="modal-title">Baixe o Asfalto Rival</h2>
+        <p>Instale o app para jogar offline, salvar seu progresso e disputar o ranking global.</p>
+        <div class="modal__stores">
+          <button class="store-btn" id="btn-store-android">
+            <span class="store-btn__icon">▶</span>
+            <span class="store-btn__text"><small>Disponível em breve no</small>Google Play</span>
+          </button>
+          <button class="store-btn" id="btn-store-ios">
+            <span class="store-btn__icon"></span>
+            <span class="store-btn__text"><small>Disponível em breve na</small>App Store</span>
+          </button>
+        </div>
+        <div class="modal__divider"><span>ou</span></div>
+        <a class="btn btn--outline btn--large modal__play" href="/jogar.html">▶ Jogar agora no navegador</a>
+      </div>
+    </div>
+
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>
