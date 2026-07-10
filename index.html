@@ -215,34 +215,24 @@
     gap:20px;
   }
 
-  .testi-photo{
+  .hero-video{
     border-radius:var(--radius-lg);
     overflow:hidden;
     border:1px solid var(--panel-border);
     background:var(--panel);
   }
 
-  .testi-photo.glow{
+  .hero-video.glow{
     box-shadow:0 20px 50px rgba(79,124,255,0.15);
   }
 
-  .testi-photo img{
-    border-radius:0;
+  .hero-video video{
+    display:block;
     width:100%;
-    aspect-ratio:16/10;
-    object-fit:cover;
+    max-height:480px;
+    object-fit:contain;
+    background:#000;
   }
-
-  .testi-photo figcaption{
-    padding:14px 18px;
-    font-size:13px;
-    color:var(--text-muted);
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-
-  .testi-photo figcaption svg{width:14px;height:14px;stroke:var(--success);flex-shrink:0;}
 
   /* Quiz */
   .quiz{
@@ -635,19 +625,8 @@
   </div>
 
   <div class="hero-visual">
-    <figure class="testi-photo glow">
-      <img src="aluno1.jpg" alt="Aluno satisfeito com a primeira encomenda de iPhones">
-      <figcaption>
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        Primeira encomenda aprovada e enviada
-      </figcaption>
-    </figure>
-    <figure class="testi-photo glow">
-      <img src="aluno2.jpg" alt="Comprovante de pagamento direto ao fornecedor">
-      <figcaption>
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        Pagamento direto confirmado — iPhones novos
-      </figcaption>
+    <figure class="hero-video glow">
+      <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/419e390619c.mp4" controls playsinline preload="metadata"></video>
     </figure>
   </div>
 </section>
