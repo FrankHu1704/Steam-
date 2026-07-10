@@ -10,23 +10,27 @@ const METHODS_MZN = [
 ];
 const METHODS_ZAR = [{ value: "payfast", label: "PayFast (Cartão/EFT)" }];
 
+const NEEDS_WALLET_NUMBER = ["mpesa", "emola", "mkesh"];
+
 /** Standalone integration test page — not part of the normal checkout
  * flow. Calls Debito Pay's payment-orchestrator directly through the
  * testCharge Cloud Function (which holds the real API key server-side)
  * to confirm DEBITO_PAY_API_KEY / MERCHANT_ID / WALLET_CODE are wired up
  * correctly, without needing a merchant account or a product. */
 export function TestCheckout() {
-  const [method, setMethod] = useState("mpesa");
   const [amount, setAmount] = useState("50");
   const [currency, setCurrency] = useState<"MZN" | "ZAR">("MZN");
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [method, setMethod] = useState("mpesa");
+  const [walletNumber, setWalletNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
 
   const methods = currency === "ZAR" ? METHODS_ZAR : METHODS_MZN;
+  const needsWalletNumber = NEEDS_WALLET_NUMBER.includes(method);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -39,12 +43,12 @@ export function TestCheckout() {
         paymentMethod: method,
         amount: Number(amount),
         currency,
-        customerName,
-        customerEmail,
-        customerPhone,
+        customerName: name,
+        customerEmail: email,
+        customerPhone: needsWalletNumber ? walletNumber : undefined,
         returnUrl: window.location.href,
       });
-      setResult(res.data as Record<string, unknown>);
+      setResult({ whatsapp, ...(res.data as Record<string, unknown>) });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -91,8 +95,43 @@ export function TestCheckout() {
             />
           </div>
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-slate-700">Método</label>
+          <label className="block text-sm font-medium text-slate-700">1. Nome</label>
+          <input
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">2. E-mail</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">3. WhatsApp</label>
+          <input
+            required
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder="+258841234567"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            4. Selecione a carteira de pagamento
+          </label>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value)}
@@ -105,44 +144,30 @@ export function TestCheckout() {
             ))}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">Nome do Cliente</label>
-          <input
-            required
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">Email do Cliente</label>
-          <input
-            type="email"
-            required
-            value={customerEmail}
-            onChange={(e) => setCustomerEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-          />
-        </div>
-        {method !== "visa_mastercard" && method !== "payfast" && (
+
+        {needsWalletNumber && (
           <div>
-            <label className="block text-sm font-medium text-slate-700">Telefone</label>
+            <label className="block text-sm font-medium text-slate-700">
+              5. Coloque o número da carteira
+            </label>
             <input
               required
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              value={walletNumber}
+              onChange={(e) => setWalletNumber(e.target.value)}
               placeholder="+258841234567"
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
             />
           </div>
         )}
+
         {error && <p className="text-sm text-red-600">{error}</p>}
+
         <button
           type="submit"
           disabled={submitting}
           className="w-full rounded-lg bg-brand-500 py-2.5 font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
         >
-          {submitting ? "A processar…" : "Testar Cobrança"}
+          {submitting ? "A processar…" : "Pagar"}
         </button>
       </form>
 
