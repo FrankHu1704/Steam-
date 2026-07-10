@@ -14,6 +14,7 @@ export function PublicNav() {
         <div className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
           <a href="#metodos" className="hover:text-brand-600">Métodos</a>
           <a href="#como-funciona" className="hover:text-brand-600">Como Funciona</a>
+          <a href="#saques" className="hover:text-brand-600">Saques</a>
           <a href="#contacto" className="hover:text-brand-600">Contacto</a>
         </div>
         <div className="flex items-center gap-3">

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { PublicNav } from "../components/PublicNav";
 import { InstallAppButton } from "../components/InstallAppButton";
+import { WithdrawalInfoSection } from "../components/WithdrawalInfoSection";
 
 const METHODS = ["M-Pesa", "e-Mola", "mKesh", "Visa & Mastercard", "PayFast (ZAR)"];
 
@@ -81,6 +82,8 @@ export function Landing() {
           </div>
         </div>
       </section>
+
+      <WithdrawalInfoSection />
 
       <footer id="contacto" className="border-t border-slate-200 py-10 text-center text-sm text-slate-500">
         © {new Date().getFullYear()} PagaJá. Plataforma de pagamentos para Moçambique.
