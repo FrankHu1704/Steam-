@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
+import { describeAuthError } from "../../lib/authErrors";
 import { PublicNav } from "../../components/PublicNav";
 
 export function Login() {
@@ -19,7 +20,7 @@ export function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/dashboard");
     } catch (err) {
-      setError("Email ou palavra-passe incorretos.");
+      setError(describeAuthError(err));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../../lib/firebase";
+import { describeAuthError } from "../../lib/authErrors";
 import { PublicNav } from "../../components/PublicNav";
 
 export function Signup() {
@@ -21,7 +22,7 @@ export function Signup() {
       await updateProfile(cred.user, { displayName: name });
       navigate("/dashboard/settings");
     } catch (err) {
-      setError("Não foi possível criar a conta. Verifique os dados e tente novamente.");
+      setError(describeAuthError(err));
     } finally {
       setLoading(false);
     }
