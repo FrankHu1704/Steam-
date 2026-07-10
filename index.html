@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frank AI Solutions — Chaquil Alberto</title>
+<meta name="description" content="Bots de WhatsApp, sites e integrações de pagamento M-Pesa/E-Mola para o mercado moçambicano.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0F0D;
+    --bg-soft: #111613;
+    --panel: #151B17;
+    --line: rgba(238, 244, 232, 0.09);
+    --text: #EEF4E8;
+    --text-dim: #8FA396;
+    --accent: #2ED27A;   /* verde "online" / wa-ish, mas autoral */
+    --accent-2: #F2B33D; /* dourado, capulana / sol */
+    --accent-deep: #14361F;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--display);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important;}
+  }
+
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--accent); color:#06140A;}
+
+  /* ---------- background texture ---------- */
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(46,210,122,0.06), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(242,179,61,0.05), transparent 45%);
+    mix-blend-mode:normal;
+  }
+  .scan{
+    position:fixed; inset:0; pointer-events:none; z-index:2; opacity:0.035;
+    background:repeating-linear-gradient(0deg, #000 0px, transparent 1px, transparent 2px);
+  }
+
+  /* ---------- nav ---------- */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 6vw;
+    backdrop-filter:blur(10px);
+    background:rgba(11,15,13,0.6);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{
+    font-family:var(--mono); font-weight:700; font-size:14px; letter-spacing:0.02em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .nav-avatar{width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid var(--accent);}
+  .logo .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .nav-links{display:flex; gap:32px; font-size:13px; font-family:var(--mono); color:var(--text-dim);}
+  .nav-links a:hover{color:var(--accent);}
+  .nav-cta{
+    font-family:var(--mono); font-size:12px; padding:9px 16px; border:1px solid var(--accent);
+    border-radius:30px; color:var(--accent); transition:all .25s ease;
+  }
+  .nav-cta:hover{background:var(--accent); color:#06140A;}
+  @media (max-width:780px){ .nav-links{display:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative; min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+    padding:140px 6vw 80px; z-index:3;
+  }
+  .avatar{
+    width:104px; height:104px; border-radius:50%; object-fit:cover; margin-bottom:26px;
+    border:2px solid var(--accent); box-shadow:0 0 0 6px rgba(46,210,122,0.08), 0 20px 40px -14px rgba(0,0,0,0.6);
+    opacity:0; animation:rise .7s ease forwards;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:13px; color:var(--accent-2); letter-spacing:0.12em; text-transform:uppercase;
+    display:flex; align-items:center; gap:10px; margin-bottom:28px;
+    opacity:0; animation:rise .7s ease forwards; animation-delay:.1s;
+  }
+  .eyebrow::before{content:''; width:18px; height:1px; background:var(--accent-2);}
+
+  .hero h1{
+    font-size:clamp(2.6rem, 7.5vw, 6.2rem);
+    line-height:0.98; letter-spacing:-0.02em; font-weight:700;
+    max-width:14ch;
+  }
+  .hero h1 .line{display:block; overflow:hidden;}
+  .hero h1 .line span{display:block; opacity:0; transform:translateY(110%); animation:rise .8s cubic-bezier(.16,1,.3,1) forwards;}
+  .hero h1 .line:nth-child(1) span{animation-delay:.15s;}
+  .hero h1 .line:nth-child(2) span{animation-delay:.28s;}
+  .hero h1 .accent-text{color:var(--accent);}
+
+  @keyframes rise{ to{ opacity:1; transform:translateY(0);} }
+
+  .hero-sub{
+    margin-top:28px; max-width:46ch; font-size:1.08rem; line-height:1.65; color:var(--text-dim);
+    opacity:0; animation:rise .7s ease forwards; animation-delay:.5s;
+  }
+  .hero-meta{
+    margin-top:46px; display:flex; gap:40px; flex-wrap:wrap;
+    opacity:0; animation:rise .7s ease forwards; animation-delay:.65s;
+  }
+  .hero-meta div{font-family:var(--mono); font-size:12px; color:var(--text-dim);}
+  .hero-meta strong{display:block; color:var(--text); font-size:15px; font-weight:600; margin-top:4px;}
+
+  .hero-buttons{
+    margin-top:44px; display:flex; gap:16px; flex-wrap:wrap;
+    opacity:0; animation:rise .7s ease forwards; animation-delay:.8s;
+  }
+  .btn{
+    font-family:var(--mono); font-size:13px; padding:14px 26px; border-radius:30px;
+    display:inline-flex; align-items:center; gap:10px; transition:all .3s cubic-bezier(.16,1,.3,1);
+  }
+  .btn-primary{background:var(--accent); color:#06140A; font-weight:600;}
+  .btn-primary:hover{transform:translateY(-3px); box-shadow:0 14px 30px -10px rgba(46,210,122,0.5);}
+  .btn-ghost{border:1px solid var(--line); color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent); color:var(--accent); transform:translateY(-3px);}
+
+  /* floating terminal card */
+  .term-float{
+    position:absolute; right:6vw; top:50%; transform:translateY(-46%);
+    width:340px; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+    opacity:0; animation:floatIn 1s cubic-bezier(.16,1,.3,1) forwards; animation-delay:1s;
+    font-family:var(--mono); font-size:12.5px;
+  }
+  @keyframes floatIn{ from{opacity:0; transform:translateY(-40%) translateX(20px);} to{opacity:1; transform:translateY(-46%) translateX(0);} }
+  .term-bar{display:flex; gap:6px; padding:12px 14px; border-bottom:1px solid var(--line);}
+  .term-bar span{width:9px; height:9px; border-radius:50%; background:#3a4a3f;}
+  .term-bar span:nth-child(1){background:#e6584f;}
+  .term-bar span:nth-child(2){background:#e6b85a;}
+  .term-bar span:nth-child(3){background:#2ED27A;}
+  .term-body{padding:18px 16px; color:var(--text-dim); line-height:1.85;}
+  .term-body .ok{color:var(--accent);}
+  .term-body .warn{color:var(--accent-2);}
+  .caret{display:inline-block; width:7px; height:14px; background:var(--accent); vertical-align:middle; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  @media (max-width:980px){ .term-float{display:none;} }
+
+  .scroll-cue{
+    position:absolute; bottom:36px; left:6vw; font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    display:flex; align-items:center; gap:10px;
+  }
+  .scroll-cue .bar{width:1px; height:34px; background:linear-gradient(to bottom, var(--accent), transparent); animation:scrollbar 1.8s ease-in-out infinite;}
+  @keyframes scrollbar{0%{transform:scaleY(0); transform-origin:top;}50%{transform:scaleY(1); transform-origin:top;}50.01%{transform-origin:bottom;}100%{transform:scaleY(0); transform-origin:bottom;}}
+
+  /* ---------- ticker ---------- */
+  .ticker-wrap{
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    background:var(--bg-soft); padding:16px 0; overflow:hidden; position:relative; z-index:3;
+  }
+  .ticker{display:flex; white-space:nowrap; animation:ticker 28s linear infinite;}
+  .ticker span{
+    font-family:var(--mono); font-size:13px; color:var(--text-dim); padding:0 28px; display:flex; align-items:center; gap:10px;
+  }
+  .ticker span::before{content:'◆'; color:var(--accent-2); font-size:9px;}
+  @keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+  /* ---------- section shared ---------- */
+  section{position:relative; z-index:3; padding:140px 6vw;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:24px; margin-bottom:64px; flex-wrap:wrap;}
+  .section-num{font-family:var(--mono); color:var(--text-dim); font-size:13px;}
+  .section-title{font-size:clamp(2rem, 4.2vw, 3.2rem); font-weight:700; letter-spacing:-0.01em;}
+  .reveal{opacity:0; transform:translateY(36px); transition:opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);}
+  .reveal.in{opacity:1; transform:translateY(0);}
+
+  /* ---------- work ---------- */
+  .work-list{display:flex; flex-direction:column;}
+  .work-item{
+    border-top:1px solid var(--line); padding:46px 0; display:grid; grid-template-columns:90px 1.1fr 1fr 140px;
+    align-items:center; gap:32px; transition:background .3s ease; position:relative;
+  }
+  .work-item:last-child{border-bottom:1px solid var(--line);}
+  .work-item:hover{background:rgba(46,210,122,0.04);}
+  .work-num{font-family:var(--mono); color:var(--text-dim); font-size:14px;}
+  .work-name{font-size:clamp(1.5rem,3vw,2.1rem); font-weight:600; display:flex; align-items:center; gap:14px;}
+  .work-name .pill{font-family:var(--mono); font-size:10px; padding:4px 10px; border-radius:20px; border:1px solid var(--line); color:var(--text-dim); font-weight:400;}
+  .work-desc{color:var(--text-dim); font-size:0.95rem; line-height:1.6;}
+  .work-link{
+    font-family:var(--mono); font-size:12px; justify-self:end; display:flex; align-items:center; gap:8px;
+    border:1px solid var(--line); padding:10px 18px; border-radius:30px; transition:all .3s ease; white-space:nowrap;
+  }
+  .work-item:hover .work-link{border-color:var(--accent); color:var(--accent); background:rgba(46,210,122,0.08);}
+  .work-link svg{transition:transform .3s ease;}
+  .work-item:hover .work-link svg{transform:translate(3px,-3px);}
+
+  @media (max-width:900px){
+    .work-item{grid-template-columns:1fr; gap:12px; text-align:left;}
+    .work-link{justify-self:start;}
+  }
+
+  /* ---------- stack ---------- */
+  .stack-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+  .stack-cell{background:var(--bg-soft); padding:32px 28px; transition:background .3s ease;}
+  .stack-cell:hover{background:var(--panel);}
+  .stack-cell .k{font-family:var(--mono); font-size:11px; color:var(--accent-2); text-transform:uppercase; letter-spacing:0.08em;}
+  .stack-cell .v{margin-top:10px; font-size:1.15rem; font-weight:600;}
+  .stack-cell .d{margin-top:8px; font-size:0.85rem; color:var(--text-dim); line-height:1.5;}
+
+  /* ---------- process ---------- */
+  .process{display:grid; grid-template-columns:repeat(4,1fr); gap:0; border-top:1px solid var(--line); border-left:1px solid var(--line);}
+  .proc-cell{border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:36px 26px; min-height:220px; display:flex; flex-direction:column; justify-content:space-between;}
+  .proc-cell .pn{font-family:var(--mono); font-size:34px; color:var(--accent); font-weight:700; opacity:.85;}
+  .proc-cell h4{margin-top:18px; font-size:1.05rem;}
+  .proc-cell p{margin-top:8px; font-size:0.85rem; color:var(--text-dim); line-height:1.5;}
+  @media (max-width:900px){ .process{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .process{grid-template-columns:1fr;} }
+
+  /* ---------- services ---------- */
+  .service-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+  .service-card{background:var(--bg-soft); padding:40px 36px; transition:background .3s ease; display:flex; flex-direction:column;}
+  .service-card:hover{background:var(--panel);}
+  .service-icon{font-size:28px; margin-bottom:18px;}
+  .service-card h3{font-size:1.3rem; font-weight:600; margin-bottom:12px;}
+  .service-card p{color:var(--text-dim); font-size:0.92rem; line-height:1.6; flex-grow:1;}
+  .service-link{
+    margin-top:24px; font-family:var(--mono); font-size:12.5px; color:var(--accent);
+    display:inline-flex; align-items:center; gap:6px; align-self:flex-start;
+    border-bottom:1px solid transparent; transition:border-color .25s ease;
+  }
+  .service-card:hover .service-link{border-color:var(--accent);}
+  .service-note{margin-top:28px; text-align:center; font-family:var(--mono); font-size:12.5px; color:var(--text-dim);}
+  @media (max-width:760px){ .service-grid{grid-template-columns:1fr;} }
+
+  /* ---------- social ---------- */
+  .social-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+  .social-card{background:var(--bg-soft); padding:28px 26px; display:flex; align-items:center; gap:18px; transition:background .3s ease;}
+  .social-card:hover{background:var(--panel);}
+  .social-icon{font-size:26px; flex-shrink:0;}
+  .social-info .k{font-family:var(--mono); font-size:11px; color:var(--accent-2); text-transform:uppercase; letter-spacing:0.08em;}
+  .social-info .v{margin-top:6px; font-size:1rem; font-weight:600; word-break:break-word; transition:color .25s ease;}
+  .social-card:hover .social-info .v{color:var(--accent);}
+
+  /* ---------- contact ---------- */
+  .contact{
+    background:radial-gradient(ellipse at 50% 0%, rgba(46,210,122,0.08), transparent 60%);
+    text-align:center; padding:160px 6vw;
+  }
+  .contact h2{font-size:clamp(2.4rem,6vw,4.6rem); font-weight:700; line-height:1.05; letter-spacing:-0.02em;}
+  .contact h2 .accent-text{color:var(--accent);}
+  .contact p{margin:26px auto 0; max-width:42ch; color:var(--text-dim); font-size:1.05rem;}
+  .wa-btn{
+    margin-top:48px; display:inline-flex; align-items:center; gap:14px; background:var(--accent); color:#06140A;
+    padding:20px 38px; border-radius:40px; font-family:var(--mono); font-weight:700; font-size:15px;
+    box-shadow:0 0 0 0 rgba(46,210,122,0.5); animation:wa-pulse 2.6s infinite;
+  }
+  @keyframes wa-pulse{
+    0%{box-shadow:0 0 0 0 rgba(46,210,122,0.45);}
+    70%{box-shadow:0 0 0 22px rgba(46,210,122,0);}
+    100%{box-shadow:0 0 0 0 rgba(46,210,122,0);}
+  }
+  .wa-btn:hover{transform:scale(1.04);}
+  .wa-number{display:block; margin-top:20px; font-family:var(--mono); color:var(--text-dim); font-size:13px; letter-spacing:0.05em;}
+
+  footer{
+    border-top:1px solid var(--line); padding:32px 6vw; display:flex; justify-content:space-between;
+    font-family:var(--mono); font-size:12px; color:var(--text-dim); flex-wrap:wrap; gap:12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="scan"></div>
+
+<nav>
+  <div class="logo">
+    <img class="nav-avatar" src="https://raw.githubusercontent.com/vitincruz68-oss/uploads/main/449ieo.jpeg" alt="Chaquil Alberto">
+    <span class="dot"></span> FRANK AI SOLUTIONS
+  </div>
+  <div class="nav-links">
+    <a href="#trabalhos">Trabalhos</a>
+    <a href="#servicos">Serviços</a>
+    <a href="#stack">Stack</a>
+    <a href="#processo">Processo</a>
+    <a href="#redes">Redes</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <a class="nav-cta" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20vi%20o%20seu%20portf%C3%B3lio%20e%20quero%20saber%20mais%20sobre%20os%20seus%20servi%C3%A7os." target="_blank" rel="noopener">Contratar serviço</a>
+</nav>
+
+<section class="hero">
+  <img class="avatar" src="https://raw.githubusercontent.com/vitincruz68-oss/uploads/main/449ieo.jpeg" alt="Chaquil Alberto">
+  <div class="eyebrow">Chaquil Alberto · Maputo, Moçambique</div>
+  <h1>
+    <span class="line"><span>Bots e sites que</span></span>
+    <span class="line"><span class="accent-text">vendem enquanto</span></span>
+    <span class="line"><span>você dorme.</span></span>
+  </h1>
+  <p class="hero-sub">
+    Construo bots de WhatsApp, plataformas web e integrações de pagamento (M-Pesa, E-Mola)
+    pensadas para o mercado moçambicano. Da ideia ao deploy, código que roda em produção.
+  </p>
+  <div class="hero-meta">
+    <div>Base<strong>Maputo / Matola</strong></div>
+    <div>Stack<strong>Node.js · Baileys · APIs</strong></div>
+    <div>Foco<strong>WhatsApp · Pagamentos · Web</strong></div>
+  </div>
+  <div class="hero-buttons">
+    <a class="btn btn-primary" href="#trabalhos">Ver trabalhos ↓</a>
+    <a class="btn btn-ghost" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20vi%20o%20seu%20portf%C3%B3lio%20e%20quero%20saber%20mais%20sobre%20os%20seus%20servi%C3%A7os." target="_blank" rel="noopener">+258 84 931 1757</a>
+  </div>
+
+  <div class="term-float">
+    <div class="term-bar"><span></span><span></span><span></span></div>
+    <div class="term-body">
+~/frank-ai-solutions $ status<br>
+&gt; conectando WhatsApp...<br>
+&gt; sessão activa <span class="ok">ok</span><br>
+&gt; pagamento M-Pesa <span class="ok">ok</span><br>
+&gt; pagamento E-Mola <span class="ok">ok</span><br>
+&gt; bot online <span class="ok">●</span><br>
+&gt; <span class="warn">3 novos clientes</span> hoje<br>
+&gt; <span class="caret"></span>
+    </div>
+  </div>
+
+  <div class="scroll-cue"><div class="bar"></div> scroll</div>
+</section>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>LunaAI</span><span>Pin Fornecedores</span><span>Netflix MZ</span><span>M-Pesa</span>
+    <span>E-Mola</span><span>Baileys</span><span>Node.js</span>
+    <span>LunaAI</span><span>Pin Fornecedores</span><span>Netflix MZ</span><span>M-Pesa</span>
+    <span>E-Mola</span><span>Baileys</span><span>Node.js</span>
+  </div>
+</div>
+
+<section id="trabalhos">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-num">01 / Trabalhos</div>
+      <h2 class="section-title">Projetos em produção</h2>
+    </div>
+  </div>
+
+  <div class="work-list">
+    <a class="work-item reveal" href="https://pin-fornecedores.vercel.app" target="_blank" rel="noopener">
+      <div class="work-num">01</div>
+      <div class="work-name">Pin Fornecedores <span class="pill">Plataforma Web</span></div>
+      <div class="work-desc">Plataforma que conecta compradores a fornecedores verificados de iPhones na China, permitindo importar pagando diretamente ao fabricante com métodos de pagamento seguros.</div>
+      <div class="work-link">Visitar site
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+      </div>
+    </a>
+
+    <a class="work-item reveal" href="https://netflix-mz.vercel.app/" target="_blank" rel="noopener">
+      <div class="work-num">02</div>
+      <div class="work-name">Netflix MZ <span class="pill">Plataforma Web</span></div>
+      <div class="work-desc">Landing page de vendas para vagas em contas Netflix Premium 4K e Spotify Premium sem anúncios, com ativação rápida e suporte via WhatsApp para clientes em Moçambique.</div>
+      <div class="work-link">Visitar site
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+      </div>
+    </a>
+
+    <a class="work-item reveal" href="https://luna-website-rho.vercel.app/" target="_blank" rel="noopener">
+      <div class="work-num">03</div>
+      <div class="work-name">LunaAI <span class="pill">WhatsApp Bot</span></div>
+      <div class="work-desc">Assistente de IA para WhatsApp com áudio, imagem e código, mais um módulo de qualificação de leads que assume o papel de vendedor automaticamente.</div>
+      <div class="work-link">Visitar site
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section id="servicos">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-num">02 / Serviços</div>
+      <h2 class="section-title">O que posso construir para o seu negócio</h2>
+    </div>
+  </div>
+
+  <div class="service-grid reveal">
+    <div class="service-card">
+      <div class="service-icon">🤖</div>
+      <h3>Bot de WhatsApp</h3>
+      <p>Atendimento automático, catálogo, respostas a perguntas frequentes e qualificação de clientes 24 horas por dia, sem precisar de alguém online o tempo todo.</p>
+      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20contratar%20um%20Bot%20de%20WhatsApp%20para%20o%20meu%20negócio." target="_blank" rel="noopener">Contratar este serviço →</a>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">💳</div>
+      <h3>Pagamentos M-Pesa & E-Mola</h3>
+      <p>Confirmação automática de pagamentos, registo de vendas e liberação imediata do produto ou serviço depois do cliente pagar.</p>
+      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20integrar%20pagamentos%20M-Pesa%2FE-Mola%20no%20meu%20negócio." target="_blank" rel="noopener">Contratar este serviço →</a>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🌐</div>
+      <h3>Sites e plataformas web</h3>
+      <p>Site institucional, loja online ou painel de cliente, com domínio próprio e pensado para quem vai usar a partir do telemóvel.</p>
+      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20um%20site%20ou%20plataforma%20web%20para%20o%20meu%20negócio." target="_blank" rel="noopener">Contratar este serviço →</a>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🔌</div>
+      <h3>Integrações e automações</h3>
+      <p>Conectar o seu bot, site ou sistema interno a outras ferramentas, e automatizar tarefas repetitivas do dia a dia do negócio.</p>
+      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20integra%C3%A7%C3%B5es%20e%20automa%C3%A7%C3%B5es." target="_blank" rel="noopener">Contratar este serviço →</a>
+    </div>
+  </div>
+
+  <div class="service-note reveal">
+    <span>Orçamento sob medida, conforme o tamanho e a complexidade do projecto. Resposta normalmente em poucas horas.</span>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-num">03 / Stack</div>
+      <h2 class="section-title">Ferramentas do dia a dia</h2>
+    </div>
+  </div>
+  <div class="stack-grid reveal">
+    <div class="stack-cell">
+      <div class="k">Bots</div>
+      <div class="v">Node.js + Baileys</div>
+      <div class="d">Sessões persistentes, reconexão automática, arquitetura modular de comandos.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="k">Pagamentos</div>
+      <div class="v">M-Pesa & E-Mola</div>
+      <div class="d">Verificação automática de SMS de confirmação e registo de compras em tempo real.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="k">Backend</div>
+      <div class="v">Auth + Base de dados</div>
+      <div class="d">Login, permissões e armazenamento estruturado para painéis e bots.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="k">IA</div>
+      <div class="v">Assistentes inteligentes</div>
+      <div class="d">Texto, visão e geração de imagem integrados directamente nos bots.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="k">Deploy</div>
+      <div class="v">Publicação na nuvem</div>
+      <div class="d">Site ou bot no ar com domínio próprio, monitorização e actualizações contínuas.</div>
+    </div>
+    <div class="stack-cell">
+      <div class="k">Mercado</div>
+      <div class="v">Moçambique 🇲🇿</div>
+      <div class="d">Produtos pensados em português, para a realidade e os meios de pagamento locais.</div>
+    </div>
+  </div>
+</section>
+
+<section id="processo">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-num">04 / Processo</div>
+      <h2 class="section-title">Como o projecto acontece</h2>
+    </div>
+  </div>
+  <div class="process reveal">
+    <div class="proc-cell">
+      <div class="pn">01</div>
+      <div><h4>Entender o negócio</h4><p>O que você vende, quem compra, e onde o WhatsApp ou o site entra nesse processo.</p></div>
+    </div>
+    <div class="proc-cell">
+      <div class="pn">02</div>
+      <div><h4>Desenhar o fluxo</h4><p>Comandos do bot, telas do site, integração de pagamento. Tudo mapeado antes de codar.</p></div>
+    </div>
+    <div class="proc-cell">
+      <div class="pn">03</div>
+      <div><h4>Construir</h4><p>Código em produção, testado com casos reais, não só com dados de exemplo.</p></div>
+    </div>
+    <div class="proc-cell">
+      <div class="pn">04</div>
+      <div><h4>Lançar e ajustar</h4><p>Deploy, acompanhamento dos primeiros dias e ajustes com base no uso real.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="redes">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-num">05 / Redes sociais</div>
+      <h2 class="section-title">Onde me encontrar online</h2>
+    </div>
+  </div>
+  <div class="social-grid reveal">
+    <a class="social-card" href="https://www.tiktok.com/@chaquil_999" target="_blank" rel="noopener">
+      <div class="social-icon">🎵</div>
+      <div class="social-info">
+        <div class="k">TikTok</div>
+        <div class="v">@chaquil_999</div>
+      </div>
+    </a>
+    <a class="social-card" href="https://whatsapp.com/channel/0029VbCA7myJf05ajpNctv0o" target="_blank" rel="noopener">
+      <div class="social-icon">📢</div>
+      <div class="social-info">
+        <div class="k">Canal do WhatsApp</div>
+        <div class="v">Novidades e actualizações</div>
+      </div>
+    </a>
+    <a class="social-card" href="https://www.instagram.com/frankstore.co.mz" target="_blank" rel="noopener">
+      <div class="social-icon">📸</div>
+      <div class="social-info">
+        <div class="k">Instagram</div>
+        <div class="v">@frankstore.co.mz</div>
+      </div>
+    </a>
+    <a class="social-card" href="mailto:starchannelmoz@gmail.com">
+      <div class="social-icon">✉️</div>
+      <div class="social-info">
+        <div class="k">E-mail</div>
+        <div class="v">starchannelmoz@gmail.com</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="contact" id="contacto">
+  <div class="reveal">
+    <h2>Tem uma ideia? <br><span class="accent-text">Vamos pôr no ar.</span></h2>
+    <p>Bot de WhatsApp, site institucional, loja online ou integração de pagamento. Manda a ideia e eu digo o que é possível construir.</p>
+    <a class="wa-btn" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20tenho%20uma%20ideia%20de%20projecto%20e%20gostaria%20de%20conversar%20consigo." target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0 0 12 4a8.9 8.9 0 0 0-7.7 13.4L3 21l3.7-1.27A8.9 8.9 0 0 0 12 21a8.9 8.9 0 0 0 8.9-8.9 8.86 8.86 0 0 0-3.3-5.78ZM12 19.3a7.3 7.3 0 0 1-3.7-1l-.27-.16-2.43.83.84-2.36-.18-.27a7.32 7.32 0 1 1 5.74 2.96Zm4-5.46c-.22-.11-1.3-.64-1.5-.71-.2-.08-.35-.11-.49.11-.15.22-.57.71-.7.86-.13.14-.26.16-.48.05-1.3-.65-2.15-1.16-3-2.64-.23-.39.23-.36.66-1.2.07-.15.04-.27-.03-.38-.07-.11-.65-1.56-.89-2.13-.23-.56-.47-.48-.65-.49-.17-.01-.35-.01-.54-.01-.18 0-.48.07-.74.34-.26.27-1 1-1 2.42 0 1.43 1.04 2.81 1.18 3 .15.2 2.04 3.13 4.94 4.27 2.9 1.14 2.9.76 3.43.71.53-.05 1.72-.7 1.96-1.38.24-.68.24-1.27.17-1.39-.07-.12-.25-.18-.47-.29Z"/></svg>
+      Iniciar conversa no WhatsApp
+    </a>
+    <span class="wa-number">+258 84 931 1757 · Maputo, Moçambique</span>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Frank AI Solutions — Chaquil Alberto</span>
+  <span>Maputo · Matola · Moçambique</span>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); }
+    });
+  }, {threshold:0.15});
+  reveals.forEach(r=>obs.observe(r));
+</script>
+
+</body>
+</html>
