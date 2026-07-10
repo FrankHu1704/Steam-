@@ -7,6 +7,7 @@ import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { PublicCheckout } from "./pages/PublicCheckout";
 import { ProductSalePage } from "./pages/ProductSalePage";
+import { TestCheckout } from "./pages/TestCheckout";
 
 import { Overview } from "./pages/merchant/Overview";
 import { Products } from "./pages/merchant/Products";
@@ -32,6 +33,7 @@ export function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/pay/:paymentId" element={<PublicCheckout />} />
           <Route path="/produto/:productId" element={<ProductSalePage />} />
+          <Route path="/test-checkout" element={<TestCheckout />} />
 
           <Route
             path="/dashboard"

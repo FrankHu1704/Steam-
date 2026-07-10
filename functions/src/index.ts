@@ -16,6 +16,7 @@ export {
   getProductDownload,
 } from "./https/publicProducts";
 export { becomeAffiliate } from "./https/affiliates";
+export { testCharge } from "./https/testCheckout";
 export { debitoPayWebhook } from "./https/webhook";
 export {
   requestWithdrawal,
