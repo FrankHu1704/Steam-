@@ -169,6 +169,11 @@ domínio aponta para qual.
   venda depois de `reviewProduct` (`/admin/products`) marcar `approved`.
 - **Saques**: `requestWithdrawal` cria com `status: pending`; admin decide
   em `/admin/withdrawals` (`approved`/`rejected`) e finaliza com
-  `markWithdrawalPaid` quando o dinheiro já foi enviado.
+  `markWithdrawalPaid` quando o dinheiro já foi enviado. Taxa fixa de 5%
+  (M-Pesa, e-Mola, Payoneer) calculada em `functions/src/lib/fees.ts` — o
+  saldo do merchant é debitado no valor cheio (`amount`), mas o admin só
+  transfere o `netAmount` (já com a taxa descontada). Ver a seção
+  "Informações sobre Saques" na landing page para o texto exposto ao
+  público.
 - **Merchants**: contas começam `pending` e só podem pedir saques depois de
   um admin as ativar em `/admin/merchants`.

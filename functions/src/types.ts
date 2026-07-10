@@ -47,8 +47,10 @@ export type WithdrawalStatus = "pending" | "approved" | "rejected" | "paid";
 export interface WithdrawalDoc {
   merchantId: string;
   amount: number;
+  feeAmount: number;
+  netAmount: number;
   currency: "MZN" | "ZAR";
-  payoutMethod: PaymentMethod | "bank_transfer";
+  payoutMethod: import("./lib/fees").WithdrawalMethod;
   destination: string;
   status: WithdrawalStatus;
   rejectionReason: string | null;

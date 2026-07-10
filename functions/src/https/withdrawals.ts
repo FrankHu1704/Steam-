@@ -1,17 +1,20 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db, FieldValue } from "../lib/admin";
 import { requireAuth, requireAdmin } from "../lib/authz";
-import type { PaymentMethod } from "../types";
+import { WITHDRAWAL_METHODS, computeWithdrawalFee, type WithdrawalMethod } from "../lib/fees";
 
 interface RequestWithdrawalInput {
   amount: number;
-  payoutMethod: PaymentMethod | "bank_transfer";
+  payoutMethod: WithdrawalMethod;
   destination: string;
 }
 
 /** Merchant requests a payout (saque) of their available ledger balance.
- * The amount is immediately moved from balanceAvailable to balancePending
- * so it can't be double-spent while an admin reviews it. */
+ * `amount` is the gross value deducted from balanceAvailable; the merchant
+ * actually receives `netAmount` (amount minus the 5% fee) — matches the
+ * "Informações sobre Saques" page. The gross amount is immediately moved
+ * from balanceAvailable to balancePending so it can't be double-spent
+ * while an admin reviews it. */
 export const requestWithdrawal = onCall(async (request) => {
   const uid = requireAuth(request);
   const { amount, payoutMethod, destination } = request.data as RequestWithdrawalInput;
@@ -19,9 +22,17 @@ export const requestWithdrawal = onCall(async (request) => {
   if (typeof amount !== "number" || amount <= 0) {
     throw new HttpsError("invalid-argument", "A positive amount is required.");
   }
-  if (!payoutMethod || !destination) {
-    throw new HttpsError("invalid-argument", "payoutMethod and destination are required.");
+  if (!WITHDRAWAL_METHODS.includes(payoutMethod)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `payoutMethod must be one of: ${WITHDRAWAL_METHODS.join(", ")}.`
+    );
   }
+  if (!destination) {
+    throw new HttpsError("invalid-argument", "destination is required.");
+  }
+
+  const { feeAmount, netAmount } = computeWithdrawalFee(amount);
 
   const merchantRef = db.collection("merchants").doc(uid);
   const withdrawalRef = db.collection("withdrawals").doc();
@@ -50,6 +61,8 @@ export const requestWithdrawal = onCall(async (request) => {
     tx.set(withdrawalRef, {
       merchantId: uid,
       amount,
+      feeAmount,
+      netAmount,
       currency: merchant.currency ?? "MZN",
       payoutMethod,
       destination,
@@ -63,7 +76,7 @@ export const requestWithdrawal = onCall(async (request) => {
     });
   });
 
-  return { success: true, withdrawalId: withdrawalRef.id };
+  return { success: true, withdrawalId: withdrawalRef.id, feeAmount, netAmount };
 });
 
 interface ReviewWithdrawalInput {
@@ -73,9 +86,10 @@ interface ReviewWithdrawalInput {
 }
 
 /** Admin approves or rejects a pending withdrawal. Approval only records
- * the decision — the actual payout still happens outside this system
- * (e.g. an ops team wiring funds via the platform's own Debito Pay wallet
- * or a bank transfer), finalized separately via `markWithdrawalPaid`. */
+ * the decision — the actual payout (of `netAmount`, after the fee) still
+ * happens outside this system (e.g. an ops team wiring funds via the
+ * platform's own Debito Pay wallet or Payoneer), finalized separately via
+ * `markWithdrawalPaid`. */
 export const reviewWithdrawal = onCall(async (request) => {
   const adminUid = requireAdmin(request);
   const { withdrawalId, decision, rejectionReason } = request.data as ReviewWithdrawalInput;
@@ -123,7 +137,8 @@ interface MarkPaidInput {
   payoutReference: string;
 }
 
-/** Admin confirms the funds have actually been sent to the merchant. */
+/** Admin confirms the netAmount (after the 5% fee) has actually been sent
+ * to the merchant via their chosen payoutMethod. */
 export const markWithdrawalPaid = onCall(async (request) => {
   const adminUid = requireAdmin(request);
   const { withdrawalId, payoutReference } = request.data as MarkPaidInput;

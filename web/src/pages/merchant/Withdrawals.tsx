@@ -1,14 +1,17 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { DashboardLayout } from "../../components/DashboardLayout";
 import { StatusBadge } from "../../components/StatusBadge";
+import { WITHDRAWAL_METHODS, WITHDRAWAL_FEE_PERCENT, computeWithdrawalFee } from "../../lib/fees";
 
 interface WithdrawalRow {
   id: string;
   amount: number;
+  feeAmount: number;
+  netAmount: number;
   currency: string;
   payoutMethod: string;
   destination: string;
@@ -20,7 +23,7 @@ export function Withdrawals() {
   const { merchant } = useAuth();
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
   const [amount, setAmount] = useState("");
-  const [payoutMethod, setPayoutMethod] = useState("mpesa");
+  const [payoutMethod, setPayoutMethod] = useState<string>(WITHDRAWAL_METHODS[0].value);
   const [destination, setDestination] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +39,15 @@ export function Withdrawals() {
       setWithdrawals(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<WithdrawalRow, "id">) })));
     });
   }, [merchant]);
+
+  const preview = useMemo(() => {
+    const parsed = Number(amount);
+    if (!parsed || parsed <= 0) return null;
+    return computeWithdrawalFee(parsed);
+  }, [amount]);
+
+  const destinationLabel =
+    WITHDRAWAL_METHODS.find((m) => m.value === payoutMethod)?.destinationLabel ?? "Destino";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -60,6 +72,7 @@ export function Withdrawals() {
       <h1 className="text-2xl font-bold text-brand-900">Saques</h1>
       <p className="mt-1 text-sm text-slate-500">
         Saldo disponível: <strong>{(merchant?.balanceAvailable ?? 0).toFixed(2)} {merchant?.currency}</strong>
+        {" · "}Taxa de saque: <strong>{WITHDRAWAL_FEE_PERCENT}%</strong>
       </p>
 
       {!canWithdraw && (
@@ -91,16 +104,15 @@ export function Withdrawals() {
             onChange={(e) => setPayoutMethod(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
           >
-            <option value="mpesa">M-Pesa</option>
-            <option value="emola">e-Mola</option>
-            <option value="mkesh">mKesh</option>
-            <option value="bank_transfer">Transferência Bancária</option>
+            {WITHDRAWAL_METHODS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700">
-            Destino (número de telefone ou conta bancária)
-          </label>
+          <label className="block text-sm font-medium text-slate-700">{destinationLabel}</label>
           <input
             required
             value={destination}
@@ -108,6 +120,24 @@ export function Withdrawals() {
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-brand-500 focus:outline-none"
           />
         </div>
+
+        {preview && (
+          <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4 text-sm md:col-span-2">
+            <div>
+              <p className="text-slate-500">Taxa ({WITHDRAWAL_FEE_PERCENT}%)</p>
+              <p className="font-semibold text-slate-700">
+                -{preview.feeAmount.toFixed(2)} {merchant?.currency}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-500">Vai receber</p>
+              <p className="font-semibold text-emerald-700">
+                {preview.netAmount.toFixed(2)} {merchant?.currency}
+              </p>
+            </div>
+          </div>
+        )}
+
         {error && <p className="text-sm text-red-600 md:col-span-2">{error}</p>}
         <div className="md:col-span-2">
           <button
@@ -124,16 +154,17 @@ export function Withdrawals() {
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-3">Valor</th>
+              <th className="px-4 py-3">Valor Solicitado</th>
+              <th className="px-4 py-3">Taxa</th>
+              <th className="px-4 py-3">Valor Líquido</th>
               <th className="px-4 py-3">Método</th>
-              <th className="px-4 py-3">Destino</th>
               <th className="px-4 py-3">Estado</th>
             </tr>
           </thead>
           <tbody>
             {withdrawals.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
                   Ainda sem pedidos de saque.
                 </td>
               </tr>
@@ -143,8 +174,15 @@ export function Withdrawals() {
                 <td className="px-4 py-3 font-medium">
                   {w.amount.toFixed(2)} {w.currency}
                 </td>
-                <td className="px-4 py-3 text-slate-600">{w.payoutMethod}</td>
-                <td className="px-4 py-3 text-slate-600">{w.destination}</td>
+                <td className="px-4 py-3 text-slate-500">
+                  -{(w.feeAmount ?? 0).toFixed(2)} {w.currency}
+                </td>
+                <td className="px-4 py-3 font-semibold text-emerald-700">
+                  {(w.netAmount ?? w.amount).toFixed(2)} {w.currency}
+                </td>
+                <td className="px-4 py-3 text-slate-600">
+                  {w.payoutMethod} · {w.destination}
+                </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={w.status} />
                   {w.status === "rejected" && w.rejectionReason && (

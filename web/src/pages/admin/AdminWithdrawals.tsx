@@ -9,6 +9,8 @@ interface WithdrawalRow {
   id: string;
   merchantId: string;
   amount: number;
+  feeAmount: number;
+  netAmount: number;
   currency: string;
   payoutMethod: string;
   destination: string;
@@ -40,7 +42,10 @@ export function AdminWithdrawals() {
   }
 
   async function markPaid(withdrawalId: string) {
-    const payoutReference = window.prompt("Referência do pagamento efetuado:");
+    const w = withdrawals.find((row) => row.id === withdrawalId);
+    const payoutReference = window.prompt(
+      `Referência do pagamento efetuado (enviar ${(w?.netAmount ?? w?.amount ?? 0).toFixed(2)} ${w?.currency ?? ""} para ${w?.destination ?? "?"}):`
+    );
     if (!payoutReference) return;
     setBusyId(withdrawalId);
     try {
@@ -76,7 +81,9 @@ export function AdminWithdrawals() {
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Merchant</th>
-              <th className="px-4 py-3">Valor</th>
+              <th className="px-4 py-3">Solicitado</th>
+              <th className="px-4 py-3">Taxa</th>
+              <th className="px-4 py-3">Pagar (líquido)</th>
               <th className="px-4 py-3">Destino</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3">Ações</th>
@@ -85,7 +92,7 @@ export function AdminWithdrawals() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                   Nada por aqui.
                 </td>
               </tr>
@@ -95,6 +102,12 @@ export function AdminWithdrawals() {
                 <td className="px-4 py-3 font-mono text-xs text-slate-500">{w.merchantId.slice(0, 8)}…</td>
                 <td className="px-4 py-3 font-medium">
                   {w.amount.toFixed(2)} {w.currency}
+                </td>
+                <td className="px-4 py-3 text-slate-500">
+                  -{(w.feeAmount ?? 0).toFixed(2)} {w.currency}
+                </td>
+                <td className="px-4 py-3 font-semibold text-emerald-700">
+                  {(w.netAmount ?? w.amount).toFixed(2)} {w.currency}
                 </td>
                 <td className="px-4 py-3 text-slate-600">
                   {w.payoutMethod} · {w.destination}
