@@ -120,11 +120,18 @@ firebase deploy --only firestore:rules,firestore:indexes,storage,functions,hosti
 Não existe nenhum admin por padrão. Para criar o primeiro:
 
 1. Crie uma conta normal em `/signup`.
-2. Com essa conta autenticada no browser, abra a consola de DevTools e
-   invoque a função callable `bootstrapAdmin` com o
-   `ADMIN_BOOTSTRAP_SECRET` que definiu no passo 2 (ou crie um pequeno
-   script Node usando o Admin SDK). Isto define a claim `role: admin` e
-   redireciona os acessos futuros para `/admin`.
+2. Rode o script `web/scripts/bootstrap-admin.mjs` (funciona no Termux, não
+   precisa de DevTools do browser):
+
+   ```bash
+   cd web
+   node scripts/bootstrap-admin.mjs
+   ```
+
+   Ele pede o email/palavra-passe da conta e o `ADMIN_BOOTSTRAP_SECRET` que
+   você definiu, faz login e promove essa conta a admin. Depois, saia e
+   entre de novo em `/login` — o token só atualiza a claim `role: admin`
+   num novo login.
 3. Repita para cada admin adicional; depois disso, trate o
    `ADMIN_BOOTSTRAP_SECRET` como comprometido e rode-o
    (`firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET` de novo).
