@@ -84,7 +84,14 @@ export async function createDebitoPayCharge(
     customer_email: input.customerEmail,
   };
 
-  if (input.customerPhone) body.customer_phone = input.customerPhone;
+  if (input.customerPhone) {
+    // The docs' "common fields" example uses customer_phone, but the
+    // mobile-money-specific examples (M-Pesa/e-Mola/mKesh) use a plain
+    // "phone" field and error with "Phone number required" if only
+    // customer_phone is sent — send both so it's picked up either way.
+    body.customer_phone = input.customerPhone;
+    body.phone = input.customerPhone;
+  }
   if (input.returnUrl) body.return_url = input.returnUrl;
   if (input.customerIp) body.customer_ip = input.customerIp;
   if (input.customerUserAgent) body.customer_user_agent = input.customerUserAgent;
