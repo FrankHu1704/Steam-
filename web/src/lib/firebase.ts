@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 import { isSupported, getAnalytics, type Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -19,6 +20,7 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
+export const storage = getStorage(app);
 
 // Analytics needs a browser environment with IndexedDB/cookies available
 // (fails inside some webviews and during SSR), so it's opt-in via isSupported().

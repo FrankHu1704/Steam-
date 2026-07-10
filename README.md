@@ -22,6 +22,10 @@ web/         React + Vite + Tailwind                        -> frontend (SPA)
 - **Firestore**: `merchants`, `products`, `payments`, `withdrawals`,
   `webhookEvents`, `users`. Ver `functions/src/types.ts` para os campos de
   cada coleção.
+- **Storage**: fotos de produtos ficam em `products/{merchantId}/{ficheiro}`
+  (upload direto do cliente, ver `web/src/lib/uploadProductImage.ts`) —
+  leitura pública, escrita só pelo próprio merchant dono da pasta, até 5MB
+  e só imagens (`storage.rules`).
 - **Cloud Functions**: toda a escrita sensível (saldo, aprovações, chamadas à
   Debito Pay) passa por funções `onCall`/`onRequest` — o cliente nunca
   escreve diretamente nesses campos (ver `firestore.rules`).
@@ -107,7 +111,7 @@ Settings → General → Your apps).
 ### 4. Deploy e primeiro administrador
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes,functions,hosting
+firebase deploy --only firestore:rules,firestore:indexes,storage,functions,hosting
 ```
 
 Não existe nenhum admin por padrão. Para criar o primeiro:

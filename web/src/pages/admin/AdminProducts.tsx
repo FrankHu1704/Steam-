@@ -12,6 +12,7 @@ interface ProductRow {
   description: string;
   price: number;
   currency: string;
+  imageUrl: string | null;
   status: "pending" | "approved" | "rejected";
 }
 
@@ -65,10 +66,19 @@ export function AdminProducts() {
         )}
         {filtered.map((p) => (
           <div key={p.id} className="rounded-xl bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-semibold text-brand-900">{p.name}</p>
-                <p className="mt-1 text-sm text-slate-500">{p.description}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex gap-3">
+                {p.imageUrl && (
+                  <img
+                    src={p.imageUrl}
+                    alt={p.name}
+                    className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 object-cover"
+                  />
+                )}
+                <div>
+                  <p className="font-semibold text-brand-900">{p.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">{p.description}</p>
+                </div>
               </div>
               <StatusBadge status={p.status} />
             </div>
