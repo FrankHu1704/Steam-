@@ -180,3 +180,31 @@ export const markWithdrawalPaid = onCall(async (request) => {
 
   return { success: true };
 });
+
+interface ConfirmReceiptInput {
+  withdrawalId: string;
+}
+
+/** Merchant confirms the money actually landed in their M-Pesa/e-Mola/
+ * Payoneer account, closing the loop after markWithdrawalPaid. */
+export const confirmWithdrawalReceipt = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const { withdrawalId } = request.data as ConfirmReceiptInput;
+  if (!withdrawalId) throw new HttpsError("invalid-argument", "withdrawalId is required.");
+
+  const withdrawalRef = db.collection("withdrawals").doc(withdrawalId);
+  const snap = await withdrawalRef.get();
+  if (!snap.exists || snap.data()?.merchantId !== uid) {
+    throw new HttpsError("not-found", "Withdrawal not found for this merchant.");
+  }
+  if (snap.data()?.status !== "paid") {
+    throw new HttpsError("failed-precondition", "Withdrawal must be marked paid first.");
+  }
+
+  await withdrawalRef.update({
+    status: "confirmed",
+    confirmedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { success: true };
+});

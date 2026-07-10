@@ -6,9 +6,13 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { PublicCheckout } from "./pages/PublicCheckout";
+import { ProductSalePage } from "./pages/ProductSalePage";
 
 import { Overview } from "./pages/merchant/Overview";
 import { Products } from "./pages/merchant/Products";
+import { ProductWizard } from "./pages/merchant/ProductWizard";
+import { ProductDetail } from "./pages/merchant/ProductDetail";
+import { Affiliates } from "./pages/merchant/Affiliates";
 import { Payments } from "./pages/merchant/Payments";
 import { Withdrawals } from "./pages/merchant/Withdrawals";
 import { Settings } from "./pages/merchant/Settings";
@@ -27,6 +31,7 @@ export function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/pay/:paymentId" element={<PublicCheckout />} />
+          <Route path="/produto/:productId" element={<ProductSalePage />} />
 
           <Route
             path="/dashboard"
@@ -41,6 +46,30 @@ export function App() {
             element={
               <ProtectedRoute requireRole="merchant">
                 <Products />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/products/new"
+            element={
+              <ProtectedRoute requireRole="merchant">
+                <ProductWizard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/products/:productId"
+            element={
+              <ProtectedRoute requireRole="merchant">
+                <ProductDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/affiliates"
+            element={
+              <ProtectedRoute requireRole="merchant">
+                <Affiliates />
               </ProtectedRoute>
             }
           />

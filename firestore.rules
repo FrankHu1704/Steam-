@@ -64,6 +64,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // affiliateLinks/{productId}_{affiliateUid}: readable by the affiliate
+    // themself, the product owner (merchantId), or admins. Written only by
+    // Cloud Functions (becomeAffiliate / webhook click+sale counters).
+    match /affiliateLinks/{linkId} {
+      allow get: if isOwner(resource.data.affiliateUid)
+        || isOwner(resource.data.merchantId)
+        || isAdmin();
+      allow list: if isOwner(resource.data.affiliateUid)
+        || isOwner(resource.data.merchantId)
+        || isAdmin();
+      allow write: if false;
+    }
+
     // Internal audit log, server-only.
     match /webhookEvents/{eventId} {
       allow read, write: if false;

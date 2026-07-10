@@ -3,15 +3,28 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Product photos: publicly readable (payment links/product cards show
-    // them to anonymous buyers), but a merchant may only write into their
-    // own folder, and only small image files.
+    // Cover photo / preview images: publicly readable (shown on the public
+    // product sale page to anonymous buyers), writable only by the owning
+    // merchant, images only, capped at 5MB.
     match /products/{merchantId}/{fileName} {
       allow read: if true;
       allow write: if request.auth != null
         && request.auth.uid == merchantId
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == merchantId;
+    }
+
+    // Paid digital downloads (PDFs etc): never publicly readable — the
+    // owning merchant can upload/replace their own files, but every read
+    // (including by the merchant) goes through the getProductDownload
+    // Cloud Function, which uses the Admin SDK (bypasses these rules) to
+    // mint a short-lived signed URL only after a payment is confirmed.
+    match /product-files/{merchantId}/{productId}/{fileName} {
+      allow read: if false;
+      allow write: if request.auth != null
+        && request.auth.uid == merchantId
+        && request.resource.size < 40 * 1024 * 1024;
       allow delete: if request.auth != null && request.auth.uid == merchantId;
     }
 

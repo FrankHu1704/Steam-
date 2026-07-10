@@ -5,8 +5,9 @@ import { auth } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 
 const LINKS = [
-  { to: "/dashboard", label: "Visão Geral" },
+  { to: "/dashboard", label: "Visão Geral", exact: true },
   { to: "/dashboard/products", label: "Produtos" },
+  { to: "/dashboard/affiliates", label: "Afiliados" },
   { to: "/dashboard/payments", label: "Links de Pagamento" },
   { to: "/dashboard/withdrawals", label: "Saques" },
   { to: "/dashboard/settings", label: "Definições" },
@@ -23,19 +24,22 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           Paga<span className="text-brand-400">Já</span>
         </div>
         <nav className="mt-4 space-y-1 px-3">
-          {LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`block rounded-lg px-3 py-2 text-sm font-medium ${
-                location.pathname === link.to
-                  ? "bg-white/10 text-white"
-                  : "text-slate-300 hover:bg-white/5"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {LINKS.map((link) => {
+            const active = link.exact
+              ? location.pathname === link.to
+              : location.pathname.startsWith(link.to);
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`block rounded-lg px-3 py-2 text-sm font-medium ${
+                  active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <button
           onClick={() => signOut(auth)}

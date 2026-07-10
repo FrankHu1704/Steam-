@@ -65,7 +65,7 @@ export const debitoPayWebhook = onRequest(
 
     // sourceId was set to our local Firestore payment doc id when the
     // charge was created, and Debito Pay's own payment_id was stored back
-    // on that doc in submitPayment — look it up by that field.
+    // on that doc in submitPayment/purchaseProduct — look it up by that field.
     const paymentQuery = await db
       .collection("payments")
       .where("debitoPayPaymentId", "==", paymentId)
@@ -81,8 +81,15 @@ export const debitoPayWebhook = onRequest(
     const paymentRef = paymentQuery.docs[0].ref;
 
     await db.runTransaction(async (tx) => {
+      // All reads must happen before any writes in a Firestore transaction.
       const paymentSnap = await tx.get(paymentRef);
       const payment = paymentSnap.data()!;
+
+      const affiliateLinkRef =
+        payment.productId && payment.affiliateUid
+          ? db.collection("affiliateLinks").doc(`${payment.productId}_${payment.affiliateUid}`)
+          : null;
+      const affiliateLinkSnap = affiliateLinkRef ? await tx.get(affiliateLinkRef) : null;
 
       if (body.event === "payment.completed") {
         tx.update(paymentRef, {
@@ -91,13 +98,30 @@ export const debitoPayWebhook = onRequest(
           completedAt: FieldValue.serverTimestamp(),
         });
 
-        // Idempotent credit: only touch the merchant ledger once per payment.
+        // Idempotent credit: only touch ledgers/counters once per payment.
         if (!payment.creditedAt) {
+          const commission = payment.affiliateCommissionAmount ?? 0;
+          const ownerNet = (payment.amount - commission) * (1 - PLATFORM_FEE_PERCENT / 100);
+
           const merchantRef = db.collection("merchants").doc(payment.merchantId);
-          const net = payment.amount * (1 - PLATFORM_FEE_PERCENT / 100);
-          tx.update(merchantRef, {
-            balanceAvailable: FieldValue.increment(net),
-          });
+          tx.update(merchantRef, { balanceAvailable: FieldValue.increment(ownerNet) });
+
+          if (payment.productId) {
+            tx.update(db.collection("products").doc(payment.productId), {
+              salesCount: FieldValue.increment(1),
+            });
+          }
+
+          if (payment.affiliateUid && commission > 0 && affiliateLinkRef && affiliateLinkSnap?.exists) {
+            tx.update(db.collection("merchants").doc(payment.affiliateUid), {
+              balanceAvailable: FieldValue.increment(commission),
+            });
+            tx.update(affiliateLinkRef, {
+              sales: FieldValue.increment(1),
+              commissionEarned: FieldValue.increment(commission),
+            });
+          }
+
           tx.update(paymentRef, { creditedAt: FieldValue.serverTimestamp() });
         }
       } else if (body.event === "payment.failed") {
@@ -111,10 +135,17 @@ export const debitoPayWebhook = onRequest(
           updatedAt: FieldValue.serverTimestamp(),
         });
         if (payment.creditedAt) {
-          const merchantRef = db.collection("merchants").doc(payment.merchantId);
-          tx.update(merchantRef, {
-            balanceAvailable: FieldValue.increment(-payment.amount),
+          const commission = payment.affiliateCommissionAmount ?? 0;
+          const ownerNet = (payment.amount - commission) * (1 - PLATFORM_FEE_PERCENT / 100);
+
+          tx.update(db.collection("merchants").doc(payment.merchantId), {
+            balanceAvailable: FieldValue.increment(-ownerNet),
           });
+          if (payment.affiliateUid && commission > 0 && affiliateLinkRef && affiliateLinkSnap?.exists) {
+            tx.update(db.collection("merchants").doc(payment.affiliateUid), {
+              balanceAvailable: FieldValue.increment(-commission),
+            });
+          }
         }
       }
     });

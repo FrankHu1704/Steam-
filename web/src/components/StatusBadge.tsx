@@ -5,6 +5,7 @@ const COLORS: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-800",
   success: "bg-emerald-100 text-emerald-800",
   paid: "bg-emerald-100 text-emerald-800",
+  confirmed: "bg-emerald-100 text-emerald-800",
   rejected: "bg-red-100 text-red-700",
   failed: "bg-red-100 text-red-700",
   suspended: "bg-red-100 text-red-700",

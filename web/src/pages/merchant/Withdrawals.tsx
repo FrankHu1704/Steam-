@@ -27,6 +27,7 @@ export function Withdrawals() {
   const [destination, setDestination] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!merchant) return;
@@ -67,6 +68,16 @@ export function Withdrawals() {
 
   const canWithdraw = merchant?.status === "active";
 
+  async function handleConfirmReceipt(withdrawalId: string) {
+    setConfirmingId(withdrawalId);
+    try {
+      const confirmWithdrawalReceipt = httpsCallable(functions, "confirmWithdrawalReceipt");
+      await confirmWithdrawalReceipt({ withdrawalId });
+    } finally {
+      setConfirmingId(null);
+    }
+  }
+
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-bold text-brand-900">Saques</h1>
@@ -80,6 +91,25 @@ export function Withdrawals() {
           A sua conta precisa de ser ativada por um administrador antes de pedir saques.
         </div>
       )}
+
+      {withdrawals
+        .filter((w) => w.status === "paid")
+        .map((w) => (
+          <div key={w.id} className="mt-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50 p-4">
+            <p className="font-semibold text-emerald-800">✓ O pagamento foi efetuado pelo administrador!</p>
+            <p className="mt-1 text-sm text-emerald-700">
+              {(w.netAmount ?? w.amount).toFixed(2)} {w.currency} via {w.payoutMethod} para{" "}
+              {w.destination}. Confirme se o valor já caiu na sua conta.
+            </p>
+            <button
+              onClick={() => handleConfirmReceipt(w.id)}
+              disabled={confirmingId === w.id}
+              className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {confirmingId === w.id ? "A confirmar…" : "Confirmar Recebimento"}
+            </button>
+          </div>
+        ))}
 
       <form
         onSubmit={handleSubmit}

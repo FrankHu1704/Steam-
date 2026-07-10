@@ -20,12 +20,15 @@ web/         React + Vite + Tailwind                        -> frontend (SPA)
   automaticamente um "merchant" (documento em `merchants/{uid}`, estado
   `pending`). Administradores são promovidos manualmente (ver abaixo).
 - **Firestore**: `merchants`, `products`, `payments`, `withdrawals`,
-  `webhookEvents`, `users`. Ver `functions/src/types.ts` para os campos de
-  cada coleção.
-- **Storage**: fotos de produtos ficam em `products/{merchantId}/{ficheiro}`
-  (upload direto do cliente, ver `web/src/lib/uploadProductImage.ts`) —
-  leitura pública, escrita só pelo próprio merchant dono da pasta, até 5MB
-  e só imagens (`storage.rules`).
+  `affiliateLinks`, `webhookEvents`, `users`. Ver `functions/src/types.ts`
+  para os campos de cada coleção.
+- **Storage**: capas/previews em `products/{merchantId}/{ficheiro}` —
+  públicas, upload direto do cliente (`web/src/lib/uploadProductImage.ts`),
+  até 5MB, só imagens. Ficheiros pagos (PDFs) em
+  `product-files/{merchantId}/{productId}/{ficheiro}` —
+  **nunca legíveis diretamente** (`web/src/lib/uploadProductFile.ts` só
+  escreve; leitura é sempre via signed URL do servidor, ver
+  `getProductDownload`/`adminGetProductFiles`), até 40MB (`storage.rules`).
 - **Cloud Functions**: toda a escrita sensível (saldo, aprovações, chamadas à
   Debito Pay) passa por funções `onCall`/`onRequest` — o cliente nunca
   escreve diretamente nesses campos (ver `firestore.rules`).
@@ -167,17 +170,39 @@ domínio aponta para qual.
    `balancePending`. Um admin aprova/rejeita (`/admin/withdrawals`) e, após
    transferir o valor manualmente, marca como pago.
 
-## Produtos e saques (aprovação)
+## Produtos digitais, afiliados e saques (aprovação)
 
-- **Produtos**: `createProduct` cria com `status: pending`; só aparece para
-  venda depois de `reviewProduct` (`/admin/products`) marcar `approved`.
+- **Produtos**: assistente em 6 passos (`/dashboard/products/new` →
+  `ProductWizard.tsx`) — tipo (Ebook/Templates/Grupo Privado/Videoaula) →
+  dados → ficheiros → capa/previews → afiliação → revisão. `createProduct`
+  cria com `status: pending`; só fica à venda depois de `reviewProduct`
+  (`/admin/products`, que também deixa o admin abrir os PDFs via
+  `adminGetProductFiles` antes de aprovar) marcar `approved`. Cada produto
+  aprovado ganha uma página pública permanente em `/produto/{productId}`
+  (não é mais preciso o merchant gerar um link por venda).
+- **Entrega digital**: ficheiros (`ebook`/`template`/`videoaula`) vão para
+  `product-files/{merchantId}/{productId}/` no Storage, **nunca
+  publicamente legíveis** (`storage.rules`). `purchaseProduct` cria o
+  pagamento e cobra na hora; depois do webhook confirmar
+  `payment.completed`, a página de sucesso chama `getProductDownload` para
+  obter links assinados (24h) — só funciona com pagamento confirmado.
+- **Afiliados**: qualquer merchant vira afiliado de um produto de outro
+  merchant com `affiliateEnabled: true` via `becomeAffiliate`, ganhando um
+  link `/produto/{id}?ref={uid}` (`/dashboard/affiliates`).
+  `registerProductView` conta cliques por link; no `payment.completed`, o
+  webhook divide o valor: comissão (`affiliateCommissionAmount`, calculada
+  na compra) cai no saldo do afiliado, o resto cai no saldo do dono do
+  produto — ambos usam o mesmo sistema de saque abaixo.
+- **Links de pagamento avulsos** (`/dashboard/payments`, `createPaymentLink`
+  + `submitPayment`): para cobranças que não são de um produto do catálogo.
 - **Saques**: `requestWithdrawal` cria com `status: pending`; admin decide
-  em `/admin/withdrawals` (`approved`/`rejected`) e finaliza com
-  `markWithdrawalPaid` quando o dinheiro já foi enviado. Taxa fixa de 5%
-  (M-Pesa, e-Mola, Payoneer) calculada em `functions/src/lib/fees.ts` — o
-  saldo do merchant é debitado no valor cheio (`amount`), mas o admin só
-  transfere o `netAmount` (já com a taxa descontada). Ver a seção
-  "Informações sobre Saques" na landing page para o texto exposto ao
-  público.
+  em `/admin/withdrawals` (`approved`/`rejected`), marca `paid` com
+  `markWithdrawalPaid` quando transfere o valor, e o merchant fecha o ciclo
+  confirmando com `confirmWithdrawalReceipt` (`status: confirmed`). Taxa
+  fixa de 5% (M-Pesa, e-Mola, Payoneer) calculada em
+  `functions/src/lib/fees.ts` — o saldo do merchant é debitado no valor
+  cheio (`amount`), mas o admin só transfere o `netAmount` (já com a taxa
+  descontada). Ver a seção "Informações sobre Saques" na landing page para
+  o texto exposto ao público.
 - **Merchants**: contas começam `pending` e só podem pedir saques depois de
   um admin as ativar em `/admin/merchants`.

@@ -6,13 +6,6 @@ import { useAuth } from "../../context/AuthContext";
 import { DashboardLayout } from "../../components/DashboardLayout";
 import { StatusBadge } from "../../components/StatusBadge";
 
-interface ProductRow {
-  id: string;
-  name: string;
-  price: number;
-  currency: string;
-}
-
 interface PaymentRow {
   id: string;
   amount: number;
@@ -23,9 +16,7 @@ interface PaymentRow {
 
 export function Payments() {
   const { merchant } = useAuth();
-  const [products, setProducts] = useState<ProductRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
-  const [productId, setProductId] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<"MZN" | "ZAR">("MZN");
   const [submitting, setSubmitting] = useState(false);
@@ -34,38 +25,15 @@ export function Payments() {
 
   useEffect(() => {
     if (!merchant) return;
-    const productsQ = query(
-      collection(db, "products"),
-      where("merchantId", "==", merchant.uid),
-      where("status", "==", "approved")
-    );
-    const unsubProducts = onSnapshot(productsQ, (snap) => {
-      setProducts(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ProductRow, "id">) })));
-    });
-
     const paymentsQ = query(
       collection(db, "payments"),
       where("merchantId", "==", merchant.uid),
       orderBy("createdAt", "desc")
     );
-    const unsubPayments = onSnapshot(paymentsQ, (snap) => {
+    return onSnapshot(paymentsQ, (snap) => {
       setPayments(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<PaymentRow, "id">) })));
     });
-
-    return () => {
-      unsubProducts();
-      unsubPayments();
-    };
   }, [merchant]);
-
-  function onSelectProduct(id: string) {
-    setProductId(id);
-    const p = products.find((prod) => prod.id === id);
-    if (p) {
-      setAmount(String(p.price));
-      setCurrency(p.currency as "MZN" | "ZAR");
-    }
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -74,15 +42,10 @@ export function Payments() {
     setSubmitting(true);
     try {
       const createPaymentLink = httpsCallable(functions, "createPaymentLink");
-      const res = await createPaymentLink({
-        productId: productId || undefined,
-        amount: Number(amount),
-        currency,
-      });
+      const res = await createPaymentLink({ amount: Number(amount), currency });
       const { paymentId } = res.data as { paymentId: string };
       setCreatedLink(`${window.location.origin}/pay/${paymentId}`);
       setAmount("");
-      setProductId("");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -90,49 +53,41 @@ export function Payments() {
     }
   }
 
+  // Product sales have their own permanent page + histórico on the
+  // product's detail screen — this list is only ad-hoc, one-off links.
+  const adHocPayments = payments.filter((p) => !p.productId);
+
   return (
     <DashboardLayout>
       <h1 className="text-2xl font-bold text-brand-900">Links de Pagamento</h1>
+      <p className="mt-1 text-sm text-slate-500">
+        Para vender um produto do catálogo, use o link de venda na página do próprio produto — isto
+        aqui é só para cobranças avulsas.
+      </p>
 
       <form onSubmit={handleSubmit} className="mt-6 grid gap-4 rounded-xl bg-white p-6 shadow-sm md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-slate-700">Produto (opcional)</label>
-          <select
-            value={productId}
-            onChange={(e) => onSelectProduct(e.target.value)}
+          <label className="block text-sm font-medium text-slate-700">Valor</label>
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            required
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-          >
-            <option value="">Valor avulso</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.price.toFixed(2)} {p.currency})
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Valor</label>
-          <div className="mt-1 flex gap-2">
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              disabled={!!productId}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 disabled:bg-slate-100"
-            />
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as "MZN" | "ZAR")}
-              disabled={!!productId}
-              className="rounded-lg border border-slate-300 px-3 py-2 disabled:bg-slate-100"
-            >
-              <option value="MZN">MZN</option>
-              <option value="ZAR">ZAR</option>
-            </select>
-          </div>
+          <label className="block text-sm font-medium text-slate-700">Moeda</label>
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value as "MZN" | "ZAR")}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+          >
+            <option value="MZN">MZN</option>
+            <option value="ZAR">ZAR</option>
+          </select>
         </div>
         {error && <p className="text-sm text-red-600 md:col-span-2">{error}</p>}
         {createdLink && (
@@ -164,14 +119,14 @@ export function Payments() {
             </tr>
           </thead>
           <tbody>
-            {payments.length === 0 && (
+            {adHocPayments.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
                   Ainda sem links de pagamento.
                 </td>
               </tr>
             )}
-            {payments.map((p) => (
+            {adHocPayments.map((p) => (
               <tr key={p.id} className="border-t border-slate-100">
                 <td className="px-4 py-3 font-medium">
                   {p.amount.toFixed(2)} {p.currency}

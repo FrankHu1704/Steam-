@@ -12,17 +12,18 @@ import type { PaymentMethod } from "../types";
 const debitoPaySecrets = [debitoPayApiKey, debitoPayWebhookSecret];
 
 interface CreatePaymentLinkInput {
-  productId?: string;
   amount: number;
   currency: "MZN" | "ZAR";
 }
 
-/** Merchant creates a payment intent. The customer completes it separately
- * via `submitPayment`, so the merchant can share {paymentId} as a link
- * without exposing any secret key to the buyer. */
+/** Merchant creates a one-off payment link for an arbitrary amount (not
+ * tied to a catalog product — products get their own permanent sale page
+ * at /produto/{productId} instead, see purchaseProduct). The customer
+ * completes it separately via `submitPayment`, so the merchant can share
+ * {paymentId} as a link without exposing any secret key to the buyer. */
 export const createPaymentLink = onCall(async (request) => {
   const uid = requireAuth(request);
-  const { productId, amount, currency } = request.data as CreatePaymentLinkInput;
+  const { amount, currency } = request.data as CreatePaymentLinkInput;
 
   if (typeof amount !== "number" || amount <= 0) {
     throw new HttpsError("invalid-argument", "A positive amount is required.");
@@ -31,22 +32,9 @@ export const createPaymentLink = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "currency must be MZN or ZAR.");
   }
 
-  if (productId) {
-    const productSnap = await db.collection("products").doc(productId).get();
-    if (!productSnap.exists || productSnap.data()?.merchantId !== uid) {
-      throw new HttpsError("not-found", "Product not found for this merchant.");
-    }
-    if (productSnap.data()?.status !== "approved") {
-      throw new HttpsError(
-        "failed-precondition",
-        "Product must be approved before it can be sold."
-      );
-    }
-  }
-
   const ref = await db.collection("payments").add({
     merchantId: uid,
-    productId: productId ?? null,
+    productId: null,
     amount,
     currency,
     paymentMethod: null,
@@ -57,6 +45,8 @@ export const createPaymentLink = onCall(async (request) => {
     customerName: null,
     customerEmail: null,
     customerPhone: null,
+    affiliateUid: null,
+    affiliateCommissionAmount: 0,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     completedAt: null,
