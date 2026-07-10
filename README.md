@@ -31,6 +31,27 @@ web/         React + Vite + Tailwind                        -> frontend (SPA)
   `payment.failed` / `payment.refunded` / `payment.chargeback`, valida a
   assinatura HMAC-SHA256 e credita o saldo do merchant correspondente.
 
+## Usando o Termux (Android)
+
+Tudo aqui (Node, npm, git, Firebase CLI) roda normalmente no Termux, sem
+nada específico de sistema operativo:
+
+```bash
+pkg update && pkg upgrade
+pkg install nodejs-lts git
+npm install -g firebase-tools
+```
+
+`firebase login` abre um link no browser para autenticar (o Termux não tem
+browser embutido, mas o CLI aceita autenticação por link/código — siga o
+que o terminal instruir). Daqui em diante, todos os comandos deste README
+(`npm install`, `npm run build`, `firebase deploy`, etc.) funcionam iguais.
+
+O site (`web/`) já é um PWA instalável: abrindo-o no Chrome do Android
+aparece o botão **"Baixar App"** (ou o Chrome oferece "Adicionar à tela
+inicial" no menu), instalando-o como um app normal, com ícone próprio, sem
+precisar de Play Store. Não requer nenhum passo extra de build.
+
 ## Configuração inicial
 
 ### 1. Firebase CLI e projeto

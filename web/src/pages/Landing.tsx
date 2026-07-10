@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { PublicNav } from "../components/PublicNav";
+import { InstallAppButton } from "../components/InstallAppButton";
 
 const METHODS = ["M-Pesa", "e-Mola", "mKesh", "Visa & Mastercard", "PayFast (ZAR)"];
 
@@ -35,6 +36,7 @@ export function Landing() {
             >
               Como Funciona
             </a>
+            <InstallAppButton className="rounded-lg border border-white/20 px-6 py-3 font-semibold hover:bg-white/10" />
           </div>
         </div>
       </section>
