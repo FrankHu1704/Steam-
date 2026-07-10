@@ -114,8 +114,15 @@ Settings → General → Your apps).
 ### 4. Deploy e primeiro administrador
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes,storage,functions,hosting
+firebase deploy --only firestore:rules,firestore:indexes,storage,functions
 ```
+
+(sem `hosting` — o frontend é publicado pela Vercel, ver secção abaixo. Só
+inclua `,hosting` se decidir usar o Firebase Hosting em vez da Vercel, e
+nesse caso adicione `"site": "<seu-site-id>"` ao bloco `hosting` do
+`firebase.json` primeiro, com o ID real de `firebase hosting:sites:list`
+— sem isso o CLI falha com "resolving hosting target of a site with no
+site name".)
 
 Não existe nenhum admin por padrão. Para criar o primeiro:
 
