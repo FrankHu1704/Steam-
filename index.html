@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netflix Premium 4K e Spotify Premium em Moçambique | FrankFlix</title>
+<meta name="description" content="Tem a tua vaga numa conta Netflix Premium 4K (250MT/mês) e Spotify Premium sem anúncios (110MT/mês). Ativação rápida, suporte via WhatsApp.">
+<meta name="keywords" content="netflix premium moçambique, netflix 4k maputo, netflix barato moçambique, spotify premium moçambique, spotify premium maputo, spotify barato moçambique, assinatura spotify mt">
+<meta property="og:title" content="Netflix Premium 4K e Spotify Premium — Moçambique">
+<meta property="og:description" content="Vagas em contas Netflix Premium 4K e Spotify Premium sem anúncios, com qualidade máxima. Suporte garantido via WhatsApp.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0A0A0A;
+    --black-2:#141414;
+    --black-3:#1C1C1C;
+    --red:#E50914;
+    --red-dim:#B00710;
+    --white:#FFFFFF;
+    --gray:#B3B3B3;
+    --gray-dim:#737373;
+    --glass-border:rgba(255,255,255,0.08);
+    --glass-bg:rgba(20,20,20,0.55);
+    --green:#1ED760;
+    --green-dim:#159c47;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--black);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important;}
+  }
+
+  .display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.02em;}
+
+  a{color:inherit; text-decoration:none;}
+
+  img,video{display:block; max-width:100%;}
+
+  .container{
+    max-width:1200px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ===== NAV ===== */
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:100;
+    padding:18px 0;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.85) 10%, transparent 100%);
+    transition:background 0.3s ease;
+  }
+  nav.scrolled{
+    background:rgba(10,10,10,0.92);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--glass-border);
+  }
+  .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .logo{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:24px;
+    color:var(--red);
+    letter-spacing:0.05em;
+  }
+  .nav-cta{
+    background:var(--red);
+    color:var(--white);
+    padding:9px 20px;
+    border-radius:4px;
+    font-weight:700;
+    font-size:14px;
+    transition:transform 0.2s ease, background 0.2s ease;
+  }
+  .nav-cta:hover{background:var(--red-dim); transform:translateY(-1px);}
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    padding-top:90px;
+  }
+  .hero-bg{
+    position:absolute;
+    inset:0;
+    z-index:-2;
+    background-image:
+      linear-gradient(to top, var(--black) 0%, rgba(10,10,10,0.4) 45%, rgba(10,10,10,0.85) 100%),
+      linear-gradient(to right, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.3) 50%, rgba(10,10,10,0.7) 100%),
+      url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1920&auto=format&fit=crop');
+    background-size:cover;
+    background-position:center 20%;
+  }
+  .hero-grain{
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    opacity:0.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .hero-content{
+    position:relative;
+    max-width:680px;
+    animation:heroIn 0.9s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes heroIn{
+    from{opacity:0; transform:translateY(24px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(229,9,20,0.12);
+    border:1px solid rgba(229,9,20,0.35);
+    color:#ff5a62;
+    font-size:13px;
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:100px;
+    margin-bottom:22px;
+  }
+  .eyebrow .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:#ff5a62;
+    animation:pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:0.5; transform:scale(0.8);}
+  }
+  .hero h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(2.6rem, 6.5vw, 4.6rem);
+    line-height:1.04;
+    letter-spacing:0.01em;
+    margin-bottom:20px;
+  }
+  .hero h1 .price{color:var(--red);}
+  .hero p.sub{
+    font-size:clamp(1.02rem,2vw,1.2rem);
+    color:var(--gray);
+    line-height:1.6;
+    margin-bottom:32px;
+    max-width:520px;
+  }
+  .hero-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:38px;
+  }
+  .btn-primary{
+    background:var(--red);
+    color:var(--white);
+    font-weight:700;
+    font-size:16px;
+    padding:16px 32px;
+    border-radius:6px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-shadow:0 8px 30px -8px rgba(229,9,20,0.5);
+  }
+  .btn-primary:hover{
+    background:var(--red-dim);
+    transform:translateY(-2px);
+    box-shadow:0 12px 36px -8px rgba(229,9,20,0.65);
+  }
+  .btn-secondary{
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--glass-border);
+    color:var(--white);
+    font-weight:600;
+    font-size:16px;
+    padding:16px 28px;
+    border-radius:6px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    backdrop-filter:blur(10px);
+    transition:background 0.2s ease, transform 0.2s ease;
+  }
+  .btn-secondary:hover{background:rgba(255,255,255,0.1); transform:translateY(-2px);}
+
+  .benefits-list{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px 24px;
+    max-width:520px;
+  }
+  .benefits-list li{
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:14.5px;
+    color:#e8e8e8;
+  }
+  .benefits-list svg{flex-shrink:0;}
+
+  /* ===== TRUST BAR ===== */
+  .trust-bar{
+    border-top:1px solid var(--glass-border);
+    border-bottom:1px solid var(--glass-border);
+    background:var(--black-2);
+    padding:18px 0;
+  }
+  .trust-inner{
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+    gap:18px;
+    text-align:center;
+  }
+  .trust-item{
+    font-size:13px;
+    color:var(--gray-dim);
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+  .trust-item strong{color:var(--white); font-size:15px; display:block; margin-bottom:2px; letter-spacing:0;}
+
+  /* ===== SECTION GENERIC ===== */
+  section{padding:100px 0;}
+  .section-head{
+    text-align:center;
+    max-width:640px;
+    margin:0 auto 56px;
+  }
+  .section-tag{
+    color:var(--green);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:block;
+  }
+  .section-head h2{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(2rem,4vw,2.8rem);
+    margin-bottom:14px;
+    line-height:1.1;
+  }
+  .section-head p{color:var(--gray); font-size:16px; line-height:1.6;}
+
+  /* ===== SPLIT MODEL EXPLAINER (signature element) ===== */
+  .split-section{background:var(--black-2);}
+  .split-visual{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+    margin-bottom:48px;
+  }
+  .split-half{
+    flex:1;
+    max-width:200px;
+    text-align:center;
+    padding:28px 16px;
+    position:relative;
+  }
+  .split-half .num{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:3.2rem;
+    color:var(--red);
+    line-height:1;
+  }
+  .split-half .label{
+    font-size:13px;
+    color:var(--gray);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-top:6px;
+  }
+  .split-divider{
+    width:1px;
+    align-self:stretch;
+    background:linear-gradient(to bottom, transparent, var(--glass-border) 20%, var(--glass-border) 80%, transparent);
+    margin:0 8px;
+  }
+  .split-center{
+    flex:1.4;
+    max-width:280px;
+    text-align:center;
+    padding:0 12px;
+  }
+  .split-center .display{
+    font-size:1.9rem;
+    color:var(--white);
+  }
+  .split-center .price-tag{
+    color:var(--red);
+    font-size:2.6rem;
+  }
+  .split-note{
+    text-align:center;
+    color:var(--gray);
+    font-size:15px;
+    max-width:520px;
+    margin:0 auto;
+    line-height:1.7;
+  }
+  .split-note strong{color:var(--white);}
+
+  /* ===== TRAILER CAROUSEL ===== */
+  .carousel-wrap{position:relative;}
+  .carousel-track{
+    display:flex;
+    gap:18px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    padding:4px 4px 20px;
+    scrollbar-width:none;
+  }
+  .carousel-track::-webkit-scrollbar{display:none;}
+  .trailer-card{
+    position:relative;
+    flex:0 0 auto;
+    width:240px;
+    aspect-ratio:9/13;
+    border-radius:10px;
+    overflow:hidden;
+    scroll-snap-align:start;
+    background:var(--black-3);
+    border:1px solid var(--glass-border);
+    cursor:pointer;
+    transition:transform 0.35s cubic-bezier(.16,1,.3,1), border-color 0.35s ease;
+  }
+  .trailer-card:hover{
+    transform:translateY(-8px) scale(1.03);
+    border-color:rgba(229,9,20,0.5);
+    z-index:2;
+  }
+  .trailer-card video{
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  .trailer-overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 45%);
+    display:flex;
+    align-items:flex-end;
+    padding:14px;
+    opacity:0;
+    transition:opacity 0.3s ease;
+  }
+  .trailer-card:hover .trailer-overlay{opacity:1;}
+  .trailer-overlay span{
+    font-size:13px;
+    font-weight:700;
+    color:var(--white);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .carousel-hint{
+    text-align:center;
+    color:var(--gray-dim);
+    font-size:13px;
+    margin-top:10px;
+  }
+
+  /* ===== DEVICE GRID ===== */
+  .device-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:16px;
+  }
+  .device-card{
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    border-radius:12px;
+    padding:28px 18px;
+    text-align:center;
+    transition:transform 0.3s ease, border-color 0.3s ease;
+  }
+  .device-card:hover{transform:translateY(-4px); border-color:rgba(229,9,20,0.4);}
+  .device-card svg{margin-bottom:14px; color:var(--red);}
+  .device-card h3{font-size:15px; font-weight:600; margin-bottom:4px;}
+  .device-card p{font-size:13px; color:var(--gray-dim);}
+
+  /* ===== SPOTIFY SECTION ===== */
+  .spotify-section{
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(30,215,96,0.12), transparent 70%),
+      var(--black-2);
+    border-top:1px solid var(--glass-border);
+    border-bottom:1px solid var(--glass-border);
+  }
+  .sp-tag{color:var(--green) !important;}
+  .sp-slogan{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(30,215,96,0.12);
+    border:1px solid rgba(30,215,96,0.35);
+    color:var(--green);
+    font-size:13px;
+    font-weight:600;
+    padding:7px 16px;
+    border-radius:100px;
+    margin:0 auto 22px;
+  }
+  .sp-price-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:36px;
+  }
+  .sp-price-row .display{
+    font-size:clamp(2.4rem,6vw,3.6rem);
+    color:var(--green);
+  }
+  .sp-price-row .unit{
+    font-size:15px;
+    color:var(--gray);
+  }
+  .sp-cta{
+    display:flex;
+    justify-content:center;
+    margin-bottom:12px;
+  }
+  .btn-spotify{
+    background:var(--green);
+    color:#06170d;
+    font-weight:700;
+    font-size:16px;
+    padding:16px 34px;
+    border-radius:6px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-shadow:0 8px 30px -8px rgba(30,215,96,0.5);
+  }
+  .btn-spotify:hover{
+    background:var(--green-dim);
+    transform:translateY(-2px);
+    box-shadow:0 12px 36px -8px rgba(30,215,96,0.65);
+  }
+  .sp-trailer-card{border-color:var(--glass-border);}
+  .sp-trailer-card:hover{border-color:rgba(30,215,96,0.5) !important;}
+
+  /* ===== ADVANTAGES ===== */
+  .adv-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+  }
+  .adv-card{
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    border-radius:14px;
+    padding:26px;
+    display:flex;
+    gap:16px;
+    align-items:flex-start;
+    transition:border-color 0.3s ease, transform 0.3s ease;
+  }
+  .adv-card:hover{border-color:rgba(30,215,96,0.35); transform:translateY(-3px);}
+  .adv-icon{
+    flex-shrink:0;
+    width:42px; height:42px;
+    border-radius:10px;
+    background:rgba(30,215,96,0.12);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--green);
+  }
+  .adv-card h3{font-size:16px; font-weight:700; margin-bottom:6px;}
+  .adv-card p{font-size:14px; color:var(--gray); line-height:1.55;}
+
+  /* ===== TESTIMONIALS ===== */
+  .testi-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+  }
+  .testi-card{
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    border-radius:14px;
+    padding:26px;
+  }
+  .stars{color:var(--red); font-size:15px; margin-bottom:14px; letter-spacing:2px;}
+  .testi-card p.quote{font-size:14.5px; color:#ddd; line-height:1.65; margin-bottom:18px;}
+  .testi-person{display:flex; align-items:center; gap:10px;}
+  .testi-avatar{
+    width:38px; height:38px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--red), #6e0007);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:14px;
+  }
+  .testi-name{font-size:14px; font-weight:600;}
+  .testi-loc{font-size:12px; color:var(--gray-dim);}
+
+  /* ===== FAQ ===== */
+  .faq-item{
+    border-bottom:1px solid var(--glass-border);
+    padding:22px 0;
+  }
+  .faq-q{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    font-weight:600;
+    font-size:15.5px;
+  }
+  .faq-q .chevron{transition:transform 0.3s ease; color:var(--gray-dim); flex-shrink:0; margin-left:16px;}
+  .faq-item.open .chevron{transform:rotate(180deg); color:var(--red);}
+  .faq-a{
+    color:var(--gray);
+    font-size:14.5px;
+    line-height:1.65;
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.35s ease, padding-top 0.35s ease;
+  }
+  .faq-item.open .faq-a{max-height:200px; padding-top:14px;}
+
+  /* ===== FINAL CTA ===== */
+  .final-cta{
+    position:relative;
+    text-align:center;
+    padding:120px 0;
+    overflow:hidden;
+  }
+  .final-cta-bg{
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(229,9,20,0.18), transparent 70%),
+      var(--black);
+  }
+  .final-cta h2{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(2.2rem,5vw,3.4rem);
+    margin-bottom:16px;
+  }
+  .final-cta p{
+    color:var(--gray);
+    font-size:17px;
+    max-width:480px;
+    margin:0 auto 36px;
+    line-height:1.6;
+  }
+  .final-price{
+    font-family:'Bebas Neue',sans-serif;
+    color:var(--red);
+  }
+  .final-price-green{color:var(--green) !important;}
+  .final-cta-bg-green{
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(30,215,96,0.18), transparent 70%),
+      var(--black) !important;
+  }
+  .btn-primary.large{
+    font-size:18px;
+    padding:19px 42px;
+  }
+  .secure-note{
+    margin-top:20px;
+    font-size:13px;
+    color:var(--gray-dim);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+
+  /* ===== FOOTER ===== */
+  footer{
+    border-top:1px solid var(--glass-border);
+    padding:48px 0 32px;
+    background:var(--black-2);
+  }
+  .footer-inner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:24px;
+    margin-bottom:32px;
+  }
+  .footer-brand .logo{margin-bottom:8px; display:block;}
+  .footer-brand p{font-size:13px; color:var(--gray-dim);}
+  .footer-whats{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--glass-border);
+    padding:12px 18px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+    transition:background 0.2s ease;
+  }
+  .footer-whats:hover{background:rgba(255,255,255,0.09);}
+  .footer-whats svg{color:#25D366;}
+  .footer-bottom{
+    border-top:1px solid var(--glass-border);
+    padding-top:24px;
+    text-align:center;
+    font-size:12.5px;
+    color:var(--gray-dim);
+    line-height:1.7;
+  }
+
+  /* ===== WHATSAPP FLOAT ===== */
+  .wa-float{
+    position:fixed;
+    bottom:22px;
+    right:22px;
+    z-index:99;
+    width:58px; height:58px;
+    border-radius:50%;
+    background:#25D366;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 8px 24px -4px rgba(37,211,102,0.5);
+    transition:transform 0.25s ease;
+    animation:float 2.4s ease-in-out infinite;
+  }
+  .wa-float:hover{transform:scale(1.08);}
+  @keyframes float{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-6px);}
+  }
+
+  /* ===== REVEAL ON SCROLL ===== */
+  .reveal{opacity:0; transform:translateY(28px); transition:opacity 0.7s cubic-bezier(.16,1,.3,1), transform 0.7s cubic-bezier(.16,1,.3,1);}
+  .reveal.visible{opacity:1; transform:translateY(0);}
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 860px){
+    .adv-grid{grid-template-columns:1fr;}
+    .testi-grid{grid-template-columns:1fr;}
+    .split-visual{flex-wrap:wrap;}
+    .split-divider{display:none;}
+  }
+  @media (max-width: 640px){
+    section{padding:70px 0;}
+    .benefits-list{grid-template-columns:1fr;}
+    .hero-actions{flex-direction:column; align-items:stretch;}
+    .trust-inner{justify-content:space-between;}
+    .footer-inner{flex-direction:column; text-align:center;}
+    .trailer-card{width:170px;}
+  }
+
+  /* ===== NETFLIX STATUS BADGE ===== */
+  .badge-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(229,9,20,0.14);
+    border:1px solid rgba(229,9,20,0.4);
+    color:#ff5a62;
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:6px 14px;
+    border-radius:100px;
+    margin-bottom:16px;
+  }
+
+  /* ===== SPOTIFY PRIMARY ACCENTS ===== */
+  .nav-cta.nav-cta-green{
+    background:var(--green);
+    color:#06170d;
+  }
+  .nav-cta.nav-cta-green:hover{background:var(--green-dim);}
+  .eyebrow-green{
+    background:rgba(30,215,96,0.12) !important;
+    border:1px solid rgba(30,215,96,0.35) !important;
+    color:var(--green) !important;
+  }
+  .eyebrow-green .dot{background:var(--green) !important;}
+  .hero h1 .price-green{color:var(--green);}
+  .btn-primary.btn-green{
+    background:var(--green);
+    color:#06170d;
+    box-shadow:0 8px 30px -8px rgba(30,215,96,0.5);
+  }
+  .btn-primary.btn-green:hover{
+    background:var(--green-dim);
+    box-shadow:0 12px 36px -8px rgba(30,215,96,0.65);
+  }
+  .btn-spotify{animation:btnPulse 2.2s ease-in-out infinite;}
+  @keyframes btnPulse{
+    0%,100%{box-shadow:0 8px 30px -8px rgba(30,215,96,0.5);}
+    50%{box-shadow:0 8px 40px -4px rgba(30,215,96,0.85);}
+  }
+
+  /* ===== COUNTDOWN TIMER ===== */
+  .countdown-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .countdown-label{
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--gray);
+    letter-spacing:0.04em;
+  }
+  .countdown-box{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:#081109;
+    border:1px solid rgba(30,215,96,0.35);
+    border-radius:10px;
+    padding:14px 22px;
+    box-shadow:0 0 24px -4px rgba(30,215,96,0.45), inset 0 0 20px rgba(30,215,96,0.06);
+    animation:glowPulse 2s ease-in-out infinite;
+  }
+  @keyframes glowPulse{
+    0%,100%{box-shadow:0 0 24px -4px rgba(30,215,96,0.45), inset 0 0 20px rgba(30,215,96,0.06);}
+    50%{box-shadow:0 0 34px 2px rgba(30,215,96,0.7), inset 0 0 24px rgba(30,215,96,0.1);}
+  }
+  .countdown-box .digits{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2.2rem;
+    color:var(--green);
+    letter-spacing:0.08em;
+    text-shadow:0 0 12px rgba(30,215,96,0.7);
+  }
+  .countdown-box .colon{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2.2rem;
+    color:var(--green);
+    animation:blink 1s step-start infinite;
+  }
+  @keyframes blink{50%{opacity:0.2;}}
+
+  /* ===== URGENCY ===== */
+  .urgency-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    margin-bottom:22px;
+    text-align:center;
+  }
+  .urgency-text{
+    font-size:13.5px;
+    font-weight:600;
+    color:#ffcf5c;
+  }
+  .urgency-text.social{color:var(--gray);}
+
+  /* ===== TESTIMONIAL PHOTOS ===== */
+  .testi-avatar-img{
+    width:44px; height:44px;
+    border-radius:50%;
+    object-fit:cover;
+    box-shadow:0 4px 14px -2px rgba(0,0,0,0.5);
+    border:2px solid rgba(30,215,96,0.4);
+    transition:transform 0.3s ease, border-color 0.3s ease;
+  }
+  .testi-card{transition:transform 0.3s ease, border-color 0.3s ease;}
+  .testi-card:hover{transform:translateY(-6px); border-color:rgba(30,215,96,0.45);}
+  .testi-card:hover .testi-avatar-img{transform:scale(1.08); border-color:var(--green);}
+</style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="container nav-inner">
+    <span class="logo">FRANK<span style="color:#fff;">FLIX</span></span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="#planos" class="nav-cta">Comprar Netflix</a>
+      <a href="#spotify" class="nav-cta nav-cta-green">Comprar Spotify</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grain"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:22px;">
+        <span class="eyebrow" style="margin-bottom:0;"><span class="dot"></span> Netflix Premium 4K disponível agora</span>
+        <span class="eyebrow eyebrow-green" style="margin-bottom:0;"><span class="dot"></span> Spotify Premium disponível agora</span>
+      </div>
+      <h1><span class="price">Netflix Premium</span> e <span class="price-green">Spotify Premium</span><br>por menos, juntos</h1>
+      <p class="sub">Vaga na conta Netflix Premium 4K a partir de 250MT/mês e Spotify Premium sem anúncios por 110MT/mês. Ativação rápida, suporte via WhatsApp.</p>
+      <div class="hero-actions">
+        <a href="#planos" class="btn-primary">
+          Comprar Netflix
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#spotify" class="btn-primary btn-green">
+          Comprar Spotify
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="https://wa.me/258849311757" class="btn-secondary" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0 0 12.05 4a8.94 8.94 0 0 0-7.74 13.4L4 21l3.7-1.27a8.93 8.93 0 0 0 4.33 1.1h.01a8.93 8.93 0 0 0 5.55-15.5zM12.05 19.4h-.01a7.4 7.4 0 0 1-3.78-1.03l-.27-.16-2.81.96.95-2.74-.18-.28a7.42 7.42 0 0 1 11.6-9.1 7.32 7.32 0 0 1 2.17 5.25 7.43 7.43 0 0 1-7.42 7.1h-.01zm4.07-5.56c-.22-.11-1.32-.65-1.53-.72-.2-.08-.35-.11-.5.11-.15.22-.57.72-.7.87-.13.15-.26.16-.48.05-.22-.11-.93-.34-1.78-1.1a6.66 6.66 0 0 1-1.23-1.53c-.13-.22-.01-.34.1-.45.11-.11.25-.28.37-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.03-.41-.07-.11-.66-1.6-.91-2.18-.24-.57-.49-.5-.67-.5h-.57a1.1 1.1 0 0 0-.8.38 3.34 3.34 0 0 0-1.04 2.49c0 1.46 1.07 2.88 1.22 3.08.15.2 2.07 3.16 5.02 4.31 2.95 1.14 2.95.76 3.48.71.53-.05 1.71-.7 1.95-1.38.24-.68.24-1.26.17-1.38-.07-.13-.22-.2-.44-.31z"/></svg>
+          Falar no WhatsApp
+        </a>
+      </div>
+      <ul class="benefits-list">
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1ED760" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Acesso imediato após pagamento</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1ED760" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Netflix 4K com 2 perfis disponíveis</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1ED760" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Spotify sem anúncios e música offline</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1ED760" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Qualidade máxima em ambos</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1ED760" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Suporte direto via WhatsApp</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1ED760" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Processo simples, sem burocracia</li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="trust-bar">
+  <div class="container trust-inner">
+    <div class="trust-item"><strong>4K</strong>Qualidade Netflix</div>
+    <div class="trust-item"><strong>Sem anúncios</strong>Spotify Premium</div>
+    <div class="trust-item"><strong>250MT / 110MT</strong>Por mês</div>
+    <div class="trust-item"><strong>WhatsApp</strong>Suporte direto</div>
+  </div>
+</div>
+
+<section class="split-section" id="planos">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge-pill">🎬 Netflix Premium 4K disponível agora</span>
+      <span class="section-tag" style="color:var(--red);">Como funciona</span>
+      <h2>1 conta Premium. 2 perfis. 2 pessoas.</h2>
+      <p>Em vez de pagares uma assinatura Premium completa sozinho, divides a conta com mais 1 pessoa. Cada um fica com o seu perfil próprio, o seu histórico, a sua lista — só a fatura é que é partilhada.</p>
+    </div>
+    <div class="split-visual reveal">
+      <div class="split-half">
+        <div class="num">01</div>
+        <div class="label">Perfil A</div>
+      </div>
+      <div class="split-divider"></div>
+      <div class="split-center">
+        <div class="display">A tua vaga custa</div>
+        <div class="display price-tag">250MT</div>
+        <div class="display" style="font-size:1rem; color:var(--gray); margin-top:4px;">por mês</div>
+      </div>
+      <div class="split-divider"></div>
+      <div class="split-half">
+        <div class="num">02</div>
+        <div class="label">Perfil B</div>
+      </div>
+    </div>
+    <p class="split-note reveal">Cada perfil tem o seu próprio espaço dentro da conta Premium, com qualidade 4K e até 2 ecrãs em simultâneo no total. <strong>Tu pagas só a tua parte, não a conta inteira.</strong></p>
+    <div style="display:flex; justify-content:center; margin-top:28px;" class="reveal">
+      <a href="https://pay.lojou.app/p/LMce2" class="btn-primary" target="_blank" rel="noopener">
+        Garantir Minha Vaga
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag">Catálogo</span>
+      <h2>Veja o que está a perder</h2>
+      <p>Uma amostra do que tens disponível assim que a tua vaga é ativada.</p>
+    </div>
+    <div class="carousel-wrap reveal">
+      <div class="carousel-track" id="carouselTrack">
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/272cd438aa8.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Em destaque</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/3762ddb45d9.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Popular agora</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/792cd5cb0f4.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Novo</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/5440c4e07e6.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Tendência</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/339d318765c.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Recomendado</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/569f370db96.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Em destaque</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/874c16ab402.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Popular agora</span></div>
+        </div>
+        <div class="trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/38804b55fbb.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Novo</span></div>
+        </div>
+      </div>
+      <p class="carousel-hint">Arrasta para o lado para ver mais →</p>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--black-2);">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag">Compatibilidade</span>
+      <h2>Funciona nos teus aparelhos</h2>
+    </div>
+    <div class="device-grid reveal">
+      <div class="device-card">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 21h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h3>Smart TV</h3>
+        <p>App nativa da Netflix</p>
+      </div>
+      <div class="device-card">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h3>Android</h3>
+        <p>Qualquer marca</p>
+      </div>
+      <div class="device-card">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h3>iPhone</h3>
+        <p>App da App Store</p>
+      </div>
+      <div class="device-card">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="12" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h3>Computador</h3>
+        <p>Direto pelo navegador</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="spotify-section" id="spotify">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag sp-tag">🎧 Spotify Premium — disponível agora</span>
+      <h2>Spotify Premium por apenas <span style="color:var(--green);">110MT</span>/mês</h2>
+      <p style="margin-bottom:6px;">Vagas disponíveis agora. A tua conta Spotify Premium, sem anúncios, com suporte real via WhatsApp.</p>
+      <span class="sp-slogan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 6v12l10-6z" fill="currentColor"/></svg>Escute músicas sem anúncio</span>
+    </div>
+
+    <div class="sp-price-row reveal">
+      <span class="display">110MT</span>
+      <span class="unit">por mês</span>
+    </div>
+
+    <div class="countdown-wrap reveal">
+      <span class="countdown-label">⏳ Oferta termina em:</span>
+      <div class="countdown-box">
+        <span class="digits" id="cdMin">02</span>
+        <span class="colon">:</span>
+        <span class="digits" id="cdSec">00</span>
+      </div>
+    </div>
+
+    <div class="urgency-wrap reveal">
+      <span class="urgency-text">⚡ Restam poucas vagas disponíveis hoje.</span>
+      <span class="urgency-text social">Mais de 127 pessoas compraram nas últimas 24 horas.</span>
+    </div>
+
+    <div class="sp-cta reveal">
+      <a href="https://ratixpay.co.mz/checkout.html?produto=7VKIOKKVA" class="btn-spotify" target="_blank" rel="noopener">
+        Comprar Spotify Premium
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <div class="carousel-wrap reveal" style="margin-top:48px;">
+      <div class="carousel-track">
+        <div class="trailer-card sp-trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/542b7160c84.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Spotify Premium</span></div>
+        </div>
+        <div class="trailer-card sp-trailer-card">
+          <video src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/videos/992a728896a.mp4" autoplay muted loop playsinline></video>
+          <div class="trailer-overlay"><span>▶ Sem anúncios</span></div>
+        </div>
+      </div>
+      <p class="carousel-hint">Arrasta para o lado para ver mais →</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag">Vantagens</span>
+      <h2>Por que escolher partilhar conosco</h2>
+    </div>
+    <div class="adv-grid reveal">
+      <div class="adv-card">
+        <div class="adv-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div><h3>Muito mais barato</h3><p>Uma assinatura Premium individual custa bem mais que 250MT. Partilhando o custo, tens a mesma qualidade 4K por uma fração do preço.</p></div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <div><h3>Ativação rápida</h3><p>Depois do pagamento confirmado, recebes o teu acesso ao perfil em pouco tempo, sem espera longa.</p></div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div><h3>Perfil só teu</h3><p>O teu histórico, a tua lista de "para ver depois" e as tuas recomendações ficam separadas das do outro perfil.</p></div>
+      </div>
+      <div class="adv-card">
+        <div class="adv-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M17.6 6.32A8.86 8.86 0 0 0 12.05 4a8.94 8.94 0 0 0-7.74 13.4L4 21l3.7-1.27a8.93 8.93 0 0 0 4.33 1.1h.01a8.93 8.93 0 0 0 5.55-15.5z" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div><h3>Suporte real</h3><p>Qualquer problema com login, perfil ou pagamento, falas diretamente comigo no WhatsApp. Sem bots, sem espera infinita.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--black-2);">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="section-tag sp-tag">Quem já usa</span>
+      <h2>O que dizem os clientes</h2>
+    </div>
+    <div class="testi-grid reveal">
+      <div class="testi-card">
+        <div class="stars" style="color:var(--green);">★★★★★</div>
+        <p class="quote">"Recebi o acesso em poucos minutos. Está tudo a funcionar perfeitamente e sem anúncios."</p>
+        <div class="testi-person">
+          <img class="testi-avatar-img" src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/imagens/8691a57303b.jpg" alt="Laila Mahesse" loading="lazy">
+          <div><div class="testi-name">Laila Mahesse</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars" style="color:var(--green);">★★★★★</div>
+        <p class="quote">"Já uso há semanas. Qualidade excelente e o atendimento foi muito rápido."</p>
+        <div class="testi-person">
+          <img class="testi-avatar-img" src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/imagens/2016eba4b1c.jpg" alt="Carolina Mucavele" loading="lazy">
+          <div><div class="testi-name">Carolina Mucavele</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars" style="color:var(--green);">★★★★★</div>
+        <p class="quote">"Vale muito a pena. Spotify Premium original e ativado rapidamente."</p>
+        <div class="testi-person">
+          <img class="testi-avatar-img" src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/imagens/54850cca81c.jpg" alt="Simão Sambo" loading="lazy">
+          <div><div class="testi-name">Simão Sambo</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container" style="max-width:760px;">
+    <div class="section-head reveal">
+      <span class="section-tag">Perguntas frequentes</span>
+      <h2>Antes de assinares</h2>
+    </div>
+    <div class="reveal">
+      <div class="faq-item">
+        <div class="faq-q">É uma conta Netflix oficial? <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="faq-a">Sim. É uma conta Netflix Premium 4K real, partilhada entre 2 pessoas através dos 2 perfis disponíveis no plano. Tu não recebes uma conta inteira sozinho, recebes o teu próprio perfil dentro dela.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">O que acontece se eu não pagar no mês seguinte? <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="faq-a">O acesso ao teu perfil é suspenso até regularizares o pagamento. Sem multas nem complicações, basta avisar no WhatsApp quando quiseres reativar.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Posso mudar a senha do perfil? <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="faq-a">A senha da conta é partilhada entre os 2 perfis, por isso não pode ser alterada sem combinar com a outra pessoa. O PIN do teu perfil individual, esse sim, podes definir.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Como faço o pagamento? <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="faq-a">Clicas no botão "Garantir Minha Vaga", pagas os 250MT pelo link seguro, e recebes os dados de acesso do teu perfil diretamente no WhatsApp.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="final-cta-bg"></div>
+  <div class="container reveal">
+    <h2>Ativa o teu Netflix ou Spotify hoje</h2>
+    <p>Por apenas <span class="final-price">250MT</span>/mês tens a tua vaga na conta Netflix Premium 4K, ou <span class="final-price final-price-green">110MT</span>/mês no Spotify Premium sem anúncios, com suporte garantido sempre que precisares.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center;">
+      <a href="https://pay.lojou.app/p/LMce2" class="btn-primary large" target="_blank" rel="noopener">Comprar Netflix</a>
+      <a href="https://ratixpay.co.mz/checkout.html?produto=7VKIOKKVA" class="btn-primary btn-green large" target="_blank" rel="noopener">Comprar Spotify Premium</a>
+    </div>
+    <div class="secure-note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="1.6"/></svg>
+      Pagamento processado por link seguro
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo">FRANK<span style="color:#fff;">FLIX</span></span>
+        <p>Vagas em contas Netflix Premium 4K e Spotify Premium partilhadas. Moçambique.</p>
+      </div>
+      <a href="https://wa.me/258849311757" class="footer-whats" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0 0 12.05 4a8.94 8.94 0 0 0-7.74 13.4L4 21l3.7-1.27a8.93 8.93 0 0 0 4.33 1.1h.01a8.93 8.93 0 0 0 5.55-15.5zM12.05 19.4h-.01a7.4 7.4 0 0 1-3.78-1.03l-.27-.16-2.81.96.95-2.74-.18-.28a7.42 7.42 0 0 1 11.6-9.1 7.32 7.32 0 0 1 2.17 5.25 7.43 7.43 0 0 1-7.42 7.1h-.01z"/></svg>
+        +258 84 931 1757
+      </a>
+    </div>
+    <div class="footer-bottom">
+      Suporte disponível todos os dias.<br>
+      Este serviço oferece uma vaga partilhada em contas Netflix Premium e Spotify Premium, e não é afiliado, patrocinado ou aprovado pela Netflix, Inc. nem pela Spotify AB.
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/258849311757" class="wa-float" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.6 6.32A8.86 8.86 0 0 0 12.05 4a8.94 8.94 0 0 0-7.74 13.4L4 21l3.7-1.27a8.93 8.93 0 0 0 4.33 1.1h.01a8.93 8.93 0 0 0 5.55-15.5zM12.05 19.4h-.01a7.4 7.4 0 0 1-3.78-1.03l-.27-.16-2.81.96.95-2.74-.18-.28a7.42 7.42 0 0 1 11.6-9.1 7.32 7.32 0 0 1 2.17 5.25 7.43 7.43 0 0 1-7.42 7.1h-.01z"/></svg>
+</a>
+
+<audio id="bgAudio" src="https://raw.githubusercontent.com/dylanModz/uploadsgg/main/midias/audios/76529bc9652.mp3" loop preload="auto"></audio>
+<button id="soundToggle" aria-label="Ativar/desativar som" style="position:fixed; bottom:22px; left:22px; z-index:99; width:52px; height:52px; border-radius:50%; background:var(--green); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 8px 24px -4px rgba(30,215,96,0.5);">
+  <svg id="soundIcon" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#06170d"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="#06170d" stroke-width="1.8" stroke-linecap="round"/></svg>
+</button>
+
+<script>
+  // Navbar scroll state
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+
+  // Background music: try autoplay, fall back to first user interaction
+  const bgAudio = document.getElementById('bgAudio');
+  const soundToggle = document.getElementById('soundToggle');
+  const soundIcon = document.getElementById('soundIcon');
+  let audioStarted = false;
+
+  function setIconMuted(muted){
+    soundIcon.innerHTML = muted
+      ? '<path d="M4 9v6h4l5 4V5L8 9H4z" fill="#06170d"/><path d="M3 3l18 18" stroke="#06170d" stroke-width="1.8" stroke-linecap="round"/>'
+      : '<path d="M4 9v6h4l5 4V5L8 9H4z" fill="#06170d"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="#06170d" stroke-width="1.8" stroke-linecap="round"/>';
+  }
+
+  function tryPlay(){
+    bgAudio.play().then(() => {
+      audioStarted = true;
+      setIconMuted(false);
+    }).catch(() => {
+      // Autoplay blocked by browser; wait for user interaction
+      setIconMuted(true);
+    });
+  }
+  tryPlay();
+
+  ['click','touchstart','keydown'].forEach(evt => {
+    document.addEventListener(evt, function once(){
+      if(!audioStarted){ tryPlay(); }
+      document.removeEventListener(evt, once);
+    }, { once: true });
+  });
+
+  soundToggle.addEventListener('click', () => {
+    if(bgAudio.paused){
+      bgAudio.play();
+      setIconMuted(false);
+      audioStarted = true;
+    } else {
+      bgAudio.pause();
+      setIconMuted(true);
+    }
+  });
+
+  // Countdown timer for Spotify offer (resets 02:00 -> 00:00 -> 02:00)
+  (function(){
+    const minEl = document.getElementById('cdMin');
+    const secEl = document.getElementById('cdSec');
+    if(!minEl || !secEl) return;
+    let totalSeconds = 2 * 60;
+    function render(){
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      minEl.textContent = String(m).padStart(2,'0');
+      secEl.textContent = String(s).padStart(2,'0');
+    }
+    render();
+    setInterval(() => {
+      totalSeconds--;
+      if(totalSeconds < 0){ totalSeconds = 2 * 60; }
+      render();
+    }, 1000);
+  })();
+
+  // Pause off-screen videos to save bandwidth
+  const videos = document.querySelectorAll('.trailer-card video');
+  const vio = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      const v = e.target;
+      if (e.isIntersecting) { v.play().catch(()=>{}); }
+      else { v.pause(); }
+    });
+  }, { threshold: 0.2 });
+  videos.forEach(v => vio.observe(v));
+</script>
+<!-- Inicia codigo Contador -->
+<div align="center"><a title='Contador de Visitas do MegaContador' href='https://megacontador.com.br/' ><img src='https://megacontador.com.br/img-93DM83i8NssPmvif-49.gif' border='0' alt='Contador de visitas'></a></div>
+<!-- Fim do codigo Contador -->
+
+</body>
+</html>
