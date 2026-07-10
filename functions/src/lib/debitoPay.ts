@@ -10,10 +10,40 @@ import type { PaymentMethod } from "../types";
 export const debitoPayApiKey = defineSecret("DEBITO_PAY_API_KEY");
 export const debitoPayWebhookSecret = defineSecret("DEBITO_PAY_WEBHOOK_SECRET");
 export const debitoPayMerchantId = defineString("DEBITO_PAY_MERCHANT_ID");
-export const debitoPayWalletCode = defineString("DEBITO_PAY_WALLET_CODE");
 export const debitoPayBaseUrl = defineString("DEBITO_PAY_BASE_URL", {
   default: "https://gyqoaningqhurhvdugne.supabase.co/functions/v1",
 });
+
+// Each Debito Pay wallet is bound to one specific payment_method (and
+// currency) — a single shared wallet_code doesn't work across methods.
+// Configure one env var per method; DEBITO_PAY_WALLET_CODE is a fallback
+// for any method that doesn't have its own configured.
+const debitoPayWalletCodeDefault = defineString("DEBITO_PAY_WALLET_CODE", { default: "" });
+const debitoPayWalletCodeMpesa = defineString("DEBITO_PAY_WALLET_CODE_MPESA", { default: "" });
+const debitoPayWalletCodeEmola = defineString("DEBITO_PAY_WALLET_CODE_EMOLA", { default: "" });
+const debitoPayWalletCodeMkesh = defineString("DEBITO_PAY_WALLET_CODE_MKESH", { default: "" });
+const debitoPayWalletCodeVisaMastercard = defineString(
+  "DEBITO_PAY_WALLET_CODE_VISA_MASTERCARD",
+  { default: "" }
+);
+const debitoPayWalletCodePayfast = defineString("DEBITO_PAY_WALLET_CODE_PAYFAST", { default: "" });
+
+function walletCodeForMethod(method: PaymentMethod): string {
+  const byMethod: Record<PaymentMethod, string> = {
+    mpesa: debitoPayWalletCodeMpesa.value(),
+    emola: debitoPayWalletCodeEmola.value(),
+    mkesh: debitoPayWalletCodeMkesh.value(),
+    visa_mastercard: debitoPayWalletCodeVisaMastercard.value(),
+    payfast: debitoPayWalletCodePayfast.value(),
+  };
+  const code = byMethod[method] || debitoPayWalletCodeDefault.value();
+  if (!code) {
+    throw new Error(
+      `No Debito Pay wallet_code configured for payment method "${method}". Set DEBITO_PAY_WALLET_CODE_${method.toUpperCase()} in functions/.env.`
+    );
+  }
+  return code;
+}
 
 interface ProcessPaymentInput {
   paymentMethod: PaymentMethod;
@@ -75,7 +105,7 @@ export async function createDebitoPayCharge(
     action: "process",
     payment_method: input.paymentMethod,
     merchant_id: debitoPayMerchantId.value(),
-    wallet_code: debitoPayWalletCode.value(),
+    wallet_code: walletCodeForMethod(input.paymentMethod),
     amount: input.amount,
     currency: input.currency,
     source: "gateway",
@@ -133,9 +163,9 @@ export async function checkDebitoPayStatus(
   return json;
 }
 
-export async function getDebitoPayWalletBalance(): Promise<unknown> {
+export async function getDebitoPayWalletBalance(method: PaymentMethod): Promise<unknown> {
   const url = new URL(`${debitoPayBaseUrl.value()}/wallet-balance`);
-  url.searchParams.set("wallet_code", debitoPayWalletCode.value());
+  url.searchParams.set("wallet_code", walletCodeForMethod(method));
   const res = await fetch(url.toString(), {
     method: "GET",
     headers: authHeaders(),
