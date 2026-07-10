@@ -73,8 +73,34 @@ export const debitoPayWebhook = onRequest(
       .get();
 
     if (paymentQuery.empty) {
-      logger.warn(`No local payment found for debitoPayPaymentId=${paymentId}`);
-      res.status(200).send("OK (no matching payment)");
+      // Not a merchant/product sale — check the standalone donations
+      // collection before giving up (e.g. the Frank AI Solutions "doar"
+      // page). Donations have no ledger to credit, just a status to flip.
+      const donationQuery = await db
+        .collection("donations")
+        .where("debitoPayPaymentId", "==", paymentId)
+        .limit(1)
+        .get();
+
+      if (donationQuery.empty) {
+        logger.warn(`No local payment/donation found for debitoPayPaymentId=${paymentId}`);
+        res.status(200).send("OK (no matching payment)");
+        return;
+      }
+
+      const donationRef = donationQuery.docs[0].ref;
+      const statusByEvent: Record<string, string> = {
+        "payment.completed": "success",
+        "payment.failed": "failed",
+        "payment.refunded": "refunded",
+        "payment.chargeback": "chargeback",
+      };
+      await donationRef.update({
+        status: statusByEvent[body.event] ?? "pending",
+        updatedAt: FieldValue.serverTimestamp(),
+        completedAt: body.event === "payment.completed" ? FieldValue.serverTimestamp() : null,
+      });
+      res.status(200).send("OK (donation)");
       return;
     }
 

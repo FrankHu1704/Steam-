@@ -137,3 +137,24 @@ export interface UserDoc {
   role: UserRole;
   createdAt: FirebaseFirestore.Timestamp | FirebaseFirestore.FieldValue;
 }
+
+/** Standalone donations (e.g. the Frank AI Solutions "doar" page) — not
+ * tied to a merchant/product, money lands in the platform's own Debito
+ * Pay wallet. Kept separate from `payments` so the webhook never has to
+ * touch a merchant ledger for these. */
+export interface DonationDoc {
+  donorName: string;
+  donorEmail: string;
+  donorPhone: string | null;
+  message: string | null;
+  amount: number;
+  currency: "MZN" | "ZAR";
+  paymentMethod: PaymentMethod | null;
+  status: PaymentStatus;
+  debitoPayPaymentId: string | null;
+  reference: string | null;
+  checkoutUrl: string | null;
+  createdAt: FirebaseFirestore.Timestamp | FirebaseFirestore.FieldValue;
+  updatedAt: FirebaseFirestore.Timestamp | FirebaseFirestore.FieldValue;
+  completedAt: FirebaseFirestore.Timestamp | FirebaseFirestore.FieldValue | null;
+}

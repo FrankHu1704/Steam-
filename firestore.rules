@@ -77,6 +77,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // donations/{donationId}: standalone donations (e.g. the Frank AI
+    // Solutions "doar" page) — not tied to a merchant. Readable by anyone
+    // holding its id (same "random id is the secret" pattern as payments),
+    // written only by Cloud Functions.
+    match /donations/{donationId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
     // Internal audit log, server-only.
     match /webhookEvents/{eventId} {
       allow read, write: if false;

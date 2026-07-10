@@ -17,6 +17,7 @@ export {
 } from "./https/publicProducts";
 export { becomeAffiliate } from "./https/affiliates";
 export { testCharge } from "./https/testCheckout";
+export { createDonation, checkDonationStatus } from "./https/donations";
 export { debitoPayWebhook } from "./https/webhook";
 export {
   requestWithdrawal,
