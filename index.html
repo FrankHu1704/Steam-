@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIN Fornecedores — Importe iPhones Direto da China</title>
+<meta name="description" content="Descubra fornecedores verificados de iPhones na China e importe pagando diretamente ao fabricante, com métodos de pagamento seguros.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --bg-alt:#0f1526;
+    --panel:rgba(255,255,255,0.04);
+    --panel-border:rgba(255,255,255,0.08);
+    --text:#e8ebf3;
+    --text-muted:#9aa3b8;
+    --gold:#c9a24b;
+    --gold-light:#e6c876;
+    --blue:#4f7cff;
+    --success:#3ecf8e;
+    --radius:14px;
+    --radius-lg:22px;
+    --shadow:0 20px 60px rgba(0,0,0,0.35);
+    --max-w:1160px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    font-family:'Inter', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(79,124,255,0.12), transparent 60%),
+      radial-gradient(1000px 500px at 90% 10%, rgba(201,162,75,0.10), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  img{max-width:100%;display:block;border-radius:var(--radius);}
+
+  a{color:inherit;text-decoration:none;}
+
+  ul{list-style:none;}
+
+  h1,h2,h3{font-weight:700;letter-spacing:-0.02em;}
+
+  section{
+    max-width:var(--max-w);
+    margin:0 auto;
+    padding:96px 24px;
+  }
+
+  .eyebrow{
+    display:inline-block;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:14px;
+  }
+
+  h2{
+    font-size:clamp(28px,3.4vw,38px);
+    margin-bottom:14px;
+  }
+
+  .section-sub{
+    color:var(--text-muted);
+    max-width:620px;
+    margin-bottom:48px;
+    font-size:16px;
+  }
+
+  /* Glass effect */
+  .glass{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+  }
+
+  /* Buttons */
+  .btn-cta,
+  .btn-primary,
+  .btn-secondary{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:600;
+    font-size:15px;
+    border-radius:999px;
+    padding:14px 28px;
+    cursor:pointer;
+    border:none;
+    transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    white-space:nowrap;
+  }
+
+  .btn-cta,
+  .btn-primary{
+    background:linear-gradient(135deg, var(--gold-light), var(--gold));
+    color:#1a1305;
+    box-shadow:0 10px 30px rgba(201,162,75,0.28);
+  }
+
+  .btn-cta:hover,
+  .btn-primary:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 36px rgba(201,162,75,0.4);
+  }
+
+  .btn-primary.xl{
+    padding:18px 40px;
+    font-size:17px;
+  }
+
+  .btn-secondary{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--panel-border);
+  }
+
+  .btn-secondary:hover{
+    border-color:var(--gold-light);
+    color:var(--gold-light);
+  }
+
+  .btn-secondary:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+
+  /* Header */
+  .nav{
+    position:sticky;
+    top:0;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 32px;
+  }
+
+  .logo{
+    font-weight:800;
+    font-size:19px;
+    letter-spacing:0.01em;
+  }
+
+  .logo span{color:var(--gold-light);}
+
+  /* Hero */
+  .hero{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:56px;
+    align-items:center;
+    padding-top:72px;
+    padding-bottom:72px;
+  }
+
+  .hero-text h1{
+    font-size:clamp(32px,4.2vw,50px);
+    line-height:1.12;
+    margin-bottom:20px;
+  }
+
+  .hero-text p{
+    font-size:18px;
+    color:var(--text-muted);
+    margin-bottom:32px;
+    max-width:520px;
+  }
+
+  .trust-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:28px;
+  }
+
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:var(--text-muted);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    padding:8px 14px;
+    border-radius:999px;
+  }
+
+  .chip svg{width:14px;height:14px;stroke:var(--success);flex-shrink:0;}
+
+  .hero-visual{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  .testi-photo{
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    border:1px solid var(--panel-border);
+    background:var(--panel);
+  }
+
+  .testi-photo.glow{
+    box-shadow:0 20px 50px rgba(79,124,255,0.15);
+  }
+
+  .testi-photo img{
+    border-radius:0;
+    width:100%;
+    aspect-ratio:16/10;
+    object-fit:cover;
+  }
+
+  .testi-photo figcaption{
+    padding:14px 18px;
+    font-size:13px;
+    color:var(--text-muted);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .testi-photo figcaption svg{width:14px;height:14px;stroke:var(--success);flex-shrink:0;}
+
+  /* Quiz */
+  .quiz{
+    border-radius:var(--radius-lg);
+    padding:48px;
+    text-align:center;
+  }
+
+  .quiz h2{max-width:640px;margin:0 auto 8px;}
+
+  .quiz .section-sub{margin:0 auto 32px;text-align:center;}
+
+  .progress{
+    width:100%;
+    height:6px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.08);
+    overflow:hidden;
+    margin-bottom:36px;
+  }
+
+  .progress .bar{
+    height:100%;
+    background:linear-gradient(90deg, var(--blue), var(--gold-light));
+    border-radius:999px;
+    transition:width .3s ease;
+    width:0%;
+  }
+
+  .quiz-question{
+    text-align:left;
+    max-width:640px;
+    margin:0 auto;
+  }
+
+  .quiz-question .q-count{
+    font-size:13px;
+    color:var(--text-muted);
+    margin-bottom:10px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+
+  .quiz-question h3{
+    font-size:20px;
+    margin-bottom:22px;
+    line-height:1.4;
+  }
+
+  .quiz-options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:32px;
+  }
+
+  .quiz-option{
+    text-align:left;
+    padding:14px 18px;
+    border-radius:var(--radius);
+    border:1px solid var(--panel-border);
+    background:rgba(255,255,255,0.02);
+    color:var(--text);
+    font-size:15px;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+
+  .quiz-option:hover{
+    border-color:rgba(255,255,255,0.2);
+  }
+
+  .quiz-option.selected{
+    border-color:var(--gold-light);
+    background:rgba(201,162,75,0.1);
+  }
+
+  .quiz-actions{
+    display:flex;
+    justify-content:center;
+  }
+
+  .quiz-result{
+    max-width:560px;
+    margin:0 auto;
+  }
+
+  .quiz-result h3{
+    font-size:24px;
+    margin-bottom:16px;
+  }
+
+  .quiz-result p{
+    color:var(--text-muted);
+    margin-bottom:28px;
+    font-size:16px;
+  }
+
+  .hidden{display:none !important;}
+
+  /* Benefits */
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:16px;
+  }
+
+  .card{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:20px;
+    border-radius:var(--radius);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    font-size:15px;
+  }
+
+  .card svg{width:20px;height:20px;stroke:var(--gold-light);flex-shrink:0;margin-top:2px;}
+
+  /* Why */
+  .why{
+    border-radius:var(--radius-lg);
+    padding:48px;
+  }
+
+  .badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+
+  .badges span{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:14px;
+    padding:10px 16px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--panel-border);
+  }
+
+  .badges span svg{width:14px;height:14px;stroke:var(--success);flex-shrink:0;}
+
+  /* Testimonials */
+  .testi-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:20px;
+  }
+
+  .testi-card{
+    padding:24px;
+    border-radius:var(--radius);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+  }
+
+  .avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:14px;
+  }
+
+  .testi-card h3{
+    font-size:16px;
+    margin-bottom:4px;
+  }
+
+  .stars{
+    display:flex;
+    gap:3px;
+    margin-bottom:12px;
+  }
+
+  .stars svg{width:14px;height:14px;fill:var(--gold-light);stroke:none;}
+
+  .testi-card p:last-child{
+    font-size:14px;
+    color:var(--text-muted);
+  }
+
+  /* FAQ */
+  .faq{
+    border-radius:var(--radius-lg);
+    padding:48px;
+  }
+
+  details{
+    border-bottom:1px solid var(--panel-border);
+    padding:18px 0;
+  }
+
+  details:first-of-type{border-top:1px solid var(--panel-border);}
+
+  summary{
+    cursor:pointer;
+    font-weight:600;
+    font-size:16px;
+    list-style:none;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  summary::-webkit-details-marker{display:none;}
+
+  summary::after{
+    content:"+";
+    font-size:22px;
+    color:var(--gold-light);
+    font-weight:400;
+    transition:transform .2s ease;
+  }
+
+  details[open] summary::after{
+    transform:rotate(45deg);
+  }
+
+  details p{
+    margin-top:12px;
+    color:var(--text-muted);
+    font-size:15px;
+    max-width:640px;
+  }
+
+  /* Last call */
+  .last-call{
+    text-align:center;
+    background:linear-gradient(135deg, rgba(79,124,255,0.08), rgba(201,162,75,0.08));
+    border-radius:var(--radius-lg);
+    border:1px solid var(--panel-border);
+    padding:64px 32px;
+  }
+
+  .last-call h2{
+    max-width:640px;
+    margin:0 auto 16px;
+  }
+
+  .last-call p{
+    max-width:520px;
+    margin:0 auto 32px;
+    color:var(--text-muted);
+    font-size:16px;
+  }
+
+  /* Footer */
+  .footer{
+    text-align:center;
+    padding:40px 24px;
+    border-radius:0;
+    border-left:none;
+    border-right:none;
+    border-bottom:none;
+  }
+
+  .assurances{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:24px;
+    margin-bottom:20px;
+    font-size:13px;
+    color:var(--text-muted);
+  }
+
+  .assurances span{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .assurances svg{width:14px;height:14px;stroke:var(--gold-light);}
+
+  .footer p{
+    color:var(--text-muted);
+    font-size:13px;
+  }
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr;padding-top:40px;}
+    .hero-visual{order:-1;}
+    section{padding:64px 20px;}
+    .quiz,.why,.faq{padding:32px 24px;}
+  }
+
+  @media (max-width:520px){
+    .nav{padding:14px 18px;}
+    .btn-cta{padding:10px 18px;font-size:13px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav glass">
+  <div class="logo">PIN <span>Fornecedores</span></div>
+  <a class="btn-cta" href="https://checkout.escalepay.com/1270626">Quero Acesso Agora</a>
+</header>
+
+<section class="hero">
+  <div class="hero-text">
+    <span class="eyebrow">Importação Direta da China</span>
+    <h1>Descubra os 4 Fornecedores Verificados de iPhones Direto da China</h1>
+    <p>Importe iPhones novos pagando diretamente ao fornecedor, sem depender de intermediários, utilizando métodos de pagamento seguros que realmente funcionam.</p>
+    <a class="btn-primary" href="https://checkout.escalepay.com/1270626">Quero Acesso Agora</a>
+    <div class="trust-chips">
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Pagamento seguro
+      </span>
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        Acesso imediato
+      </span>
+      <span class="chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        Produto digital
+      </span>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <figure class="testi-photo glow">
+      <img src="aluno1.jpg" alt="Aluno satisfeito com a primeira encomenda de iPhones">
+      <figcaption>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Primeira encomenda aprovada e enviada
+      </figcaption>
+    </figure>
+    <figure class="testi-photo glow">
+      <img src="aluno2.jpg" alt="Comprovante de pagamento direto ao fornecedor">
+      <figcaption>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Pagamento direto confirmado — iPhones novos
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="quiz glass" id="quiz">
+  <span class="eyebrow">Teste Rápido</span>
+  <h2>Será que está preparado para importar iPhones da China?</h2>
+  <p class="section-sub">Responda 8 perguntas rápidas e descubra o quanto já sabe sobre importação segura de iPhones.</p>
+
+  <div class="progress"><div class="bar" id="quiz-bar"></div></div>
+
+  <div class="quiz-question" id="quiz-question-wrap">
+    <p class="q-count" id="quiz-count">Pergunta 1 de 8</p>
+    <h3 id="quiz-question-text"></h3>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-actions">
+      <button class="btn-secondary" id="quiz-next" disabled>Próximo</button>
+    </div>
+  </div>
+
+  <div class="quiz-result hidden" id="quiz-result">
+    <h3>Resultado</h3>
+    <p>Mesmo que tenha acertado algumas perguntas, ainda existem informações essenciais que podem fazer a diferença entre ter lucro ou perder dinheiro. Foi exatamente por isso que criei este material exclusivo.</p>
+    <a class="btn-primary" href="https://checkout.escalepay.com/1270626">Quero Acesso Agora</a>
+  </div>
+</section>
+
+<section class="benefits" id="receive">
+  <span class="eyebrow">Conteúdo do Curso</span>
+  <h2>O que vai receber</h2>
+  <p class="section-sub">Um material direto ao ponto, construído a partir de experiência real de importação.</p>
+  <ul class="cards">
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      4 fornecedores exclusivos de iPhones
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Métodos de pagamento sem intermediários
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Fornecedores testados e aprovados
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Contactos diretos
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Como evitar golpes
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Como importar pagando menos
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Estratégias para revender em Moçambique
+    </li>
+    <li class="card">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Atualizações futuras incluídas
+    </li>
+  </ul>
+</section>
+
+<section class="why glass">
+  <span class="eyebrow">Diferenciais</span>
+  <h2>Porque escolher este curso</h2>
+  <div class="badges">
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Fornecedores reais
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Não são links encontrados no Google
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Testados pessoalmente
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Métodos de pagamento exclusivos
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Importação direta
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Suporte incluído
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      Acesso imediato
+    </span>
+  </div>
+</section>
+
+<section class="testimonials">
+  <span class="eyebrow">Resultados</span>
+  <h2>Depoimentos</h2>
+  <p class="section-sub">Pessoas reais que já importaram utilizando este método.</p>
+  <div class="testi-grid">
+    <article class="testi-card">
+      <img class="avatar" src="ana.jpg" alt="Ana M.">
+      <h3>Ana M.</h3>
+      <p class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      </p>
+      <p>"Nunca imaginei que fosse tão fácil importar diretamente da China. Já fiz a minha primeira encomenda."</p>
+    </article>
+    <article class="testi-card">
+      <img class="avatar" src="carlos.jpg" alt="Carlos J.">
+      <h3>Carlos J.</h3>
+      <p class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      </p>
+      <p>"Economizei muito dinheiro porque finalmente deixei de usar intermediários."</p>
+    </article>
+    <article class="testi-card">
+      <img class="avatar" src="sandra.jpg" alt="Sandra C.">
+      <h3>Sandra C.</h3>
+      <p class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      </p>
+      <p>"Os fornecedores realmente são confiáveis. Já recebi os meus iPhones."</p>
+    </article>
+    <article class="testi-card">
+      <img class="avatar" src="joao.jpg" alt="João M.">
+      <h3>João M.</h3>
+      <p class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      </p>
+      <p>"O método de pagamento mudou completamente a forma como importo."</p>
+    </article>
+    <article class="testi-card">
+      <img class="avatar" src="celina.jpg" alt="Celina P.">
+      <h3>Celina P.</h3>
+      <p class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      </p>
+      <p>"Valeu cada centavo. Muito profissional."</p>
+    </article>
+  </div>
+</section>
+
+<section class="faq glass">
+  <span class="eyebrow">Dúvidas</span>
+  <h2>Perguntas Frequentes</h2>
+  <details>
+    <summary>Os fornecedores são confiáveis?</summary>
+    <p>Sim. Todos foram testados antes de serem disponibilizados no material.</p>
+  </details>
+  <details>
+    <summary>Recebo o acesso imediatamente?</summary>
+    <p>Sim. O acesso é liberado automaticamente após a confirmação do pagamento.</p>
+  </details>
+  <details>
+    <summary>Os métodos de pagamento funcionam?</summary>
+    <p>Sim. São métodos utilizados atualmente para pagar diretamente aos fornecedores, sem intermediários.</p>
+  </details>
+  <details>
+    <summary>Posso importar para Moçambique?</summary>
+    <p>Sim. O conteúdo serve para qualquer país, incluindo Moçambique.</p>
+  </details>
+</section>
+
+<section class="last-call">
+  <h2>Comece Hoje Mesmo</h2>
+  <p>Os fornecedores mudam constantemente. Este material pode deixar de estar disponível a qualquer momento. Não perca esta oportunidade.</p>
+  <a class="btn-primary xl" href="https://checkout.escalepay.com/1270626">Quero o Meu Acesso Agora</a>
+</section>
+
+<footer class="footer glass">
+  <div class="assurances">
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Pagamento Seguro
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      Acesso Imediato
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg>
+      Produto Digital
+    </span>
+  </div>
+  <p>&copy; 2026 PIN Fornecedores. Todos os direitos reservados.</p>
+</footer>
+
+<script>
+  const quizData = [
+    {
+      question: "Você sabe qual é a forma mais segura de pagar um fornecedor na China sem cair em golpe?",
+      options: [
+        "Transferência bancária direta sem qualquer verificação",
+        "Métodos com proteção e verificação do fornecedor",
+        "Envio de dinheiro através de conhecidos",
+        "Não sei"
+      ]
+    },
+    {
+      question: "Você conhece a diferença entre um fornecedor de fábrica e um simples intermediário?",
+      options: [
+        "Sim, sei identificar essa diferença",
+        "Tenho uma ideia, mas não tenho certeza",
+        "Não, para mim é tudo igual",
+        "Nunca pensei sobre isso"
+      ]
+    },
+    {
+      question: "Sabe quais cuidados são necessários para importar eletrónicos com segurança?",
+      options: [
+        "Sim, conheço o processo completo",
+        "Conheço apenas uma parte",
+        "Não conheço",
+        "Nunca importei antes"
+      ]
+    },
+    {
+      question: "Consegue identificar um fornecedor falso apenas pelo site ou catálogo dele?",
+      options: [
+        "Sim, com facilidade",
+        "Às vezes, mas não tenho certeza",
+        "Não consigo",
+        "Nunca tentei avaliar isso"
+      ]
+    },
+    {
+      question: "Sabe negociar preços diretamente com fábricas chinesas?",
+      options: [
+        "Sim, já negociei antes",
+        "Tenho noção básica",
+        "Não sei negociar",
+        "Nunca precisei fazer isso"
+      ]
+    },
+    {
+      question: "Conhece pelo menos dois métodos de pagamento internacional seguros para fornecedores?",
+      options: [
+        "Sim, conheço vários",
+        "Conheço apenas um",
+        "Não conheço nenhum",
+        "Não sei o que procurar"
+      ]
+    },
+    {
+      question: "Sabe calcular a margem de lucro real após taxas e custos de importação?",
+      options: [
+        "Sim, faço esse cálculo com segurança",
+        "Faço uma estimativa aproximada",
+        "Não sei calcular",
+        "Nunca precisei calcular"
+      ]
+    },
+    {
+      question: "Já tem contacto direto com algum fornecedor verificado de iPhones?",
+      options: [
+        "Sim, já tenho contactos verificados",
+        "Tenho contactos, mas não sei se são confiáveis",
+        "Não tenho nenhum contacto",
+        "Nunca procurei"
+      ]
+    }
+  ];
+
+  let currentQuestion = 0;
+  const answers = new Array(quizData.length).fill(null);
+
+  const bar = document.getElementById('quiz-bar');
+  const countLabel = document.getElementById('quiz-count');
+  const questionText = document.getElementById('quiz-question-text');
+  const optionsWrap = document.getElementById('quiz-options');
+  const nextBtn = document.getElementById('quiz-next');
+  const questionWrap = document.getElementById('quiz-question-wrap');
+  const resultWrap = document.getElementById('quiz-result');
+
+  function renderQuestion(){
+    const data = quizData[currentQuestion];
+    countLabel.textContent = `Pergunta ${currentQuestion + 1} de ${quizData.length}`;
+    questionText.textContent = data.question;
+    bar.style.width = `${(currentQuestion / quizData.length) * 100}%`;
+
+    optionsWrap.innerHTML = '';
+    data.options.forEach((option, index) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'quiz-option';
+      btn.textContent = option;
+      if(answers[currentQuestion] === index){
+        btn.classList.add('selected');
+      }
+      btn.addEventListener('click', () => {
+        answers[currentQuestion] = index;
+        document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+        btn.classList.add('selected');
+        nextBtn.disabled = false;
+      });
+      optionsWrap.appendChild(btn);
+    });
+
+    nextBtn.disabled = answers[currentQuestion] === null;
+    nextBtn.textContent = currentQuestion === quizData.length - 1 ? 'Ver Resultado' : 'Próximo';
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if(currentQuestion < quizData.length - 1){
+      currentQuestion++;
+      renderQuestion();
+    } else {
+      bar.style.width = '100%';
+      questionWrap.classList.add('hidden');
+      resultWrap.classList.remove('hidden');
+    }
+  });
+
+  renderQuestion();
+</script>
+
+</body>
+</html>
