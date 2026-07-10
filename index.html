@@ -527,6 +527,28 @@
     margin-bottom:16px;
   }
 
+  .tiktok-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    padding:8px 16px;
+    border-radius:999px;
+    border:1px solid var(--panel-border);
+    background:rgba(255,255,255,0.02);
+    margin-bottom:12px;
+    transition:border-color .18s ease, transform .18s ease;
+  }
+
+  .tiktok-link svg{width:15px;height:15px;flex-shrink:0;}
+
+  .tiktok-link:hover{
+    border-color:var(--gold-light);
+    transform:translateY(-1px);
+  }
+
   .signature{
     display:inline-flex;
     align-items:center;
@@ -844,6 +866,12 @@
     </span>
   </div>
   <p>&copy; 2026 PIN Fornecedores. Todos os direitos reservados.</p>
+
+  <a class="tiktok-link" href="https://vm.tiktok.com/ZS9MaYYw7SxM9-KfKdc/" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82c-.85-.9-1.36-2.07-1.44-3.32h-3.14v13.4a3.16 3.16 0 1 1-2.55-3.1V9.62a6.3 6.3 0 1 0 5.69 6.28V9.03a8.13 8.13 0 0 0 4.74 1.51V7.4a4.85 4.85 0 0 1-3.3-1.58z"/></svg>
+    Siga-me no TikTok
+  </a>
+
   <a class="signature" href="https://frank-perfil.vercel.app" target="_blank" rel="noopener noreferrer">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
     by <strong>FRANK AI SOLUTIONS</strong>
