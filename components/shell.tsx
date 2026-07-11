@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { signOut } from "@/lib/actions/auth";
+import type { Notification } from "@/types/database";
 
 export interface ShellNavItem {
   href: string;
@@ -17,10 +19,12 @@ export interface ShellNavItem {
 export function Shell({
   navItems,
   badge,
+  notifications = [],
   children,
 }: {
   navItems: ShellNavItem[];
   badge?: string;
+  notifications?: Notification[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -62,6 +66,7 @@ export function Shell({
       </aside>
       <div className="flex-1 md:pl-64">
         <header className="flex items-center justify-end gap-2 border-b border-border bg-card/60 px-6 py-3 backdrop-blur">
+          <NotificationsBell notifications={notifications} />
           <ThemeToggle />
         </header>
         <main className="p-6 md:p-8">{children}</main>

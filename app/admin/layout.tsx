@@ -12,6 +12,7 @@ import {
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { requireAdminUser } from "@/lib/data/admin";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
+import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
   { href: "/admin", label: "Visão Geral", icon: LayoutDashboard, exact: true },
@@ -31,8 +32,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = await requireAdminUser();
   if (!admin) redirect("/");
 
+  const notifications = await getMyNotifications(user.id);
+
   return (
-    <Shell navItems={NAV} badge="Admin">
+    <Shell navItems={NAV} badge="Admin" notifications={notifications}>
       {children}
     </Shell>
   );

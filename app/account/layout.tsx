@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Package, Download, History, UserRound, Share2 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
+import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
   { href: "/account/products", label: "Meus Produtos", icon: Package },
@@ -15,5 +16,11 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const { user } = await getCurrentUserAndProfile();
   if (!user) redirect("/login?next=/account/products");
 
-  return <Shell navItems={NAV}>{children}</Shell>;
+  const notifications = await getMyNotifications(user.id);
+
+  return (
+    <Shell navItems={NAV} notifications={notifications}>
+      {children}
+    </Shell>
+  );
 }

@@ -11,6 +11,7 @@ import {
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
+import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
   { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, exact: true },
@@ -31,5 +32,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     await supabase.from("profiles").update({ role: "producer" }).eq("id", user.id);
   }
 
-  return <Shell navItems={NAV}>{children}</Shell>;
+  const notifications = await getMyNotifications(user.id);
+
+  return (
+    <Shell navItems={NAV} notifications={notifications}>
+      {children}
+    </Shell>
+  );
 }
