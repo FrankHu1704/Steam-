@@ -25,6 +25,7 @@ export default async function ProductSalePage({
   if (!product) notFound();
 
   await supabase.rpc("increment_product_views", { p_id: product.id });
+  if (ref) await supabase.rpc("increment_affiliate_clicks", { affiliate_code: ref });
 
   const { data: bumps } = await supabase
     .from("products")

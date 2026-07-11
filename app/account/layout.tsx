@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { Package, Download, History, UserRound } from "lucide-react";
+import { Package, Download, History, UserRound, Share2 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 
 const NAV: ShellNavItem[] = [
   { href: "/account/products", label: "Meus Produtos", icon: Package },
   { href: "/account/downloads", label: "Downloads", icon: Download },
+  { href: "/account/affiliates", label: "Afiliados", icon: Share2 },
   { href: "/account/history", label: "Histórico", icon: History },
   { href: "/account/profile", label: "Perfil", icon: UserRound },
 ];
