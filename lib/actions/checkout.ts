@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { createCharge, checkChargeStatus, type PaymentMethod } from "@/lib/debito-pay";
 import type { Product } from "@/types/database";
 
@@ -69,6 +70,11 @@ interface CreateOrderInput {
 export async function createOrder(input: CreateOrderInput) {
   const supabase = createAdminClient();
 
+  const authClient = await createClient();
+  const {
+    data: { user: buyer },
+  } = await authClient.auth.getUser();
+
   const { data: product } = await supabase
     .from("products")
     .select("*")
@@ -131,6 +137,7 @@ export async function createOrder(input: CreateOrderInput) {
     .insert({
       product_id: product.id,
       producer_id: product.producer_id,
+      buyer_id: buyer?.id ?? null,
       buyer_name: input.buyerName,
       buyer_email: input.buyerEmail,
       buyer_phone: input.buyerPhone ?? null,
