@@ -1,0 +1,248 @@
+// Hand-written mirror of supabase/migrations/*.sql. If you have the
+// Supabase CLI available, prefer regenerating with:
+//   supabase gen types typescript --project-id <ref> > types/database.ts
+
+export type UserRole = "buyer" | "producer" | "admin";
+export type ProductStatus = "draft" | "pending" | "approved" | "rejected" | "paused";
+export type OrderStatus = "pending" | "paid" | "failed" | "refunded" | "expired";
+export type PayoutMethod = "mpesa" | "emola" | "mkesh" | "bank_transfer";
+export type WithdrawalStatus = "pending" | "approved" | "rejected" | "paid" | "confirmed";
+export type CouponDiscountType = "percent" | "fixed";
+export type CommissionStatus = "pending" | "paid";
+
+export interface Profile {
+  id: string;
+  name: string;
+  phone: string | null;
+  avatar_url: string | null;
+  role: UserRole;
+  email: string;
+  email_verified: boolean;
+  balance_available: number;
+  balance_pending: number;
+  currency: string;
+  created_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  created_at: string;
+}
+
+export interface Product {
+  id: string;
+  producer_id: string;
+  category_id: string | null;
+  title: string;
+  slug: string;
+  description: string;
+  cover_image_url: string | null;
+  video_url: string | null;
+  price: number;
+  promo_price: number | null;
+  currency: string;
+  affiliate_enabled: boolean;
+  affiliate_commission_percent: number;
+  status: ProductStatus;
+  rejection_reason: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  view_count: number;
+  sales_count: number;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+}
+
+export interface ProductFile {
+  id: string;
+  product_id: string;
+  name: string;
+  storage_path: string;
+  size_bytes: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface Coupon {
+  id: string;
+  producer_id: string;
+  product_id: string | null;
+  code: string;
+  discount_type: CouponDiscountType;
+  discount_value: number;
+  max_uses: number | null;
+  used_count: number;
+  expires_at: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+export interface Order {
+  id: string;
+  product_id: string;
+  producer_id: string;
+  buyer_id: string | null;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_phone: string | null;
+  amount: number;
+  discount_amount: number;
+  coupon_id: string | null;
+  total_amount: number;
+  currency: string;
+  status: OrderStatus;
+  payment_method: string | null;
+  affiliate_id: string | null;
+  affiliate_commission_amount: number;
+  created_at: string;
+  paid_at: string | null;
+  credited_at: string | null;
+}
+
+export interface OrderBump {
+  id: string;
+  order_id: string;
+  bump_product_id: string;
+  price: number;
+  created_at: string;
+}
+
+export interface Payment {
+  id: string;
+  order_id: string;
+  provider: string;
+  provider_payment_id: string | null;
+  reference: string | null;
+  checkout_url: string | null;
+  status: OrderStatus;
+  raw_response: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Download {
+  id: string;
+  order_id: string;
+  product_file_id: string;
+  download_token: string;
+  expires_at: string;
+  downloaded_at: string | null;
+  created_at: string;
+}
+
+export interface Affiliate {
+  id: string;
+  product_id: string;
+  affiliate_id: string;
+  code: string;
+  commission_percent: number;
+  clicks: number;
+  sales: number;
+  commission_earned: number;
+  created_at: string;
+}
+
+export interface Commission {
+  id: string;
+  affiliate_row_id: string;
+  order_id: string;
+  amount: number;
+  status: CommissionStatus;
+  created_at: string;
+}
+
+export interface Withdrawal {
+  id: string;
+  producer_id: string;
+  amount: number;
+  fee_amount: number;
+  net_amount: number;
+  currency: string;
+  payout_method: PayoutMethod;
+  destination: string;
+  status: WithdrawalStatus;
+  rejection_reason: string | null;
+  payout_reference: string | null;
+  requested_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  paid_at: string | null;
+  confirmed_at: string | null;
+}
+
+export interface Review {
+  id: string;
+  product_id: string;
+  buyer_id: string;
+  order_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface Setting {
+  key: string;
+  value: unknown;
+  updated_at: string;
+}
+
+export interface LogEntry {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  target_table: string | null;
+  target_id: string | null;
+  metadata: unknown;
+  created_at: string;
+}
+
+type Row<T> = { Row: T; Insert: Partial<T>; Update: Partial<T> };
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: Row<Profile>;
+      categories: Row<Category>;
+      products: Row<Product>;
+      product_files: Row<ProductFile>;
+      coupons: Row<Coupon>;
+      orders: Row<Order>;
+      order_bumps: Row<OrderBump>;
+      payments: Row<Payment>;
+      downloads: Row<Download>;
+      affiliates: Row<Affiliate>;
+      commissions: Row<Commission>;
+      withdrawals: Row<Withdrawal>;
+      reviews: Row<Review>;
+      notifications: Row<Notification>;
+      settings: Row<Setting>;
+      logs: Row<LogEntry>;
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      user_role: UserRole;
+      product_status: ProductStatus;
+      order_status: OrderStatus;
+      payout_method: PayoutMethod;
+      withdrawal_status: WithdrawalStatus;
+      coupon_discount_type: CouponDiscountType;
+      commission_status: CommissionStatus;
+    };
+    CompositeTypes: Record<string, never>;
+  };
+}

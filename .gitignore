@@ -1,11 +1,12 @@
 node_modules/
-web/dist/
-functions/lib/
-.firebase/
-firebase-debug.log
-firebase-debug.*.log
+.next/
+out/
+build/
 *.local
 .env
 .env.local
+.env*.local
 .DS_Store
 *.tsbuildinfo
+next-env.d.ts
+.vercel
