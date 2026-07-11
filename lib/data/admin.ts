@@ -52,7 +52,10 @@ export interface AdminProduct extends Product {
 
 export async function getAllProducts(status?: string): Promise<AdminProduct[]> {
   const supabase = await createClient();
-  let query = supabase.from("products").select("*, profiles(name)").order("created_at", { ascending: false });
+  let query = supabase
+    .from("products")
+    .select("*, profiles!producer_id(name)")
+    .order("created_at", { ascending: false });
   if (status) query = query.eq("status", status);
   const { data } = await query;
   return ((data ?? []) as (Product & { profiles: { name: string } | null })[]).map((p) => ({
@@ -87,7 +90,7 @@ export async function getAllWithdrawals(status?: string): Promise<AdminWithdrawa
   const supabase = await createClient();
   let query = supabase
     .from("withdrawals")
-    .select("*, profiles(name, email)")
+    .select("*, profiles!producer_id(name, email)")
     .order("requested_at", { ascending: false });
   if (status) query = query.eq("status", status);
   const { data } = await query;

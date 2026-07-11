@@ -9,7 +9,7 @@ export async function getAffiliateMarketplace(): Promise<MarketplaceProduct[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("*, profiles(name)")
+    .select("*, profiles!producer_id(name)")
     .eq("status", "approved")
     .eq("affiliate_enabled", true)
     .order("sales_count", { ascending: false });
