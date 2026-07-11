@@ -1,13 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, CheckCircle2, Download, Tag, ExternalLink } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  Download,
+  Tag,
+  ExternalLink,
+  Smartphone,
+  CreditCard,
+  Landmark,
+  ShieldCheck,
+  Zap,
+  ShoppingCart,
+} from "lucide-react";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { formatCurrency } from "@/lib/utils";
 import { createOrder, getOrderStatus, validateCoupon, type CouponPreview } from "@/lib/actions/checkout";
 import { getDownloadLinks } from "@/lib/actions/downloads";
 import type { PaymentMethod } from "@/lib/debito-pay";
@@ -19,9 +29,23 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   mpesa: "M-Pesa",
   emola: "e-Mola",
   mkesh: "mKesh",
-  visa_mastercard: "Cartão (Visa/Mastercard)",
+  visa_mastercard: "Cartão",
   payfast: "PayFast",
 };
+
+const PAYMENT_STYLES: Record<PaymentMethod, string> = {
+  mpesa: "bg-red-600",
+  emola: "bg-orange-500",
+  mkesh: "bg-amber-500",
+  visa_mastercard: "bg-slate-800",
+  payfast: "bg-teal-600",
+};
+
+function PaymentIcon({ method }: { method: PaymentMethod }) {
+  if (method === "visa_mastercard") return <CreditCard className="h-4 w-4" />;
+  if (method === "payfast") return <Landmark className="h-4 w-4" />;
+  return <Smartphone className="h-4 w-4" />;
+}
 
 function paymentMethodsForCurrency(currency: string): PaymentMethod[] {
   return currency === "ZAR" ? ["payfast", "visa_mastercard"] : ["mpesa", "emola", "mkesh", "visa_mastercard"];
@@ -211,7 +235,7 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+    <form onSubmit={handleSubmit} className="mt-6 space-y-5">
       {bumps.length > 0 && (
         <div className="space-y-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3">
           <p className="text-xs font-semibold uppercase text-primary">Adicione também</p>
@@ -243,39 +267,60 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
 
       <div className="space-y-1.5">
         <Label htmlFor="name">Nome completo</Label>
-        <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
+        <Input id="name" required placeholder="O seu nome" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input
+          id="email"
+          type="email"
+          required
+          placeholder="seu@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="method">Método de pagamento</Label>
-        <Select
-          id="method"
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-        >
-          {methods.map((m) => (
-            <option key={m} value={m}>
-              {PAYMENT_LABELS[m]}
-            </option>
-          ))}
-        </Select>
+        <Label>Método de pagamento</Label>
+        <div className="grid grid-cols-3 gap-2">
+          {methods.map((m) => {
+            const selected = paymentMethod === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setPaymentMethod(m)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-colors",
+                  selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                )}
+              >
+                <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", PAYMENT_STYLES[m])}>
+                  <PaymentIcon method={m} />
+                </span>
+                <span className="text-xs font-medium">{PAYMENT_LABELS[m]}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {requiresPhone && (
         <div className="space-y-1.5">
-          <Label htmlFor="phone">Número de telemóvel</Label>
-          <Input
-            id="phone"
-            required
-            placeholder="84xxxxxxx"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+          <Label htmlFor="phone">Número {PAYMENT_LABELS[paymentMethod]}</Label>
+          <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <span className="flex items-center bg-muted px-3 text-sm font-medium text-muted-foreground">+258</span>
+            <Input
+              id="phone"
+              required
+              placeholder="84xxxxxxx"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="rounded-none border-0 focus:ring-0"
+            />
+          </div>
         </div>
       )}
 
@@ -305,9 +350,9 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
         )}
       </div>
 
-      <div className="space-y-1 border-t border-border pt-3 text-sm">
+      <div className="space-y-1.5 rounded-xl bg-muted/60 p-4 text-sm">
         <div className="flex justify-between text-muted-foreground">
-          <span>Produto</span>
+          <span>Subtotal</span>
           <span>{formatCurrency(baseAmount, currency as "MZN" | "ZAR")}</span>
         </div>
         {bumpTotal > 0 && (
@@ -322,18 +367,27 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
             <span>-{formatCurrency(discount, currency as "MZN" | "ZAR")}</span>
           </div>
         )}
-        <div className="flex justify-between pt-1 text-base font-bold">
-          <span>Total</span>
+        <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold">
+          <span>Total a pagar</span>
           <span>{formatCurrency(total, currency as "MZN" | "ZAR")}</span>
         </div>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" className="w-full" size="lg" disabled={pending}>
-        {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Finalizar compra
+      <Button type="submit" className="w-full gap-2" size="lg" disabled={pending}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+        Pagar {formatCurrency(total, currency as "MZN" | "ZAR")}
       </Button>
+
+      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <ShieldCheck className="h-3.5 w-3.5" /> Compra 100% segura
+        </span>
+        <span className="flex items-center gap-1">
+          <Zap className="h-3.5 w-3.5" /> Entrega imediata
+        </span>
+      </div>
     </form>
   );
 }

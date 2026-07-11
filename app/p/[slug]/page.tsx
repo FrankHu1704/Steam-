@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Flame } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { formatCurrency } from "@/lib/utils";
@@ -59,19 +60,39 @@ export default async function ProductSalePage({
         </div>
 
         <div className="lg:col-span-2">
-          <div className="sticky top-6 rounded-2xl border border-border bg-card p-6 shadow-lg">
-            <p className="text-sm font-medium text-muted-foreground">Resumo da compra</p>
-            <div className="mt-2 flex items-baseline gap-2">
-              <p className="text-3xl font-bold">
-                {formatCurrency(product.promo_price ?? product.price, product.currency as "MZN" | "ZAR")}
-              </p>
-              {hasPromo && (
-                <p className="text-sm text-muted-foreground line-through">
-                  {formatCurrency(product.price, product.currency as "MZN" | "ZAR")}
-                </p>
-              )}
+          <div className="sticky top-6 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            {hasPromo && (
+              <div className="flex items-center justify-center gap-1.5 bg-brand-gradient px-4 py-2 text-xs font-semibold text-white">
+                <Flame className="h-3.5 w-3.5" />
+                Preço promocional por tempo limitado
+              </div>
+            )}
+            <div className="p-6">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                {product.cover_image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={product.cover_image_url}
+                    alt={product.title}
+                    className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{product.title}</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-lg font-bold text-primary">
+                      {formatCurrency(product.promo_price ?? product.price, product.currency as "MZN" | "ZAR")}
+                    </p>
+                    {hasPromo && (
+                      <p className="text-xs text-muted-foreground line-through">
+                        {formatCurrency(product.price, product.currency as "MZN" | "ZAR")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <CheckoutForm product={product} bumps={bumps ?? []} affiliateRef={ref} />
             </div>
-            <CheckoutForm product={product} bumps={bumps ?? []} affiliateRef={ref} />
           </div>
         </div>
       </div>
