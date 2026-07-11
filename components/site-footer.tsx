@@ -1,0 +1,43 @@
+import Link from "next/link";
+
+export function SiteFooter() {
+  return (
+    <footer className="border-t border-border py-12">
+      <div className="container grid gap-8 md:grid-cols-4">
+        <div>
+          <p className="text-lg font-bold">
+            Paga<span className="text-gradient">Já</span>
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            A plataforma moçambicana para vender infoprodutos.
+          </p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Produto</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li><a href="#recursos">Recursos</a></li>
+            <li><a href="#metodos">Métodos de Pagamento</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Conta</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li><Link href="/signup">Criar Conta</Link></li>
+            <li><Link href="/login">Entrar</Link></li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Legal</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>Termos de Serviço</li>
+            <li>Política de Privacidade</li>
+          </ul>
+        </div>
+      </div>
+      <p className="container mt-10 text-xs text-muted-foreground">
+        © {new Date().getFullYear()} PagaJá. Todos os direitos reservados.
+      </p>
+    </footer>
+  );
+}

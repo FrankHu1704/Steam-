@@ -1,7 +1,27 @@
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import { Hero } from "@/components/landing/hero";
+import {
+  Features,
+  HowItWorks,
+  Benefits,
+  PaymentMethods,
+  Testimonials,
+  Faq,
+} from "@/components/landing/sections";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">PagaJá — a construir…</p>
-    </main>
+    <div>
+      <SiteNav />
+      <Hero />
+      <Features />
+      <HowItWorks />
+      <Benefits />
+      <PaymentMethods />
+      <Testimonials />
+      <Faq />
+      <SiteFooter />
+    </div>
   );
 }
