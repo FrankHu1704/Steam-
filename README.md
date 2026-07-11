@@ -1,250 +1,188 @@
-# PagaJá — Plataforma de Pagamentos
+# PagaJá — Venda os seus infoprodutos em minutos
 
-Plataforma de pagamentos para Moçambique/África (inspirada na Debito Pay /
-pagar.co.mz), construída sobre Firebase. A própria plataforma é uma única
-"merchant agregadora" na Debito Pay: todos os pagamentos dos vendedores que
-usam esta plataforma passam pela mesma carteira/API key da Debito Pay, e o
-saldo de cada vendedor é controlado internamente num livro-razão (ledger) no
-Firestore. Saques ("saques") e produtos cadastrados por vendedores só ficam
-ativos depois de aprovação de um administrador.
+Plataforma SaaS moçambicana para venda de infoprodutos (eBooks, cursos,
+templates, presets, software, scripts, mentorias, documentos), construída
+inteiramente sobre serviços com camada gratuita: **Next.js 15 (App Router)** +
+**Supabase** (Postgres, Auth, Storage, RLS) + **Debito Pay** como orquestrador
+de pagamentos (M-Pesa, e-Mola, mKesh, Visa/Mastercard, PayFast).
 
-## Arquitetura
+> Esta plataforma substitui por completo a versão anterior (Firebase + Vite,
+> focada em pagamentos genéricos). É um projeto novo, com modelo de dados,
+> autenticação e infraestrutura próprios.
+
+## Stack
+
+- **Next.js 15** (App Router, Server Actions, Route Handlers, Middleware) + React + TypeScript
+- **Tailwind CSS** com primitivos no estilo shadcn/ui escritos à mão (`components/ui/*`)
+- **Framer Motion** (revelações ao scroll na landing page), **Lucide Icons**, **Recharts** (gráfico de vendas), **Sonner** (toasts), **next-themes** (dark/light mode)
+- **Supabase**: Postgres + Row Level Security, Auth (cookies via `@supabase/ssr`), Storage (capas, avatares, ficheiros pagos)
+- **Debito Pay**: `lib/debito-pay.ts` chama o `payment-orchestrator`, valida webhooks por HMAC-SHA256
+
+## Arquitetura de dados
+
+Todas as tabelas e políticas de RLS estão em `supabase/migrations/*.sql`,
+aplicadas em ordem:
 
 ```
-firebase.json, firestore.rules, firestore.indexes.json   -> config do projeto
-functions/   Cloud Functions (TypeScript)                  -> backend / API
-web/         React + Vite + Tailwind                        -> frontend (SPA)
+0001_init.sql              tabelas, enums, triggers, seeds (categorias, settings)
+0002_rls.sql                Row Level Security de todas as tabelas
+0003_storage.sql             buckets (covers, avatars, product-files) + políticas
+0004_profile_guard.sql       trigger que impede auto-promoção a admin / adulteração de saldo via update de perfil
+0005_functions.sql           incrementos atómicos (cupões, vendas, visualizações)
+0006_affiliate_clicks.sql    incremento atómico de cliques de afiliado
 ```
 
-- **Auth**: Firebase Authentication (email/senha). Cada novo utilizador vira
-  automaticamente um "merchant" (documento em `merchants/{uid}`, estado
-  `pending`). Administradores são promovidos manualmente (ver abaixo).
-- **Firestore**: `merchants`, `products`, `payments`, `withdrawals`,
-  `affiliateLinks`, `webhookEvents`, `users`. Ver `functions/src/types.ts`
-  para os campos de cada coleção.
-- **Storage**: capas/previews em `products/{merchantId}/{ficheiro}` —
-  públicas, upload direto do cliente (`web/src/lib/uploadProductImage.ts`),
-  até 5MB, só imagens. Ficheiros pagos (PDFs) em
-  `product-files/{merchantId}/{productId}/{ficheiro}` —
-  **nunca legíveis diretamente** (`web/src/lib/uploadProductFile.ts` só
-  escreve; leitura é sempre via signed URL do servidor, ver
-  `getProductDownload`/`adminGetProductFiles`), até 40MB (`storage.rules`).
-- **Cloud Functions**: toda a escrita sensível (saldo, aprovações, chamadas à
-  Debito Pay) passa por funções `onCall`/`onRequest` — o cliente nunca
-  escreve diretamente nesses campos (ver `firestore.rules`).
-- **Integração Debito Pay**: `functions/src/lib/debitoPay.ts` chama
-  `payment-orchestrator`, `check-status` e `wallet-balance` da API real da
-  Debito Pay. O webhook (`debitoPayWebhook`) recebe `payment.completed` /
-  `payment.failed` / `payment.refunded` / `payment.chargeback`, valida a
-  assinatura HMAC-SHA256 e credita o saldo do merchant correspondente.
+Tabelas: `profiles`, `categories`, `products`, `product_files`, `coupons`,
+`orders`, `order_bumps`, `payments`, `downloads`, `affiliates`, `commissions`,
+`withdrawals`, `reviews`, `notifications`, `settings`, `logs`.
 
-## Usando o Termux (Android)
-
-Tudo aqui (Node, npm, git, Firebase CLI) roda normalmente no Termux, sem
-nada específico de sistema operativo:
+O tipo TypeScript `types/database.ts` espelha manualmente este esquema (usado
+pelo cliente Supabase tipado). Se preferir gerar automaticamente:
 
 ```bash
-pkg update && pkg upgrade
-pkg install nodejs-lts git
-npm install -g firebase-tools
+supabase gen types typescript --project-id <ref> > types/database.ts
 ```
 
-`firebase login` abre um link no browser para autenticar (o Termux não tem
-browser embutido, mas o CLI aceita autenticação por link/código — siga o
-que o terminal instruir). Daqui em diante, todos os comandos deste README
-(`npm install`, `npm run build`, `firebase deploy`, etc.) funcionam iguais.
+### Padrão de checkout anónimo
 
-O site (`web/`) já é um PWA instalável: abrindo-o no Chrome do Android
-aparece o botão **"Baixar App"** (ou o Chrome oferece "Adicionar à tela
-inicial" no menu), instalando-o como um app normal, com ícone próprio, sem
-precisar de Play Store. Não requer nenhum passo extra de build.
+`orders`/`payments`/`downloads` não têm política de RLS que permita `insert`
+por clientes anónimos — de propósito. O checkout (`lib/actions/checkout.ts`,
+`lib/actions/affiliates.ts`, `lib/actions/withdrawals.ts`, `lib/actions/admin.ts`)
+usa o cliente `service_role` (`lib/supabase/admin.ts`, **nunca exposto ao
+browser**) para escrever, sempre com validação explícita no próprio server
+action antes de qualquer escrita. Isto permite comprar sem conta, mantendo os
+dados protegidos de escrita direta pelo cliente.
 
 ## Configuração inicial
 
-### 1. Firebase CLI e projeto
+### 1. Criar o projeto Supabase (gratuito)
+
+1. Crie um projeto em [supabase.com](https://supabase.com) (plano Free).
+2. Em **SQL Editor**, rode os ficheiros de `supabase/migrations/` **na ordem
+   numérica** (0001 → 0006), colando o conteúdo de cada um e executando.
+3. Em **Storage**, confirme que os buckets `covers`, `avatars` e
+   `product-files` foram criados pela migração 0003 (o último é privado).
+4. Em **Authentication → URL Configuration**, adicione
+   `http://localhost:3000/auth/callback` (e o domínio de produção depois do
+   deploy) como Redirect URL.
+
+### 2. Variáveis de ambiente
 
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase projects:create paga-ja-prod   # ou use um projeto já existente
+cp .env.example .env.local
 ```
 
-Edite `.firebaserc` e substitua `REPLACE_WITH_YOUR_FIREBASE_PROJECT_ID` pelo
-ID real do projeto. Ative no Console Firebase: **Authentication** (método
-Email/Senha), **Firestore** (modo produção) e o plano **Blaze** (necessário
-para Cloud Functions chamarem APIs externas como a Debito Pay).
+Preencha com as chaves do projeto (Project Settings → API):
 
-### 2. Credenciais da Debito Pay
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=       # nunca expor ao cliente
+```
 
-Esta plataforma **não inclui nenhuma credencial real** — você precisa da sua
-própria conta de merchant na Debito Pay:
+E as credenciais da sua conta de merchant na Debito Pay (cada método de
+pagamento tem o seu próprio `wallet_code`):
 
-- `merchant_id` e `wallet_code` — não são segredos, mas ficam fora do git.
-  Copie `functions/.env.example` para `functions/.env` e preencha:
+```
+DEBITO_PAY_API_KEY=
+DEBITO_PAY_WEBHOOK_SECRET=
+DEBITO_PAY_MERCHANT_ID=
+DEBITO_PAY_WALLET_CODE_MPESA=
+DEBITO_PAY_WALLET_CODE_EMOLA=
+DEBITO_PAY_WALLET_CODE_MKESH=
+DEBITO_PAY_WALLET_CODE_VISA_MASTERCARD=
+DEBITO_PAY_WALLET_CODE_PAYFAST=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-  ```
-  DEBITO_PAY_MERCHANT_ID=...
-  DEBITO_PAY_WALLET_CODE=...
-  ```
+No painel da Debito Pay, registe a URL do webhook depois do primeiro deploy:
+`https://<seu-dominio>/api/webhooks/debito-pay`.
 
-- `api_key` (`sk_live_...`) e o `webhook secret` são segredos reais — vão
-  para o Secret Manager do Firebase, nunca para um ficheiro no repositório:
-
-  ```bash
-  firebase functions:secrets:set DEBITO_PAY_API_KEY
-  firebase functions:secrets:set DEBITO_PAY_WEBHOOK_SECRET
-  firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET   # veja passo 4
-  ```
-
-- No painel da Debito Pay (Settings → Webhooks), registe a URL pública da
-  função `debitoPayWebhook` depois do primeiro deploy (aparece no terminal
-  como `https://<region>-<project>.cloudfunctions.net/debitoPayWebhook`).
-
-### 3. Instalar dependências
+### 3. Instalar e rodar
 
 ```bash
-cd functions && npm install && cd ..
-cd web && npm install && cd ..
+npm install
+npm run dev
 ```
 
-Configure o frontend: copie `web/.env.example` para `web/.env.local` e
-preencha com as credenciais do seu app Web no Console Firebase (Project
-Settings → General → Your apps).
+Abra `http://localhost:3000`.
 
-### 4. Deploy e primeiro administrador
+### 4. Criar o primeiro administrador
+
+Não existe nenhum admin por padrão nem um script de bootstrap — a única
+forma de criar o primeiro é diretamente no banco. Depois de criar uma conta
+normal em `/signup`, rode no **SQL Editor** do Supabase:
+
+```sql
+update profiles set role = 'admin' where email = 'seu-email@exemplo.com';
+```
+
+Saia e entre novamente em `/login`. A partir daí, use `/admin/users` para
+promover outras contas (o formulário de perfil de cada utilizador tem um
+trigger — `0004_profile_guard.sql` — que impede o próprio utilizador de se
+auto-promover pela UI; a promoção só acontece via `service_role`, usada pelas
+ações do painel admin).
+
+## Build de produção
 
 ```bash
-firebase deploy --only firestore:rules,firestore:indexes,storage,functions
+npm run build
+npm run start
 ```
 
-(sem `hosting` — o frontend é publicado pela Vercel, ver secção abaixo. Só
-inclua `,hosting` se decidir usar o Firebase Hosting em vez da Vercel, e
-nesse caso adicione `"site": "<seu-site-id>"` ao bloco `hosting` do
-`firebase.json` primeiro, com o ID real de `firebase hosting:sites:list`
-— sem isso o CLI falha com "resolving hosting target of a site with no
-site name".)
+## Deploy (Vercel)
 
-Não existe nenhum admin por padrão. Para criar o primeiro:
+1. Importe o repositório na Vercel.
+2. Defina as mesmas variáveis do `.env.example` em Project Settings →
+   Environment Variables.
+3. Atualize `NEXT_PUBLIC_SITE_URL` para o domínio real e adicione
+   `https://<dominio>/auth/callback` em Supabase → Authentication → URL
+   Configuration.
+4. Registe a URL do webhook (`https://<dominio>/api/webhooks/debito-pay`) no
+   painel da Debito Pay.
 
-1. Crie uma conta normal em `/signup`.
-2. Rode o script `web/scripts/bootstrap-admin.mjs` (funciona no Termux, não
-   precisa de DevTools do browser):
+## Funcionalidades
 
-   ```bash
-   cd web
-   node scripts/bootstrap-admin.mjs
-   ```
+- **Autenticação**: registo, login, recuperação de password, verificação de
+  email, edição de perfil (nome, telefone, foto).
+- **Produtos**: CRUD completo com categorias, ficheiros para download,
+  preço/preço promocional, afiliação configurável, SEO por produto;
+  moderação obrigatória (`pending` → `approved`/`rejected`) por um admin.
+- **Checkout** (`/p/[slug]`): cupão de desconto com pré-visualização em
+  tempo real, order bump, telefone obrigatório para dinheiro móvel,
+  M-Pesa/e-Mola/mKesh/Visa-Mastercard/PayFast, confirmação por polling +
+  webhook, entrega automática (download com link assinado de 24h).
+- **Painel do produtor** (`/dashboard`): saldo, vendas do dia/mês, lucro,
+  gráfico de 14 dias, vendas recentes, produtos, pedidos (com pesquisa e
+  exportação CSV), cupões, afiliados, saques, definições.
+- **Área do comprador** (`/account`): meus produtos, downloads, afiliados,
+  histórico, perfil.
+- **Afiliados**: qualquer utilizador autenticado pode tornar-se afiliado de
+  um produto com afiliação ativa, gera link único (`?ref=codigo`), ganha
+  comissão automática no webhook de pagamento; rankeamento por produtor.
+- **Saques**: pedido com taxa configurável, débito imediato do saldo
+  disponível, histórico, confirmação de recebimento pelo produtor depois do
+  admin marcar como pago.
+- **Painel administrativo** (`/admin`): visão geral, moderação de produtos,
+  pedidos, aprovação/pagamento de saques, utilizadores (troca de papel),
+  categorias, taxas da plataforma, logs.
+- **Extras**: notificações in-app (sino no cabeçalho), dark/light mode,
+  pesquisa e filtros (produtos e pedidos), PWA instalável (manifest +
+  service worker com cache do shell), exportação CSV de pedidos.
 
-   Ele pede o email/palavra-passe da conta e o `ADMIN_BOOTSTRAP_SECRET` que
-   você definiu, faz login e promove essa conta a admin. Depois, saia e
-   entre de novo em `/login` — o token só atualiza a claim `role: admin`
-   num novo login.
-3. Repita para cada admin adicional; depois disso, trate o
-   `ADMIN_BOOTSTRAP_SECRET` como comprometido e rode-o
-   (`firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET` de novo).
+## O que é estrutural vs. totalmente funcional
 
-### 5. Desenvolvimento local (emuladores) — sem precisar do plano Blaze
+Construído para funcionar de ponta a ponta com dados reais no Supabase, mas
+vale registar honestamente os pontos mais rasos desta primeira versão:
 
-Storage (e chamadas externas nas Functions) exigem o plano Blaze no
-projeto real. Para testar tudo — incluindo upload de fotos/PDFs — sem
-vincular cartão nenhum, use os emuladores locais:
-
-1. Em `web/.env.local`, adicione:
-   ```
-   VITE_USE_FIREBASE_EMULATORS=true
-   ```
-2. Abra duas sessões do Termux (deslize da borda esquerda para abrir uma
-   nova, ou `tmux`/`screen` se preferir):
-
-   ```bash
-   # sessão 1 — na raiz do repo
-   firebase emulators:start --only auth,firestore,functions,storage
-   ```
-   ```bash
-   # sessão 2 — dentro de web/
-   npm run dev
-   ```
-3. Abra o endereço que o Vite mostrar (ex: `http://localhost:5173`) no
-   Chrome do telemóvel — tudo (login, upload, produtos, pagamentos
-   simulados) roda 100% local, sem tocar no projeto `chaquil` real nem
-   precisar do Blaze. A UI dos emuladores (dados, Firestore, etc.) fica em
-   `http://localhost:4000`.
-4. Quando quiser voltar a apontar para o projeto real, comente/apague a
-   linha `VITE_USE_FIREBASE_EMULATORS` do `.env.local`.
-
-As funções que chamam a Debito Pay (`purchaseProduct`, `submitPayment`,
-etc.) só funcionam no emulador se você criar `functions/.secret.local` com
-`DEBITO_PAY_API_KEY=...` / `DEBITO_PAY_WEBHOOK_SECRET=...` /
-`ADMIN_BOOTSTRAP_SECRET=...` (esse ficheiro é só para o emulador, nunca é
-deployado nem commitado). Sem ele, upload de produtos/fotos e o resto do
-dashboard funcionam normalmente — só a cobrança real fica indisponível.
-
-## Hospedagem do frontend (Vercel)
-
-O `web/` é uma SPA Vite comum e pode ser hospedada na Vercel em vez do
-Firebase Hosting — o backend (Auth, Firestore, Functions, webhook) continua
-sempre no Firebase, só o site estático muda de sítio.
-
-1. Importe o repositório na Vercel, com **Root Directory** = `web`.
-2. Build command: `npm run build` · Output directory: `dist` (o
-   `web/vercel.json` já inclui o rewrite de SPA para `index.html`).
-3. Defina as mesmas variáveis do `web/.env.example` em Project Settings →
-   Environment Variables (`VITE_FIREBASE_API_KEY`, etc.).
-4. Depois do primeiro deploy, adicione o domínio da Vercel à lista de
-   domínios autorizados em Firebase Console → Authentication → Settings →
-   Authorized domains, senão o login falha.
-
-Se preferir manter tudo no Firebase Hosting, o `firebase.json` já está
-configurado para isso — as duas opções não se excluem, é só escolher qual
-domínio aponta para qual.
-
-## Fluxo de pagamento
-
-1. Merchant cria um **link de pagamento** (`/dashboard/payments`), opcional
-   ligado a um produto aprovado.
-2. O comprador abre `/pay/{paymentId}` (sem precisar de conta), escolhe o
-   método (M-Pesa, e-Mola, mKesh, Visa/Mastercard, PayFast) e submete.
-3. `submitPayment` chama o `payment-orchestrator` da Debito Pay com as
-   credenciais da plataforma.
-4. Confirmação chega por webhook (`debitoPayWebhook`) → credita
-   `merchants/{uid}.balanceAvailable`.
-5. Merchant pede saque (`requestWithdrawal`) → saldo passa para
-   `balancePending`. Um admin aprova/rejeita (`/admin/withdrawals`) e, após
-   transferir o valor manualmente, marca como pago.
-
-## Produtos digitais, afiliados e saques (aprovação)
-
-- **Produtos**: assistente em 6 passos (`/dashboard/products/new` →
-  `ProductWizard.tsx`) — tipo (Ebook/Templates/Grupo Privado/Videoaula) →
-  dados → ficheiros → capa/previews → afiliação → revisão. `createProduct`
-  cria com `status: pending`; só fica à venda depois de `reviewProduct`
-  (`/admin/products`, que também deixa o admin abrir os PDFs via
-  `adminGetProductFiles` antes de aprovar) marcar `approved`. Cada produto
-  aprovado ganha uma página pública permanente em `/produto/{productId}`
-  (não é mais preciso o merchant gerar um link por venda).
-- **Entrega digital**: ficheiros (`ebook`/`template`/`videoaula`) vão para
-  `product-files/{merchantId}/{productId}/` no Storage, **nunca
-  publicamente legíveis** (`storage.rules`). `purchaseProduct` cria o
-  pagamento e cobra na hora; depois do webhook confirmar
-  `payment.completed`, a página de sucesso chama `getProductDownload` para
-  obter links assinados (24h) — só funciona com pagamento confirmado.
-- **Afiliados**: qualquer merchant vira afiliado de um produto de outro
-  merchant com `affiliateEnabled: true` via `becomeAffiliate`, ganhando um
-  link `/produto/{id}?ref={uid}` (`/dashboard/affiliates`).
-  `registerProductView` conta cliques por link; no `payment.completed`, o
-  webhook divide o valor: comissão (`affiliateCommissionAmount`, calculada
-  na compra) cai no saldo do afiliado, o resto cai no saldo do dono do
-  produto — ambos usam o mesmo sistema de saque abaixo.
-- **Links de pagamento avulsos** (`/dashboard/payments`, `createPaymentLink`
-  + `submitPayment`): para cobranças que não são de um produto do catálogo.
-- **Saques**: `requestWithdrawal` cria com `status: pending`; admin decide
-  em `/admin/withdrawals` (`approved`/`rejected`), marca `paid` com
-  `markWithdrawalPaid` quando transfere o valor, e o merchant fecha o ciclo
-  confirmando com `confirmWithdrawalReceipt` (`status: confirmed`). Taxa
-  fixa de 5% (M-Pesa, e-Mola, Payoneer) calculada em
-  `functions/src/lib/fees.ts` — o saldo do merchant é debitado no valor
-  cheio (`amount`), mas o admin só transfere o `netAmount` (já com a taxa
-  descontada). Ver a seção "Informações sobre Saques" na landing page para
-  o texto exposto ao público.
-- **Merchants**: contas começam `pending` e só podem pedir saques depois de
-  um admin as ativar em `/admin/merchants`.
+- **PayFast/cartão**: o fluxo assume que a Debito Pay devolve um
+  `checkout_url` para redireccionar o comprador; nunca foi testado contra a
+  API real (as credenciais são do utilizador).
+- **Emails transacionais** (confirmação de compra, recibo, verificação) usam
+  o fluxo padrão do Supabase Auth — não há um serviço de email dedicado para
+  notificar o comprador após a entrega, além da própria página de sucesso.
+- **PWA**: manifest + ícones + service worker de cache do shell existem;
+  não há sincronização offline nem notificações push.
+- **Relatórios**: o painel do produtor mostra o essencial (saldo, vendas,
+  gráfico); não há exportação de relatórios financeiros detalhados além do
+  CSV de pedidos.
