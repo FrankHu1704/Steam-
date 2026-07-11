@@ -5,11 +5,11 @@ import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
-  { href: "/account/products", label: "Meus Produtos", icon: Package },
-  { href: "/account/downloads", label: "Downloads", icon: Download },
-  { href: "/account/affiliates", label: "Afiliados", icon: Share2 },
-  { href: "/account/history", label: "Histórico", icon: History },
-  { href: "/account/profile", label: "Perfil", icon: UserRound },
+  { href: "/account/products", label: "Meus Produtos", icon: <Package className="h-4 w-4" /> },
+  { href: "/account/downloads", label: "Downloads", icon: <Download className="h-4 w-4" /> },
+  { href: "/account/affiliates", label: "Afiliados", icon: <Share2 className="h-4 w-4" /> },
+  { href: "/account/history", label: "Histórico", icon: <History className="h-4 w-4" /> },
+  { href: "/account/profile", label: "Perfil", icon: <UserRound className="h-4 w-4" /> },
 ];
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {

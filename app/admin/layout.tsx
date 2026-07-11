@@ -15,14 +15,14 @@ import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
-  { href: "/admin", label: "Visão Geral", icon: LayoutDashboard, exact: true },
-  { href: "/admin/products", label: "Produtos", icon: Package },
-  { href: "/admin/orders", label: "Pedidos", icon: ShoppingCart },
-  { href: "/admin/withdrawals", label: "Saques", icon: Wallet },
-  { href: "/admin/users", label: "Utilizadores", icon: Users2 },
-  { href: "/admin/categories", label: "Categorias", icon: Tag },
-  { href: "/admin/settings", label: "Definições", icon: Settings },
-  { href: "/admin/logs", label: "Logs", icon: ScrollText },
+  { href: "/admin", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+  { href: "/admin/products", label: "Produtos", icon: <Package className="h-4 w-4" /> },
+  { href: "/admin/orders", label: "Pedidos", icon: <ShoppingCart className="h-4 w-4" /> },
+  { href: "/admin/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
+  { href: "/admin/users", label: "Utilizadores", icon: <Users2 className="h-4 w-4" /> },
+  { href: "/admin/categories", label: "Categorias", icon: <Tag className="h-4 w-4" /> },
+  { href: "/admin/settings", label: "Definições", icon: <Settings className="h-4 w-4" /> },
+  { href: "/admin/logs", label: "Logs", icon: <ScrollText className="h-4 w-4" /> },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

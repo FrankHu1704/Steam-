@@ -14,13 +14,13 @@ import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
-  { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/products", label: "Produtos", icon: Package },
-  { href: "/dashboard/orders", label: "Pedidos", icon: ShoppingCart },
-  { href: "/dashboard/coupons", label: "Cupões", icon: Tag },
-  { href: "/dashboard/affiliates", label: "Afiliados", icon: Users2 },
-  { href: "/dashboard/withdrawals", label: "Saques", icon: Wallet },
-  { href: "/dashboard/settings", label: "Definições", icon: Settings },
+  { href: "/dashboard", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+  { href: "/dashboard/products", label: "Produtos", icon: <Package className="h-4 w-4" /> },
+  { href: "/dashboard/orders", label: "Pedidos", icon: <ShoppingCart className="h-4 w-4" /> },
+  { href: "/dashboard/coupons", label: "Cupões", icon: <Tag className="h-4 w-4" /> },
+  { href: "/dashboard/affiliates", label: "Afiliados", icon: <Users2 className="h-4 w-4" /> },
+  { href: "/dashboard/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
+  { href: "/dashboard/settings", label: "Definições", icon: <Settings className="h-4 w-4" /> },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

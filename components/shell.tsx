@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
 import { LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
@@ -12,7 +11,7 @@ import type { Notification } from "@/types/database";
 export interface ShellNavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: React.ReactNode;
   exact?: boolean;
 }
 
@@ -51,7 +50,7 @@ export function Shell({
                   active ? "bg-brand-gradient text-white shadow-md" : "text-muted-foreground hover:bg-muted"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
+                {item.icon}
                 {item.label}
               </Link>
             );
