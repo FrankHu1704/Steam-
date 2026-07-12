@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { plans } from "@/lib/plans";
 import { checkStatus } from "@/lib/debitopay";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const SUCCESS_STATES = ["success", "completed", "paid"];
 const TERMINAL_FAIL_STATES = ["failed", "cancelled", "expired", "error"];
 
+// Dedupe welcome emails across polls within the same server instance.
+const emailedPaymentIds = new Set<string>();
+
 export async function POST(req: NextRequest) {
-  const { paymentId, planId } = await req.json();
+  const { paymentId, planId, customerName, customerEmail } = await req.json();
 
   const plan = plans.find((p) => p.id === planId);
   if (!plan || !paymentId) {
@@ -33,6 +37,15 @@ export async function POST(req: NextRequest) {
         status: "mismatch",
         message: "Montante confirmado difere do esperado. Contacte o suporte.",
       });
+    }
+
+    if (customerEmail && !emailedPaymentIds.has(paymentId)) {
+      emailedPaymentIds.add(paymentId);
+      sendWelcomeEmail({
+        to: customerEmail,
+        name: customerName || "cliente",
+        planName: plan.name,
+      }).catch((err) => console.error("[email] erro inesperado:", err));
     }
 
     return NextResponse.json({ status: "paid" });

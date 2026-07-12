@@ -72,7 +72,12 @@ export default function CheckoutModal({
     fetch("/api/checkout/status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paymentId: paymentId.current, planId: plan.id }),
+      body: JSON.stringify({
+        paymentId: paymentId.current,
+        planId: plan.id,
+        customerName: name,
+        customerEmail: email,
+      }),
     })
       .then((r) => r.json())
       .then((d) => {
