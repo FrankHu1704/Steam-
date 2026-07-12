@@ -10,6 +10,7 @@ export default function Header() {
           <a href="#planos" className="hover:text-white">Planos</a>
           <a href="#faq" className="hover:text-white">FAQ</a>
           <a href="#contato" className="hover:text-white">Contato</a>
+          <a href="/painel" className="hover:text-white">Área do Cliente</a>
         </nav>
 
         <a
