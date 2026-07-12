@@ -4,17 +4,8 @@ const MERCHANT_ID = process.env.DEBITO_PAY_MERCHANT_ID;
 
 export type PaymentMethod = "mpesa" | "emola";
 
-const WALLET_BY_METHOD: Record<PaymentMethod, string | undefined> = {
-  mpesa: process.env.DEBITO_PAY_MPESA_WALLET_ID,
-  emola: process.env.DEBITO_PAY_EMOLA_WALLET_ID,
-};
-
 export function isConfigured() {
   return Boolean(API_URL && API_KEY && MERCHANT_ID);
-}
-
-export function walletFor(method: PaymentMethod) {
-  return WALLET_BY_METHOD[method];
 }
 
 async function call(body: Record<string, unknown>) {
@@ -32,6 +23,32 @@ async function call(body: Record<string, unknown>) {
   return { status: res.status, body: data as Record<string, unknown> | null };
 }
 
+type Wallet = { id: string; payment_method: string; code?: string; currency?: string };
+
+// Wallet IDs are real UUIDs assigned by DebitoPay per merchant — they must
+// be looked up via list-wallets, never hardcoded. Cached in-memory per
+// server instance; a cold start just re-fetches.
+let walletCache: { byMethod: Map<string, string>; expiresAt: number } | null = null;
+const WALLET_CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function getWalletId(method: PaymentMethod): Promise<string | null> {
+  const now = Date.now();
+  if (!walletCache || walletCache.expiresAt < now) {
+    const res = await call({ action: "list-wallets", merchant_id: MERCHANT_ID });
+    const wallets = (res.body?.wallets as Wallet[] | undefined) ?? [];
+
+    const byMethod = new Map<string, string>();
+    for (const w of wallets) {
+      let pm = String(w.payment_method || "").toLowerCase();
+      if (pm === "card" || pm === "netshop") pm = "visa_mastercard";
+      if (pm && w.id) byMethod.set(pm, w.id);
+    }
+    walletCache = { byMethod, expiresAt: now + WALLET_CACHE_TTL_MS };
+  }
+
+  return walletCache.byMethod.get(method) ?? null;
+}
+
 export async function processPayment(params: {
   method: PaymentMethod;
   amount: number;
@@ -41,7 +58,17 @@ export async function processPayment(params: {
   customerPhone: string;
   sourceId: string;
 }) {
-  const walletId = walletFor(params.method);
+  const walletId = await getWalletId(params.method);
+
+  if (!walletId) {
+    return {
+      status: 502,
+      body: {
+        success: false,
+        error: `Nenhuma carteira ${params.method} encontrada para este merchant. Verifique no painel DebitoPay.`,
+      },
+    };
+  }
 
   return call({
     action: "process",

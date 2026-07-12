@@ -274,9 +274,12 @@ export default function CheckoutModal({
               Pagar e Ativar Bot
             </button>
 
-            <p className="text-center text-xs text-white/40">
-              Pagamento seguro via DebitoPay
-            </p>
+            <div className="text-center">
+              <p className="text-xs font-semibold text-white/50">
+                FRANK AI SOLUTIONS
+              </p>
+              <p className="text-xs text-white/40">GESTÃO DE ELITE 👑❤️</p>
+            </div>
           </form>
         )}
       </div>
