@@ -28,20 +28,20 @@ export default function Footer() {
             <ul className="mt-3 space-y-2 text-sm text-white/50">
               <li>
                 <a
-                  href="https://wa.me/258840000000"
+                  href="https://wa.me/258849311757"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white"
                 >
-                  WhatsApp: +258 84 000 0000
+                  WhatsApp: +258 84 931 1757
                 </a>
               </li>
               <li>
                 <a
-                  href="mailto:suporte@sengahost.com"
+                  href="mailto:starchannelmoz@gmail.com"
                   className="hover:text-white"
                 >
-                  suporte@sengahost.com
+                  starchannelmoz@gmail.com
                 </a>
               </li>
             </ul>
