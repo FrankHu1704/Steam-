@@ -77,6 +77,8 @@ export default function CheckoutModal({
         planId: plan.id,
         customerName: name,
         customerEmail: email,
+        customerPhone: phone,
+        method,
       }),
     })
       .then((r) => r.json())

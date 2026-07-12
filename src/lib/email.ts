@@ -9,11 +9,21 @@ export async function sendWelcomeEmail(params: {
   to: string;
   name: string;
   planName: string;
+  loginLink: string | null;
 }) {
   if (!RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY não configurada — email não enviado.", params);
     return { skipped: true };
   }
+
+  const accessSection = params.loginLink
+    ? `<p style="text-align:center; margin: 24px 0;">
+         <a href="${params.loginLink}" style="background:#10B981;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+           Aceder ao meu painel
+         </a>
+       </p>
+       <p style="color:#6b7280; font-size: 12px;">Este link expira em breve. Depois de entrar, pode definir uma palavra-passe em Configurações.</p>`
+    : `<p>Aceda ao painel em <a href="https://sengahost.com/painel/login">sengahost.com/painel</a> com o email usado na compra para configurar o acesso.</p>`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -29,7 +39,8 @@ export async function sendWelcomeEmail(params: {
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color:#0066FF;">Bem-vindo à Senga Host, ${params.name}!</h2>
           <p>O seu pagamento foi confirmado e o plano <strong>${params.planName}</strong> já está ativo.</p>
-          <p>Em breve receberá as credenciais de acesso ao painel para enviar o ficheiro do seu bot.</p>
+          ${accessSection}
+          <p>No painel pode enviar o ficheiro do seu bot e acompanhar o estado da sua conta.</p>
           <p style="color:#6b7280; font-size: 13px;">Dúvidas? Responda a este email ou fale connosco no WhatsApp.</p>
         </div>
       `,

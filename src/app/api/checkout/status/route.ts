@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { plans } from "@/lib/plans";
 import { checkStatus } from "@/lib/debitopay";
 import { sendWelcomeEmail } from "@/lib/email";
+import { provisionCustomer, recordOrder, generateLoginLink } from "@/lib/supabase/customer";
 
 const SUCCESS_STATES = ["success", "completed", "paid"];
 const TERMINAL_FAIL_STATES = ["failed", "cancelled", "expired", "error"];
 
-// Dedupe welcome emails across polls within the same server instance.
-const emailedPaymentIds = new Set<string>();
+// Dedupe provisioning + welcome emails across polls within the same server instance.
+const processedPaymentIds = new Set<string>();
 
 export async function POST(req: NextRequest) {
-  const { paymentId, planId, customerName, customerEmail } = await req.json();
+  const { paymentId, planId, customerName, customerEmail, customerPhone, method } =
+    await req.json();
 
   const plan = plans.find((p) => p.id === planId);
   if (!plan || !paymentId) {
@@ -39,13 +41,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (customerEmail && !emailedPaymentIds.has(paymentId)) {
-      emailedPaymentIds.add(paymentId);
-      sendWelcomeEmail({
-        to: customerEmail,
-        name: customerName || "cliente",
-        planName: plan.name,
-      }).catch((err) => console.error("[email] erro inesperado:", err));
+    if (customerEmail && !processedPaymentIds.has(paymentId)) {
+      processedPaymentIds.add(paymentId);
+
+      (async () => {
+        try {
+          const customerId = await provisionCustomer({
+            email: customerEmail,
+            name: customerName || "",
+            phone: customerPhone || "",
+            planId: plan.id,
+          });
+
+          await recordOrder({
+            customerId,
+            planId: plan.id,
+            amount: plan.price,
+            paymentMethod: method || "",
+            paymentId,
+          });
+
+          const loginLink = await generateLoginLink(
+            customerEmail,
+            `${req.nextUrl.origin}/auth/callback`
+          );
+
+          await sendWelcomeEmail({
+            to: customerEmail,
+            name: customerName || "cliente",
+            planName: plan.name,
+            loginLink,
+          });
+        } catch (err) {
+          console.error("[checkout] erro ao provisionar conta:", err);
+        }
+      })();
     }
 
     return NextResponse.json({ status: "paid" });
