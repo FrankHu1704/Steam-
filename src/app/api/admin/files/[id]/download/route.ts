@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/supabase/require-admin";
 
 export async function GET(
   req: NextRequest,
@@ -8,23 +8,9 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ message: "Não autenticado." }, { status: 401 });
-  }
-
-  const { data: requester } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single();
-
-  if (!requester?.is_admin) {
-    return NextResponse.json({ message: "Sem permissão." }, { status: 403 });
+  const auth = await requireAdmin();
+  if (!auth.ok) {
+    return NextResponse.json({ message: auth.message }, { status: auth.status });
   }
 
   const admin = createAdminClient();

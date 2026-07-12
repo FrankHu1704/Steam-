@@ -67,6 +67,39 @@ export default function AdminClient({
     );
   }
 
+  async function handlePlanChange(customer: Profile, planId: string) {
+    const nextPlanId = planId || null;
+    setError("");
+
+    const res = await fetch(`/api/admin/customers/${customer.id}/plan`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId: nextPlanId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      setError(data?.message || "Falha ao atualizar plano.");
+      return;
+    }
+
+    setList((prev) =>
+      prev.map((c) =>
+        c.id === customer.id
+          ? {
+              ...c,
+              plan_id: nextPlanId,
+              status: nextPlanId ? "ativo" : "pendente",
+              trial_ends_at:
+                nextPlanId === "trial"
+                  ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+                  : null,
+            }
+          : c
+      )
+    );
+  }
+
   async function handleDownload(fileId: string) {
     setError("");
     const res = await fetch(`/api/admin/files/${fileId}/download`);
@@ -132,8 +165,21 @@ export default function AdminClient({
                     <p className="font-medium text-white">{c.name || "—"}</p>
                     <p className="text-xs text-white/40">{c.email}</p>
                   </td>
-                  <td className="px-5 py-4 text-white/70">
-                    {c.plan_id ? c.plan_id.toUpperCase() : "—"}
+                  <td className="px-5 py-4">
+                    <select
+                      value={c.plan_id ?? ""}
+                      onChange={(e) => handlePlanChange(c, e.target.value)}
+                      className="rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white"
+                    >
+                      <option value="" className="bg-[#0f1420]">
+                        Sem plano
+                      </option>
+                      {plans.map((p) => (
+                        <option key={p.id} value={p.id} className="bg-[#0f1420]">
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-5 py-4 text-white/70">
                     {filesFor(c.id).length === 0 ? (

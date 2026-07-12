@@ -1,3 +1,5 @@
+import { Cloud } from "lucide-react";
+
 export default function Footer() {
   return (
     <footer id="contato" className="border-t border-white/10 bg-[#070a12]">
@@ -5,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-2 text-lg font-bold text-white">
-              <span>☁️</span> Senga Host
+              <Cloud className="h-5 w-5 text-primary-light" /> Senga Host
             </div>
             <p className="mt-3 text-sm text-white/50">
               Hospedagem de bots WhatsApp rápida, segura e acessível para

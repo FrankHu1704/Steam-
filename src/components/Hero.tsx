@@ -1,3 +1,5 @@
+import { Cloud, Bot } from "lucide-react";
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden pt-32 pb-24 sm:pt-40 sm:pb-32">
@@ -7,8 +9,9 @@ export default function Hero() {
 
       <div className="container-px mx-auto max-w-5xl text-center">
         <div className="mb-8 flex justify-center">
-          <div className="animate-float rounded-3xl border border-white/10 bg-white/5 p-6 text-6xl shadow-2xl shadow-primary/20">
-            ☁️🤖
+          <div className="animate-float flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-primary/20">
+            <Cloud className="h-12 w-12 text-primary-light" strokeWidth={1.5} />
+            <Bot className="h-12 w-12 text-accent" strokeWidth={1.5} />
           </div>
         </div>
 

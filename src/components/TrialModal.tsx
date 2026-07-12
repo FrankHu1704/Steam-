@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X, PartyPopper, AlertTriangle } from "lucide-react";
 
 type Status = "form" | "success" | "error";
 
@@ -60,13 +61,13 @@ export default function TrialModal({ onClose }: { onClose: () => void }) {
             className="rounded-lg p-1 text-white/50 hover:bg-white/10 hover:text-white"
             aria-label="Fechar"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {status === "success" && (
           <div className="mt-6 text-center">
-            <div className="text-4xl">🎉</div>
+            <PartyPopper className="mx-auto h-12 w-12 text-primary-light" />
             <p className="mt-3 font-semibold text-white">Teste ativado!</p>
             <p className="mt-1 text-sm text-white/60">
               Enviámos um link de acesso ao painel para o seu email. O teste
@@ -83,7 +84,7 @@ export default function TrialModal({ onClose }: { onClose: () => void }) {
 
         {status === "error" && (
           <div className="mt-6 text-center">
-            <div className="text-4xl">⚠️</div>
+            <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
             <p className="mt-3 font-semibold text-white">
               Não foi possível ativar
             </p>

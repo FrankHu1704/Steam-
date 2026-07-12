@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Cloud, Menu, X } from "lucide-react";
 
 const LINKS = [
   { href: "#planos", label: "Planos" },
@@ -15,7 +16,7 @@ export default function Header() {
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/5 bg-[#0a0e1a]/80 backdrop-blur-md">
       <div className="container-px mx-auto flex max-w-6xl items-center justify-between py-4">
         <a href="#" className="flex items-center gap-2 text-lg font-bold text-white">
-          <span>☁️</span> Senga Host
+          <Cloud className="h-5 w-5 text-primary-light" /> Senga Host
         </a>
 
         <nav className="hidden items-center gap-8 text-sm text-white/70 sm:flex">
@@ -47,7 +48,7 @@ export default function Header() {
             aria-label="Abrir menu"
             aria-expanded={open}
           >
-            {open ? "✕" : "☰"}
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>

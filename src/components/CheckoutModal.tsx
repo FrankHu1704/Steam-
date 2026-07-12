@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { X, CheckCircle2, AlertTriangle, Crown, Heart } from "lucide-react";
 import { Plan } from "@/lib/plans";
 
 type Status = "form" | "waiting" | "paid" | "failed";
@@ -140,14 +141,14 @@ export default function CheckoutModal({
               className="rounded-lg p-1 text-white/50 hover:bg-white/10 hover:text-white"
               aria-label="Fechar"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
         {status === "paid" && (
           <div className="mt-6 text-center">
-            <div className="text-4xl">✅</div>
+            <CheckCircle2 className="mx-auto h-12 w-12 text-accent" />
             <p className="mt-3 font-semibold text-white">
               Pagamento confirmado!
             </p>
@@ -183,7 +184,7 @@ export default function CheckoutModal({
 
         {status === "failed" && (
           <div className="mt-6 text-center">
-            <div className="text-4xl">⚠️</div>
+            <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
             <p className="mt-3 font-semibold text-white">
               Pagamento não concluído
             </p>
@@ -278,7 +279,11 @@ export default function CheckoutModal({
               <p className="text-xs font-semibold text-white/50">
                 FRANK AI SOLUTIONS
               </p>
-              <p className="text-xs text-white/40">GESTÃO DE ELITE 👑❤️</p>
+              <p className="flex items-center justify-center gap-1 text-xs text-white/40">
+                GESTÃO DE ELITE
+                <Crown className="h-3.5 w-3.5 text-amber-400" />
+                <Heart className="h-3.5 w-3.5 fill-red-400 text-red-400" />
+              </p>
             </div>
           </form>
         )}
