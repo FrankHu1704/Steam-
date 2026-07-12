@@ -3,14 +3,18 @@ import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
 import { ConfirmReceiptButton } from "@/components/withdrawals/confirm-receipt-button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getMyWithdrawals, getWithdrawalFeePercent } from "@/lib/data/withdrawals";
+import { getMyWithdrawals, getWithdrawalFeePercent, getWithdrawalMinimumAmount } from "@/lib/data/withdrawals";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function WithdrawalsPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const [withdrawals, feePercent] = await Promise.all([getMyWithdrawals(user.id), getWithdrawalFeePercent()]);
+  const [withdrawals, feePercent, minimumAmount] = await Promise.all([
+    getMyWithdrawals(user.id),
+    getWithdrawalFeePercent(),
+    getWithdrawalMinimumAmount(),
+  ]);
   const currency = profile.currency as "MZN" | "ZAR";
 
   return (
@@ -26,7 +30,12 @@ export default async function WithdrawalsPage() {
             <CardTitle>Novo levantamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <WithdrawalForm balanceAvailable={profile.balance_available} currency={profile.currency} feePercent={feePercent} />
+            <WithdrawalForm
+              balanceAvailable={profile.balance_available}
+              currency={profile.currency}
+              feePercent={feePercent}
+              minimumAmount={minimumAmount}
+            />
           </CardContent>
         </Card>
 

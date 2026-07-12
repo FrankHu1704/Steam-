@@ -17,6 +17,7 @@ export function SiteFooter() {
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li><a href="#recursos">Recursos</a></li>
             <li><a href="#metodos">Métodos de Pagamento</a></li>
+            <li><Link href="/taxas">Taxas</Link></li>
             <li><a href="#faq">FAQ</a></li>
           </ul>
         </div>

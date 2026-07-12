@@ -16,3 +16,9 @@ export async function getWithdrawalFeePercent(): Promise<number> {
   const { data } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();
   return typeof data?.value === "number" ? data.value : Number(data?.value ?? 5);
 }
+
+export async function getWithdrawalMinimumAmount(): Promise<number> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "withdrawal_minimum_amount").single();
+  return typeof data?.value === "number" ? data.value : Number(data?.value ?? 150);
+}

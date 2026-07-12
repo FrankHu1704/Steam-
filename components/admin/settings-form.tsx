@@ -11,13 +11,16 @@ import { updateSetting } from "@/lib/actions/admin";
 export function SettingsForm({
   withdrawalFeePercent,
   platformFeePercent,
+  withdrawalMinimumAmount,
 }: {
   withdrawalFeePercent: number;
   platformFeePercent: number;
+  withdrawalMinimumAmount: number;
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
   const [platformFee, setPlatformFee] = useState(String(platformFeePercent));
+  const [minimumAmount, setMinimumAmount] = useState(String(withdrawalMinimumAmount));
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -28,6 +31,7 @@ export function SettingsForm({
     await Promise.all([
       updateSetting("withdrawal_fee_percent", Number(withdrawalFee)),
       updateSetting("platform_fee_percent", Number(platformFee)),
+      updateSetting("withdrawal_minimum_amount", Number(minimumAmount)),
     ]);
     setPending(false);
     setSaved(true);
@@ -58,6 +62,17 @@ export function SettingsForm({
           step="0.1"
           value={platformFee}
           onChange={(e) => setPlatformFee(e.target.value)}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="min-withdrawal">Valor mínimo para saque (MT)</Label>
+        <Input
+          id="min-withdrawal"
+          type="number"
+          min={0}
+          step="1"
+          value={minimumAmount}
+          onChange={(e) => setMinimumAmount(e.target.value)}
         />
       </div>
       <Button type="submit" disabled={pending}>

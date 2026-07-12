@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
+import { sendProductApprovedEmail } from "@/lib/email";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -13,6 +14,16 @@ export async function approveProduct(productId: string) {
     .from("products")
     .update({ status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: admin.user.id, rejection_reason: null })
     .eq("id", productId);
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, profiles!producer_id(email)")
+    .eq("id", productId)
+    .single<{ title: string; profiles: { email: string } | null }>();
+  if (product?.profiles?.email) {
+    await sendProductApprovedEmail({ producerEmail: product.profiles.email, productTitle: product.title });
+  }
+
   return { ok: true };
 }
 

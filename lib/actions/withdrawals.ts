@@ -22,6 +22,16 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
     .eq("id", user.id)
     .single();
   if (!profile) return { error: "Perfil não encontrado." };
+
+  const { data: minSetting } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "withdrawal_minimum_amount")
+    .single();
+  const minimumAmount = Number(minSetting?.value ?? 150);
+  if (input.amount < minimumAmount) {
+    return { error: `O valor mínimo para levantamento é ${minimumAmount} MT.` };
+  }
   if (input.amount > profile.balance_available) return { error: "Saldo insuficiente." };
 
   const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();

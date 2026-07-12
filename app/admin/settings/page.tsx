@@ -6,6 +6,7 @@ export default async function AdminSettingsPage() {
   const settings = await getAllSettings();
   const withdrawalFeePercent = Number(settings.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
   const platformFeePercent = Number(settings.find((s) => s.key === "platform_fee_percent")?.value ?? 0);
+  const withdrawalMinimumAmount = Number(settings.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
 
   return (
     <div className="space-y-6">
@@ -16,7 +17,11 @@ export default async function AdminSettingsPage() {
 
       <Card className="max-w-lg">
         <CardContent className="p-6">
-          <SettingsForm withdrawalFeePercent={withdrawalFeePercent} platformFeePercent={platformFeePercent} />
+          <SettingsForm
+            withdrawalFeePercent={withdrawalFeePercent}
+            platformFeePercent={platformFeePercent}
+            withdrawalMinimumAmount={withdrawalMinimumAmount}
+          />
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/debito-pay";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendSaleNotificationEmail } from "@/lib/email";
 
 interface WebhookBody {
   event: "payment.completed" | "payment.failed" | "payment.refunded" | "payment.chargeback";
@@ -12,8 +13,6 @@ interface WebhookBody {
   };
   timestamp: string;
 }
-
-const PLATFORM_FEE_PERCENT = 0;
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -73,18 +72,27 @@ export async function POST(request: Request) {
     .eq("id", order.id);
 
   if (body.event === "payment.completed" && !order.credited_at) {
+    const { data: platformFeeSetting } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "platform_fee_percent")
+      .single();
+    const platformFeePercent = Number(platformFeeSetting?.value ?? 0);
+
     const commission = order.affiliate_commission_amount ?? 0;
-    const ownerNet = (order.total_amount - commission) * (1 - PLATFORM_FEE_PERCENT / 100);
+    const ownerNet = (order.total_amount - commission) * (1 - platformFeePercent / 100);
 
     const { data: producer } = await supabase
       .from("profiles")
-      .select("balance_available")
+      .select("balance_available, email")
       .eq("id", order.producer_id)
       .single();
     await supabase
       .from("profiles")
       .update({ balance_available: (producer?.balance_available ?? 0) + ownerNet })
       .eq("id", order.producer_id);
+
+    const { data: product } = await supabase.from("products").select("title").eq("id", order.product_id).single();
 
     await supabase.rpc("increment_product_sales", { p_id: order.product_id });
 
@@ -134,6 +142,15 @@ export async function POST(request: Request) {
       title: "Nova venda!",
       message: `Você vendeu por ${order.total_amount} ${order.currency}.`,
     });
+
+    if (producer?.email) {
+      await sendSaleNotificationEmail({
+        producerEmail: producer.email,
+        productTitle: product?.title ?? "o seu produto",
+        amount: order.total_amount,
+        currency: order.currency,
+      });
+    }
 
     await supabase.from("orders").update({ credited_at: new Date().toISOString() }).eq("id", order.id);
   }

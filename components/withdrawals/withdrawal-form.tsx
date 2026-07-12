@@ -22,10 +22,12 @@ export function WithdrawalForm({
   balanceAvailable,
   currency,
   feePercent,
+  minimumAmount,
 }: {
   balanceAvailable: number;
   currency: string;
   feePercent: number;
+  minimumAmount: number;
 }) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
@@ -60,7 +62,7 @@ export function WithdrawalForm({
         <Input
           id="amount"
           type="number"
-          min={1}
+          min={minimumAmount}
           max={balanceAvailable}
           step="0.01"
           required
@@ -68,7 +70,8 @@ export function WithdrawalForm({
           onChange={(e) => setAmount(e.target.value)}
         />
         <p className="text-xs text-muted-foreground">
-          Saldo disponível: {formatCurrency(balanceAvailable, currency as "MZN" | "ZAR")}
+          Saldo disponível: {formatCurrency(balanceAvailable, currency as "MZN" | "ZAR")} · Mínimo:{" "}
+          {formatCurrency(minimumAmount, currency as "MZN" | "ZAR")}
         </p>
       </div>
 
@@ -105,7 +108,7 @@ export function WithdrawalForm({
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" className="w-full" disabled={pending || numericAmount <= 0}>
+      <Button type="submit" className="w-full" disabled={pending || numericAmount < minimumAmount}>
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Pedir levantamento
       </Button>
