@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://raw.githubusercontent.com data:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<!-- frame-ancestors via <meta> não é respeitado por todos os browsers: para bloquear
+     clickjacking de forma garantida, defina também o header HTTP equivalente
+     (X-Frame-Options: DENY / Content-Security-Policy: frame-ancestors 'none') no vercel.json. -->
+<title>Doar — Frank AI Solutions</title>
+<meta name="description" content="Ajude a manter o Frank AI Solutions no ar. Doe via M-Pesa, e-Mola, mKesh ou cartão.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0614;
+    --bg-soft: #120B22;
+    --panel: #17102C;
+    --line: rgba(216, 180, 254, 0.14);
+    --text: #F5F1FF;
+    --text-dim: #9C8FC2;
+    --accent: #A855F7;
+    --accent-2: #E879F9;
+    --accent-rgb: 168,85,247;
+    --accent-2-rgb: 232,121,249;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+  }
+  [data-theme="light"]{
+    --bg: #FAF8FF;
+    --bg-soft: #F1ECFB;
+    --panel: #FFFFFF;
+    --line: rgba(88, 28, 135, 0.14);
+    --text: #1E1033;
+    --text-dim: #6B5B8F;
+    --accent: #9333EA;
+    --accent-2: #C026D3;
+    --accent-rgb: 147,51,234;
+    --accent-2-rgb: 192,38,211;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--display);
+    overflow-x:hidden; -webkit-font-smoothing:antialiased;
+    transition:background .35s ease, color .35s ease;
+    min-height:100vh;
+  }
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--accent); color:#0B0614;}
+
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),0.08), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(var(--accent-2-rgb),0.06), transparent 45%);
+  }
+
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 6vw; backdrop-filter:blur(10px);
+    background:rgba(11,6,20,0.6); border-bottom:1px solid var(--line);
+    transition:background .35s ease, border-color .35s ease;
+  }
+  [data-theme="light"] nav{ background:rgba(250,248,255,0.7); }
+  .logo{ font-family:var(--mono); font-weight:700; font-size:14px; letter-spacing:0.02em; display:flex; align-items:center; gap:10px; }
+  .nav-avatar{width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid var(--accent);}
+  .logo .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .theme-toggle{
+    width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:transparent;
+    color:var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:border-color .25s ease, color .25s ease;
+  }
+  .theme-toggle:hover{border-color:var(--accent); color:var(--accent);}
+  .theme-toggle svg{width:16px; height:16px;}
+  .icon-sun{display:none;}
+  [data-theme="light"] .icon-moon{display:none;}
+  [data-theme="light"] .icon-sun{display:block;}
+  .nav-cta{
+    font-family:var(--mono); font-size:12px; padding:9px 16px; border:1px solid var(--accent);
+    border-radius:30px; color:var(--accent); transition:all .25s ease;
+  }
+  .nav-cta:hover{background:var(--accent); color:#0B0614;}
+
+  main{
+    position:relative; z-index:3; max-width:560px; margin:0 auto;
+    padding:150px 6vw 100px;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:13px; color:var(--accent-2); letter-spacing:0.12em; text-transform:uppercase;
+    display:flex; align-items:center; gap:10px; margin-bottom:20px;
+  }
+  .eyebrow::before{content:''; width:18px; height:1px; background:var(--accent-2);}
+  h1{
+    font-size:clamp(2rem, 6vw, 2.8rem); line-height:1.05; letter-spacing:-0.02em; font-weight:700;
+  }
+  h1 .accent-text{
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{ margin-top:18px; color:var(--text-dim); font-size:1rem; line-height:1.65; max-width:48ch; }
+
+  .card{
+    margin-top:44px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:32px; box-shadow:0 30px 60px -25px rgba(0,0,0,0.5);
+  }
+
+  .amounts{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px; }
+  .amount-btn{
+    font-family:var(--mono); font-size:13px; padding:12px 0; border-radius:10px;
+    border:1px solid var(--line); background:transparent; color:var(--text); cursor:pointer;
+    transition:all .2s ease;
+  }
+  .amount-btn.active, .amount-btn:hover{ border-color:var(--accent); color:var(--accent); background:rgba(var(--accent-rgb),0.08); }
+
+  label{ display:block; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:7px; }
+  .field{ margin-top:20px; }
+  input, select, textarea{
+    width:100%; background:var(--bg-soft); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; color:var(--text); font-family:var(--display); font-size:0.95rem;
+    outline:none; transition:border-color .2s ease;
+  }
+  input:focus, select:focus, textarea:focus{ border-color:var(--accent); }
+  select{ appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239C8FC2' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; }
+  textarea{ resize:vertical; min-height:70px; font-family:var(--display); }
+
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:520px){ .row2{ grid-template-columns:1fr; } }
+
+  /* honeypot: hidden from real users/screen readers, only bots that auto-fill every field trip it */
+  .hp-field{ position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden; opacity:0; }
+
+  .submit-btn{
+    margin-top:28px; width:100%; display:inline-flex; align-items:center; justify-content:center; gap:12px;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2)); color:#0B0614;
+    padding:16px 24px; border:none; border-radius:40px; font-family:var(--mono); font-weight:700; font-size:14.5px;
+    cursor:pointer; box-shadow:0 0 0 0 rgba(var(--accent-rgb),0.5); animation:wa-pulse 2.6s infinite;
+    transition:transform .25s ease;
+  }
+  .submit-btn:hover{ transform:scale(1.02); }
+  .submit-btn:disabled{ opacity:0.55; cursor:default; animation:none; }
+  @keyframes wa-pulse{
+    0%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),0.45);}
+    70%{box-shadow:0 0 0 18px rgba(var(--accent-rgb),0);}
+    100%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),0);}
+  }
+
+  .error{ margin-top:16px; font-size:0.88rem; color:#f87171; font-family:var(--mono); }
+  .status-panel{ margin-top:22px; padding:18px 20px; border-radius:12px; border:1px solid var(--line); font-family:var(--mono); font-size:0.88rem; line-height:1.6; }
+  .status-panel.ok{ border-color:rgba(74,222,128,0.4); color:#4ade80; }
+  .status-panel.pending{ border-color:rgba(232,121,249,0.4); color:var(--accent-2); }
+  .status-panel.fail{ border-color:rgba(248,113,113,0.4); color:#f87171; }
+
+  footer{
+    border-top:1px solid var(--line); padding:28px 6vw; text-align:center;
+    font-family:var(--mono); font-size:12px; color:var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<nav>
+  <a class="logo" href="./index.html">
+    <img class="nav-avatar" src="https://raw.githubusercontent.com/vitincruz68-oss/uploads/main/449ieo.jpeg" alt="Chaquil Alberto" referrerpolicy="no-referrer">
+    <span class="dot"></span> FRANK AI SOLUTIONS
+  </a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema claro/escuro">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+</nav>
+
+<main>
+  <div class="eyebrow">Apoie o projeto</div>
+  <h1>Ajude a manter o <span class="accent-text">Frank AI Solutions</span> no ar.</h1>
+  <p class="sub">
+    Bots, sites e integrações de pagamento para Moçambique não se constroem sozinhos.
+    Se algo aqui te ajudou ou só quer apoiar o trabalho, qualquer valor faz diferença.
+  </p>
+
+  <div class="card">
+    <form id="donateForm" autocomplete="on" novalidate>
+      <label>Valor (MZN)</label>
+      <div class="amounts" id="amountButtons">
+        <button type="button" class="amount-btn" data-amount="50">50</button>
+        <button type="button" class="amount-btn active" data-amount="100">100</button>
+        <button type="button" class="amount-btn" data-amount="250">250</button>
+        <button type="button" class="amount-btn" data-amount="500">500</button>
+      </div>
+      <div class="field">
+        <input type="number" id="amount" min="1" max="1000000" step="1" value="100" placeholder="Ou digite outro valor" required>
+      </div>
+
+      <div class="field">
+        <label>1. Nome</label>
+        <input type="text" id="name" maxlength="120" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label>2. E-mail</label>
+        <input type="email" id="email" maxlength="254" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label>3. WhatsApp</label>
+        <input type="tel" id="whatsapp" placeholder="+258841234567" pattern="^\+?[0-9]{9,15}$" maxlength="16" autocomplete="tel" required>
+      </div>
+      <div class="field">
+        <label>4. Selecione a carteira de pagamento</label>
+        <select id="method">
+          <option value="mpesa">M-Pesa</option>
+          <option value="emola">e-Mola</option>
+          <option value="mkesh">mKesh</option>
+          <option value="visa_mastercard">Visa / Mastercard</option>
+        </select>
+      </div>
+      <div class="field" id="walletNumberField">
+        <label>5. Coloque o número da carteira</label>
+        <input type="tel" id="walletNumber" placeholder="+258841234567" pattern="^\+?[0-9]{9,15}$" maxlength="16" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label>Mensagem (opcional)</label>
+        <textarea id="message" maxlength="500" placeholder="Deixe uma mensagem de apoio..."></textarea>
+      </div>
+
+      <!-- honeypot: campo isco anti-bot, invisível para pessoas e leitores de ecrã -->
+      <div class="field hp-field" aria-hidden="true">
+        <label for="hp_website">Website</label>
+        <input type="text" id="hp_website" name="hp_website" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div id="errorBox" class="error" style="display:none;"></div>
+      <div id="statusBox" class="status-panel" style="display:none;"></div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"/></svg>
+        Doar Agora
+      </button>
+    </form>
+  </div>
+</main>
+
+<footer>© 2026 Frank AI Solutions — Chaquil Alberto · Maputo, Moçambique</footer>
+
+<script src="doar.js" defer></script>
+
+</body>
+</html>
