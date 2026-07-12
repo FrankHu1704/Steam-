@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0a0e1a;
+  color: #f5f7fb;
+}
+
+.container-px {
+  @apply px-6 sm:px-8 lg:px-12;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-primary-light via-primary to-accent bg-clip-text text-transparent;
+}
+
+.card-glass {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm;
+}
