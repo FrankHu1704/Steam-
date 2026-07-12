@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { InstallAppButton } from "@/components/install-app-button";
 import { signOut } from "@/lib/actions/auth";
 import type { Notification } from "@/types/database";
 
@@ -118,6 +119,7 @@ export function Shell({
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
+            <InstallAppButton />
             <NotificationsBell notifications={notifications} />
             <ThemeToggle />
           </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { InstallAppButton } from "@/components/install-app-button";
 
 const LINKS = [
   { href: "#recursos", label: "Recursos" },
@@ -25,6 +26,7 @@ export function SiteNav() {
           ))}
         </div>
         <div className="flex items-center gap-2">
+          <InstallAppButton />
           <ThemeToggle />
           <Button variant="ghost" size="sm" asChild>
             <Link href="/login">Entrar</Link>
