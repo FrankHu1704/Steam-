@@ -8,6 +8,7 @@ export type Profile = {
   plan_id: string | null;
   status: ProfileStatus;
   is_admin: boolean;
+  trial_ends_at: string | null;
   created_at: string;
 };
 

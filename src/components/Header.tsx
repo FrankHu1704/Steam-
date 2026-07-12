@@ -6,7 +6,6 @@ const LINKS = [
   { href: "#planos", label: "Planos" },
   { href: "#faq", label: "FAQ" },
   { href: "#contato", label: "Contato" },
-  { href: "/painel", label: "Área do Cliente" },
 ];
 
 export default function Header() {
@@ -27,21 +26,30 @@ export default function Header() {
           ))}
         </nav>
 
-        <a
-          href="#planos"
-          className="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark sm:block"
-        >
-          Escolher Plano
-        </a>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <a
+            href="/painel/login"
+            className="rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 sm:px-4"
+          >
+            Entrar
+          </a>
 
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-white sm:hidden"
-          aria-label="Abrir menu"
-          aria-expanded={open}
-        >
-          {open ? "✕" : "☰"}
-        </button>
+          <a
+            href="#planos"
+            className="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark sm:block"
+          >
+            Escolher Plano
+          </a>
+
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-white sm:hidden"
+            aria-label="Abrir menu"
+            aria-expanded={open}
+          >
+            {open ? "✕" : "☰"}
+          </button>
+        </div>
       </div>
 
       {open && (

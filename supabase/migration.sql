@@ -10,6 +10,7 @@ create table if not exists public.profiles (
   status text not null default 'pendente'
     check (status in ('pendente', 'ativo', 'pausado', 'erro')),
   is_admin boolean not null default false,
+  trial_ends_at timestamptz,
   created_at timestamptz not null default now()
 );
 

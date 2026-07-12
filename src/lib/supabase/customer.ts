@@ -6,6 +6,7 @@ export async function provisionCustomer(params: {
   name: string;
   phone: string;
   planId: string;
+  trialEndsAt?: string | null;
 }) {
   const admin = createAdminClient();
 
@@ -45,10 +46,21 @@ export async function provisionCustomer(params: {
       phone: params.phone,
       plan_id: params.planId,
       status: "ativo",
+      trial_ends_at: params.trialEndsAt ?? null,
     })
     .eq("id", customerId);
 
   return customerId;
+}
+
+export async function findProfileByEmail(email: string) {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("id, plan_id")
+    .eq("email", email)
+    .single();
+  return data;
 }
 
 export async function recordOrder(params: {

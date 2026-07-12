@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { plans } from "@/lib/plans";
+import { paidPlans } from "@/lib/plans";
 import { checkStatus } from "@/lib/debitopay";
 import { sendWelcomeEmail } from "@/lib/email";
 import { provisionCustomer, recordOrder, generateLoginLink } from "@/lib/supabase/customer";
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const { paymentId, planId, customerName, customerEmail, customerPhone, method } =
     await req.json();
 
-  const plan = plans.find((p) => p.id === planId);
+  const plan = paidPlans.find((p) => p.id === planId);
   if (!plan || !paymentId) {
     return NextResponse.json({ status: "error", message: "Dados inválidos." }, { status: 400 });
   }

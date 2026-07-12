@@ -35,6 +35,13 @@ export default function PainelClient({
   const fileInput = useRef<HTMLInputElement>(null);
 
   const plan = plans.find((p) => p.id === profile?.plan_id);
+  const isTrial = Boolean(plan?.trialHours);
+  const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+  const trialExpired = Boolean(isTrial && trialEndsAt && trialEndsAt.getTime() < Date.now());
+  const trialHoursLeft =
+    isTrial && trialEndsAt && !trialExpired
+      ? Math.max(1, Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60)))
+      : null;
 
   async function handleLogout() {
     const supabase = createClient();
@@ -183,9 +190,11 @@ export default function PainelClient({
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Plano atual</h2>
               <span
-                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[profile.status]}`}
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  trialExpired ? STATUS_COLOR.pausado : STATUS_COLOR[profile.status]
+                }`}
               >
-                {STATUS_LABEL[profile.status]}
+                {trialExpired ? "Teste Expirado" : STATUS_LABEL[profile.status]}
               </span>
             </div>
             {plan ? (
@@ -193,9 +202,16 @@ export default function PainelClient({
                 <p className="text-xl font-bold text-white">
                   {plan.name}{" "}
                   <span className="text-sm font-normal text-white/40">
-                    · {plan.price} MT/mês
+                    · {isTrial ? "Grátis" : `${plan.price} MT/mês`}
                   </span>
                 </p>
+                {isTrial && (
+                  <p className={trialExpired ? "text-red-400" : "text-accent"}>
+                    {trialExpired
+                      ? "O seu teste grátis expirou."
+                      : `Restam ${trialHoursLeft}h de teste.`}
+                  </p>
+                )}
                 <p>Memória: {plan.memory}</p>
                 <p>Armazenamento: {plan.storage}</p>
                 <p>CPU: {plan.cpu}</p>
@@ -209,7 +225,11 @@ export default function PainelClient({
               href="/#planos"
               className="mt-4 block text-center text-xs font-semibold text-primary-light hover:underline"
             >
-              {plan ? "Mudar de plano" : "Escolher um plano"}
+              {trialExpired
+                ? "Fazer upgrade agora"
+                : plan
+                  ? "Mudar de plano"
+                  : "Escolher um plano"}
             </Link>
           </section>
 

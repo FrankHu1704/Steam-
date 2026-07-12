@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { plans } from "@/lib/plans";
+import { paidPlans } from "@/lib/plans";
 import { isConfigured, processPayment, PaymentMethod } from "@/lib/debitopay";
 
 const VALID_METHODS: PaymentMethod[] = ["mpesa", "emola"];
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { planId, method, customer } = body ?? {};
 
-  const plan = plans.find((p) => p.id === planId);
+  const plan = paidPlans.find((p) => p.id === planId);
   if (!plan) {
     return NextResponse.json({ message: "Plano inválido." }, { status: 400 });
   }

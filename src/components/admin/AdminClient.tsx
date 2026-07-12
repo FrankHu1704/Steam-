@@ -32,6 +32,11 @@ export default function AdminClient({
   const filesFor = (customerId: string) =>
     files.filter((f) => f.customer_id === customerId);
 
+  const isTrialExpired = (c: Profile) =>
+    c.plan_id === "trial" &&
+    c.trial_ends_at !== null &&
+    new Date(c.trial_ends_at).getTime() < Date.now();
+
   const planPrice = (planId: string | null) =>
     plans.find((p) => p.id === planId)?.price ?? 0;
 
@@ -150,9 +155,11 @@ export default function AdminClient({
                   </td>
                   <td className="px-5 py-4">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[c.status]}`}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        isTrialExpired(c) ? STATUS_COLOR.pausado : STATUS_COLOR[c.status]
+                      }`}
                     >
-                      {STATUS_LABEL[c.status]}
+                      {isTrialExpired(c) ? "Teste Expirado" : STATUS_LABEL[c.status]}
                     </span>
                   </td>
                   <td className="px-5 py-4 text-white/50">
