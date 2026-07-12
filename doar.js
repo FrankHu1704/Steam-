@@ -12,6 +12,17 @@
 
   const root = document.documentElement;
 
+  // ---------- tracking (visitas/cliques, sem dados pessoais) ----------
+  function track(event, label) {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: window.location.pathname, event, label }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+  track("pageview");
+
   // ---------- tema ----------
   const themeToggle = document.getElementById("themeToggle");
   const savedTheme = localStorage.getItem("theme");
@@ -182,6 +193,7 @@
 
     submitBtn.disabled = true;
     submitBtn.textContent = "A processar…";
+    track("cta_click", "doar_submit");
 
     try {
       const res = await fetch("/api/donate", {

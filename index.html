@@ -686,6 +686,20 @@
 </footer>
 
 <script>
+  // Tracking (visitas/cliques, sem dados pessoais)
+  function track(event, label){
+    fetch('/api/track', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ path: window.location.pathname, event, label }),
+      keepalive: true,
+    }).catch(()=>{});
+  }
+  track('pageview');
+  document.querySelectorAll('.nav-cta, .wa-btn, .btn-ghost').forEach(el=>{
+    el.addEventListener('click', ()=> track('cta_click', el.className));
+  });
+
   // Reveal on scroll
   const reveals = document.querySelectorAll('.reveal');
   const obs = new IntersectionObserver((entries)=>{
