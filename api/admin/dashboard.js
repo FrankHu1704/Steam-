@@ -46,6 +46,15 @@ const HTML = `<!DOCTYPE html>
   .msg{font-family:var(--mono); font-size:13px; color:var(--text-dim); padding:20px 0;}
   section{margin-bottom:20px;}
   section h2{font-size:1rem; margin-bottom:16px; color:var(--text-dim); font-weight:600;}
+  .funnel{border:1px solid var(--line); border-radius:14px; padding:22px 24px; background:var(--bg-soft);}
+  .funnel-row{display:grid; grid-template-columns:200px 1fr 140px; align-items:center; gap:16px; margin-bottom:14px; font-size:0.85rem;}
+  .funnel-row:last-child{margin-bottom:0;}
+  .funnel-label{color:var(--text-dim);}
+  .funnel-bar-wrap{height:8px; border-radius:8px; background:var(--line); overflow:hidden;}
+  .funnel-bar{height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius:8px;}
+  .funnel-value{font-family:var(--mono); text-align:right;}
+  .funnel-pct{color:var(--text-dim);}
+  @media (max-width:640px){ .funnel-row{grid-template-columns:1fr; gap:6px;} .funnel-value{text-align:left;} }
 </style>
 </head>
 <body>
@@ -57,6 +66,10 @@ const HTML = `<!DOCTYPE html>
   <section>
     <h2>Resumo</h2>
     <div class="cards" id="cards"><div class="card"><div class="k">A carregar</div><div class="v">…</div></div></div>
+  </section>
+  <section>
+    <h2>Funil do quiz de contratação</h2>
+    <div class="funnel" id="funnel"><div class="msg">A carregar…</div></div>
   </section>
   <section>
     <h2>Transações</h2>

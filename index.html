@@ -360,6 +360,15 @@
   .support-text{ color:var(--text-dim); font-size:1rem; line-height:1.65; max-width:48ch; margin:0 auto; }
   .support-btn{ margin-top:32px; }
 
+  /* ---------- faq ---------- */
+  .faq-list{ max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .faq-item{ background:var(--bg-soft); padding:22px 26px; }
+  .faq-item summary{ cursor:pointer; font-weight:600; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .faq-item summary::-webkit-details-marker{ display:none; }
+  .faq-item summary::after{ content:'+'; color:var(--accent); font-size:1.3rem; flex-shrink:0; }
+  .faq-item[open] summary::after{ content:'−'; }
+  .faq-item p{ margin-top:14px; color:var(--text-dim); font-size:0.92rem; line-height:1.6; }
+
   /* ---------- contact ---------- */
   .contact{
     background:radial-gradient(ellipse at 50% 0%, rgba(var(--accent-rgb),0.1), transparent 60%);
@@ -455,6 +464,7 @@
     <a href="#processo">Processo</a>
     <a href="#redes">Redes</a>
     <a href="#apoiar">Apoiar</a>
+    <a href="#faq">FAQ</a>
     <a href="#contacto">Contacto</a>
   </div>
   <div class="nav-right">
@@ -770,6 +780,37 @@
       Apoiar o projeto
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg>
     </a>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-num">07 / Perguntas frequentes</div>
+      <h2 class="section-title">Antes de falares comigo</h2>
+    </div>
+  </div>
+  <div class="faq-list reveal">
+    <details class="faq-item">
+      <summary>Quanto custa um projeto?</summary>
+      <p>Depende do tamanho e da complexidade — um bot simples ou um site institucional custam menos do que uma integração de pagamento completa ou uma plataforma com painel administrativo. O orçamento é sempre calculado caso a caso, depois de perceber o que precisas.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Quanto tempo demora?</summary>
+      <p>Projetos mais simples (site institucional, bot básico) costumam ficar prontos em poucos dias. Integrações de pagamento ou plataformas mais completas levam mais tempo, dependendo dos requisitos.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Dás suporte depois de entregar?</summary>
+      <p>Sim. Fico disponível para ajustes e dúvidas depois do lançamento, e podemos combinar acompanhamento contínuo se precisares de manutenção regular.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Preciso de já ter um negócio a funcionar?</summary>
+      <p>Não. Trabalho tanto com quem já vende e quer digitalizar o atendimento ou os pagamentos, como com quem está a começar do zero.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Como começamos?</summary>
+      <p>O mais rápido é usar o botão "Contratar serviço" aqui em cima — respondes a 4 perguntas rápidas e a conversa no WhatsApp já começa com o essencial sobre o que precisas.</p>
+    </details>
   </div>
 </section>
 
@@ -1118,6 +1159,7 @@
       render();
       closeBtn.focus();
       track('cta_click', 'quiz_open');
+      track('quiz_step', 'step_' + (stepIndex + 1));
     }
 
     function closeQuiz(){
@@ -1131,6 +1173,7 @@
       if(!isAnswered()) return;
       if(stepIndex < QUESTIONS.length - 1){
         stepIndex += 1;
+        track('quiz_step', 'step_' + (stepIndex + 1));
         render();
       } else {
         const message = buildMessage();

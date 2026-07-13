@@ -4,9 +4,13 @@
 
 const { supabaseRequest } = require("../lib/supabaseRest");
 const { hashIp } = require("../lib/trackingHash");
+const { isRateLimited } = require("../lib/rateLimit");
 
 const ALLOWED_PATHS = ["/", "/index.html", "/doar", "/doar.html"];
-const ALLOWED_EVENTS = ["pageview", "cta_click"];
+const ALLOWED_EVENTS = ["pageview", "cta_click", "quiz_step"];
+
+const RATE_LIMIT_WINDOW_MS = 60000;
+const RATE_LIMIT_MAX = 40; // eventos por IP (hash) por minuto
 
 function clientIp(req) {
   const fwd = req.headers["x-forwarded-for"];
@@ -41,6 +45,13 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const ipHash = hashIp(clientIp(req));
+
+  if (await isRateLimited("page_events", ipHash, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX)) {
+    res.status(204).end();
+    return;
+  }
+
   try {
     await supabaseRequest("page_events", {
       method: "POST",
@@ -49,7 +60,7 @@ module.exports = async (req, res) => {
         path,
         event,
         label,
-        ip_hash: hashIp(clientIp(req)),
+        ip_hash: ipHash,
         user_agent: (req.headers["user-agent"] || "").slice(0, 200),
         referrer: (req.headers["referer"] || "").slice(0, 200),
       }),

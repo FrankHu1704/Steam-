@@ -29,6 +29,7 @@
 
   async function loadStats() {
     const cards = document.getElementById("cards");
+    const funnel = document.getElementById("funnel");
     try {
       const res = await fetch("/api/admin/stats");
       if (!res.ok) throw new Error("stats " + res.status);
@@ -41,8 +42,31 @@
         <div class="card"><div class="k">Doações falhadas</div><div class="v">${s.donations.failed}</div></div>
         <div class="card"><div class="k">Doações pendentes</div><div class="v">${s.donations.pending}</div></div>
       `;
+
+      if (funnel) {
+        const q = s.quiz || { opens: 0, steps: {}, completions: 0 };
+        const stages = [
+          { label: "Abriu o quiz", value: q.opens },
+          { label: "Chegou à pergunta 2", value: q.steps.step_2 || 0 },
+          { label: "Chegou à pergunta 3", value: q.steps.step_3 || 0 },
+          { label: "Chegou à pergunta 4", value: q.steps.step_4 || 0 },
+          { label: "Completou (foi ao WhatsApp)", value: q.completions },
+        ];
+        const base = stages[0].value || 0;
+        funnel.innerHTML = stages
+          .map((st) => {
+            const pct = base > 0 ? Math.round((st.value / base) * 100) : 0;
+            return `<div class="funnel-row">
+              <div class="funnel-label">${st.label}</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%"></div></div>
+              <div class="funnel-value">${st.value} <span class="funnel-pct">(${base > 0 ? pct : 0}%)</span></div>
+            </div>`;
+          })
+          .join("");
+      }
     } catch (e) {
       cards.innerHTML = '<div class="msg">Não foi possível carregar as estatísticas.</div>';
+      if (funnel) funnel.innerHTML = '<div class="msg">Não foi possível carregar o funil.</div>';
     }
   }
 

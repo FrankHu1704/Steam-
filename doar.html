@@ -117,6 +117,19 @@
   }
   .amount-btn.active, .amount-btn:hover{ border-color:var(--accent); color:var(--accent); background:rgba(var(--accent-rgb),0.08); }
 
+  .freq-toggle{ display:flex; gap:8px; margin-top:10px; }
+  .freq-btn{
+    flex:1; font-family:var(--mono); font-size:12.5px; padding:10px 0; border-radius:10px;
+    border:1px solid var(--line); background:transparent; color:var(--text); cursor:pointer;
+    transition:all .2s ease;
+  }
+  .freq-btn.active, .freq-btn:hover{ border-color:var(--accent); color:var(--accent); background:rgba(var(--accent-rgb),0.08); }
+
+  .progress-wrap{ margin-top:32px; }
+  .progress-track{ height:8px; border-radius:8px; background:var(--bg-soft); border:1px solid var(--line); overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius:8px; transition:width .6s ease; }
+  .progress-label{ margin-top:10px; font-family:var(--mono); font-size:0.82rem; color:var(--text-dim); }
+
   label{ display:block; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:7px; }
   .field{ margin-top:20px; }
   input, select, textarea{
@@ -185,6 +198,11 @@
     Se algo aqui te ajudou ou só quer apoiar o trabalho, qualquer valor faz diferença.
   </p>
 
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel"></div>
+  </div>
+
   <div class="card">
     <form id="donateForm" autocomplete="on" novalidate>
       <label>Valor (MZN)</label>
@@ -196,6 +214,14 @@
       </div>
       <div class="field">
         <input type="number" id="amount" min="1" max="1000000" step="1" value="100" placeholder="Ou digite outro valor" required>
+      </div>
+
+      <div class="field">
+        <label>Frequência</label>
+        <div class="freq-toggle" id="freqToggle">
+          <button type="button" class="freq-btn active" data-freq="once">Doação única</button>
+          <button type="button" class="freq-btn" data-freq="monthly">Doação mensal</button>
+        </div>
       </div>
 
       <div class="field">

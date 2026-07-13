@@ -23,6 +23,36 @@
   }
   track("pageview");
 
+  // ---------- barra de progresso (dados reais; fica escondida se não houver meta configurada) ----------
+  (function loadProgress() {
+    const wrap = document.getElementById("progressWrap");
+    const fill = document.getElementById("progressFill");
+    const label = document.getElementById("progressLabel");
+    if (!wrap) return;
+    fetch("/api/donation-progress")
+      .then((r) => (r.ok ? r.json() : { configured: false }))
+      .then((data) => {
+        if (!data.configured) return;
+        wrap.style.display = "block";
+        fill.style.width = data.percent + "%";
+        const raised = Math.round(data.raised).toLocaleString("pt-MZ");
+        const goal = Math.round(data.goal).toLocaleString("pt-MZ");
+        label.textContent = raised + " MT de " + goal + " MT angariados este mês (" + data.percent + "%)";
+      })
+      .catch(() => {});
+  })();
+
+  // ---------- frequência da doação ----------
+  let frequency = "once";
+  const freqButtons = document.querySelectorAll(".freq-btn");
+  freqButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      freqButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      frequency = btn.dataset.freq;
+    });
+  });
+
   // ---------- tema ----------
   const themeToggle = document.getElementById("themeToggle");
   const savedTheme = localStorage.getItem("theme");
@@ -216,6 +246,7 @@
           donorEmail: email,
           donorPhone: method !== "visa_mastercard" ? walletNumber : undefined,
           message: message || undefined,
+          recurring: frequency === "monthly",
           returnUrl: window.location.href,
         }),
       });
