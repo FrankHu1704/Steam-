@@ -64,17 +64,26 @@
   const statusBox = document.getElementById("statusBox");
   const honeypot = document.getElementById("hp_website");
 
+  // Ícones (sem emojis) usados nas mensagens de erro/estado. O texto é sempre
+  // escrito por nós (nunca vem do utilizador), por isso construir com innerHTML aqui é seguro.
+  const ICONS = {
+    warn: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    ok: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>',
+    fail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    pending: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  };
+
   function showError(text) {
     statusBox.style.display = "none";
-    errorBox.style.display = "block";
-    errorBox.textContent = text;
+    errorBox.style.display = "flex";
+    errorBox.innerHTML = ICONS.warn + "<span>" + text + "</span>";
   }
 
   function showStatus(kind, text) {
     errorBox.style.display = "none";
-    statusBox.style.display = "block";
+    statusBox.style.display = "flex";
     statusBox.className = "status-panel " + kind;
-    statusBox.textContent = text;
+    statusBox.innerHTML = (ICONS[kind] || "") + "<span>" + text + "</span>";
   }
 
   // ---------- validação client-side (defesa em profundidade) ----------
@@ -126,7 +135,7 @@
       attempts += 1;
       if (attempts > POLL_MAX_ATTEMPTS) {
         stopPolling();
-        showStatus("fail", "⏱️ Tempo de confirmação esgotado. Se já pagou, contacte o suporte.");
+        showStatus("fail", "Tempo de confirmação esgotado. Se já pagou, contacte o suporte.");
         submitBtn.disabled = false;
         return;
       }
@@ -140,10 +149,10 @@
         const data = await res.json();
         if (data.status === "success") {
           stopPolling();
-          showStatus("ok", "✅ Doação confirmada — muito obrigado pelo apoio!");
+          showStatus("ok", "Doação confirmada — muito obrigado pelo apoio!");
         } else if (data.status === "failed" || data.status === "expired") {
           stopPolling();
-          showStatus("fail", "❌ O pagamento não foi confirmado. Pode tentar novamente.");
+          showStatus("fail", "O pagamento não foi confirmado. Pode tentar novamente.");
           submitBtn.disabled = false;
         }
       } catch (e) {
@@ -230,7 +239,7 @@
         return;
       }
 
-      showStatus("pending", "⏳ Confirme o pagamento no seu telefone (" + method.toUpperCase() + ").");
+      showStatus("pending", "Confirme o pagamento no seu telefone (" + method.toUpperCase() + ").");
       pollDonation(data.paymentId, {
         donorPhone: whatsapp,
         amount,
