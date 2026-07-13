@@ -105,6 +105,7 @@
   .nav-cta{
     font-family:var(--mono); font-size:12px; padding:9px 16px; border:1px solid var(--accent);
     border-radius:30px; color:var(--accent); transition:all .25s ease;
+    background:transparent; cursor:pointer;
   }
   .nav-cta:hover{background:var(--accent); color:#0B0614;}
   @media (max-width:780px){ .nav-links{display:none;} }
@@ -327,6 +328,7 @@
     margin-top:24px; font-family:var(--mono); font-size:12.5px; color:var(--accent);
     display:inline-flex; align-items:center; gap:6px; align-self:flex-start;
     border-bottom:1px solid transparent; transition:border-color .25s ease;
+    background:transparent; border-top:none; border-left:none; border-right:none; padding:0; cursor:pointer;
   }
   .service-card:hover .service-link{border-color:var(--accent);}
   .service-note{margin-top:28px; text-align:center; font-family:var(--mono); font-size:12.5px; color:var(--text-dim);}
@@ -387,6 +389,53 @@
     border-top:1px solid var(--line); padding:32px 6vw; display:flex; justify-content:space-between;
     font-family:var(--mono); font-size:12px; color:var(--text-dim); flex-wrap:wrap; gap:12px;
   }
+
+  /* ---------- quiz de qualificação ---------- */
+  .quiz-overlay{
+    position:fixed; inset:0; z-index:100; background:rgba(6,3,12,0.72); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .quiz-overlay.open{ opacity:1; pointer-events:auto; }
+  .quiz-modal{
+    position:relative; width:100%; max-width:520px; max-height:88vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:36px 32px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,0.7);
+    transform:translateY(16px); transition:transform .25s ease;
+  }
+  .quiz-overlay.open .quiz-modal{ transform:translateY(0); }
+  .quiz-close{
+    position:absolute; top:18px; right:18px; width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--line); background:transparent; color:var(--text-dim); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all .2s ease;
+  }
+  .quiz-close:hover{ border-color:var(--accent); color:var(--accent); }
+  .quiz-progress{ height:3px; border-radius:3px; background:var(--line); overflow:hidden; margin-bottom:24px; }
+  .quiz-progress-bar{ height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .3s ease; }
+  .quiz-step-title{ font-size:1.25rem; font-weight:700; letter-spacing:-0.01em; margin-bottom:20px; padding-right:20px; }
+  .quiz-options{ display:flex; flex-direction:column; gap:10px; }
+  .quiz-option{
+    text-align:left; font-family:var(--display); font-size:0.95rem; color:var(--text);
+    background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+    cursor:pointer; transition:all .2s ease; display:flex; align-items:center; gap:12px;
+  }
+  .quiz-option:hover{ border-color:rgba(var(--accent-rgb),0.5); }
+  .quiz-option.selected{ border-color:var(--accent); background:rgba(var(--accent-rgb),0.1); color:var(--accent); }
+  .quiz-option .quiz-mark{
+    width:18px; height:18px; border-radius:5px; border:1px solid var(--line); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:transparent; transition:all .2s ease;
+  }
+  .quiz-option.selected .quiz-mark{ border-color:var(--accent); background:var(--accent); color:#0B0614; }
+  .quiz-other-input{
+    margin-top:10px; width:100%; background:var(--bg-soft); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; color:var(--text); font-family:var(--display); font-size:0.9rem; outline:none;
+  }
+  .quiz-other-input:focus{ border-color:var(--accent); }
+  .quiz-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:28px; gap:12px; }
+  .quiz-nav .btn{ cursor:pointer; border:none; }
+  .quiz-nav .btn-ghost{ background:transparent; border:1px solid var(--line); }
+  .quiz-nav .btn-primary:disabled{ opacity:0.4; cursor:default; }
+  .quiz-hint{ margin-top:10px; font-family:var(--mono); font-size:11.5px; color:var(--text-dim); }
 </style>
 </head>
 <body>
@@ -413,7 +462,7 @@
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     </button>
-    <a class="nav-cta" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20vi%20o%20seu%20portf%C3%B3lio%20e%20quero%20saber%20mais%20sobre%20os%20seus%20servi%C3%A7os." target="_blank" rel="noopener">Contratar serviço</a>
+    <button type="button" class="nav-cta quiz-trigger">Contratar serviço</button>
   </div>
 </nav>
 
@@ -556,25 +605,25 @@
       <div class="service-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0 0 12 4a8.9 8.9 0 0 0-7.7 13.4L3 21l3.7-1.27A8.9 8.9 0 0 0 12 21a8.9 8.9 0 0 0 8.9-8.9 8.86 8.86 0 0 0-3.3-5.78ZM12 19.3a7.3 7.3 0 0 1-3.7-1l-.27-.16-2.43.83.84-2.36-.18-.27a7.32 7.32 0 1 1 5.74 2.96Zm4-5.46c-.22-.11-1.3-.64-1.5-.71-.2-.08-.35-.11-.49.11-.15.22-.57.71-.7.86-.13.14-.26.16-.48.05-1.3-.65-2.15-1.16-3-2.64-.23-.39.23-.36.66-1.2.07-.15.04-.27-.03-.38-.07-.11-.65-1.56-.89-2.13-.23-.56-.47-.48-.65-.49-.17-.01-.35-.01-.54-.01-.18 0-.48.07-.74.34-.26.27-1 1-1 2.42 0 1.43 1.04 2.81 1.18 3 .15.2 2.04 3.13 4.94 4.27 2.9 1.14 2.9.76 3.43.71.53-.05 1.72-.7 1.96-1.38.24-.68.24-1.27.17-1.39-.07-.12-.25-.18-.47-.29Z"/></svg></div>
       <h3>Bot de WhatsApp</h3>
       <p>Atendimento automático, catálogo, respostas a perguntas frequentes e qualificação de clientes 24 horas por dia, sem precisar de alguém online o tempo todo.</p>
-      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20contratar%20um%20Bot%20de%20WhatsApp%20para%20o%20meu%20negócio." target="_blank" rel="noopener">Contratar este serviço →</a>
+      <button type="button" class="service-link quiz-trigger" data-service="whatsapp-bot">Contratar este serviço →</button>
     </div>
     <div class="service-card">
       <div class="service-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg></div>
       <h3>Pagamentos M-Pesa & E-Mola</h3>
       <p>Confirmação automática de pagamentos, registo de vendas e liberação imediata do produto ou serviço depois do cliente pagar.</p>
-      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20integrar%20pagamentos%20M-Pesa%2FE-Mola%20no%20meu%20negócio." target="_blank" rel="noopener">Contratar este serviço →</a>
+      <button type="button" class="service-link quiz-trigger" data-service="pagamentos">Contratar este serviço →</button>
     </div>
     <div class="service-card">
       <div class="service-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg></div>
       <h3>Sites e plataformas web</h3>
       <p>Site institucional, loja online ou painel de cliente, com domínio próprio e pensado para quem vai usar a partir do telemóvel.</p>
-      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20um%20site%20ou%20plataforma%20web%20para%20o%20meu%20negócio." target="_blank" rel="noopener">Contratar este serviço →</a>
+      <button type="button" class="service-link quiz-trigger" data-service="site">Contratar este serviço →</button>
     </div>
     <div class="service-card">
       <div class="service-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
       <h3>Integrações e automações</h3>
       <p>Conectar o seu bot, site ou sistema interno a outras ferramentas, e automatizar tarefas repetitivas do dia a dia do negócio.</p>
-      <a class="service-link" href="https://wa.me/258849311757?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20integra%C3%A7%C3%B5es%20e%20automa%C3%A7%C3%B5es." target="_blank" rel="noopener">Contratar este serviço →</a>
+      <button type="button" class="service-link quiz-trigger" data-service="integracoes">Contratar este serviço →</button>
     </div>
   </div>
 
@@ -741,6 +790,22 @@
   <span>Maputo · Matola · Moçambique</span>
 </footer>
 
+<div class="quiz-overlay" id="quizOverlay" aria-hidden="true">
+  <div class="quiz-modal" role="dialog" aria-modal="true" aria-labelledby="quizStepTitle">
+    <button type="button" class="quiz-close" id="quizClose" aria-label="Fechar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="quiz-progress"><div class="quiz-progress-bar" id="quizProgressBar" style="width:0%"></div></div>
+    <div class="quiz-step-title" id="quizStepTitle"></div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <div class="quiz-nav">
+      <button type="button" class="btn btn-ghost" id="quizBack">← Voltar</button>
+      <button type="button" class="btn btn-primary" id="quizNext" disabled>Seguinte →</button>
+    </div>
+    <div class="quiz-hint">As tuas respostas só servem para preparar a conversa no WhatsApp — nada é guardado.</div>
+  </div>
+</div>
+
 <script>
   // Tracking (visitas/cliques, sem dados pessoais)
   function track(event, label){
@@ -752,7 +817,7 @@
     }).catch(()=>{});
   }
   track('pageview');
-  document.querySelectorAll('.nav-cta, .wa-btn, .btn-ghost, .support-btn').forEach(el=>{
+  document.querySelectorAll('.wa-btn, .btn-ghost, .support-btn').forEach(el=>{
     el.addEventListener('click', ()=> track('cta_click', el.className));
   });
 
@@ -928,6 +993,169 @@
         }
       })
       .catch(() => { clearTimeout(timeoutId); showFallback(); });
+  })();
+
+  // Quiz de qualificação antes do WhatsApp
+  (function(){
+    const SERVICE_OPTIONS = [
+      { value: 'whatsapp-bot', label: 'Bot de WhatsApp' },
+      { value: 'pagamentos', label: 'Pagamentos M-Pesa & E-Mola' },
+      { value: 'site', label: 'Sites e plataformas web' },
+      { value: 'integracoes', label: 'Integrações e automações' },
+    ];
+    const TEM_OPTIONS = [
+      { value: 'whatsapp_business', label: 'WhatsApp Business' },
+      { value: 'site_proprio', label: 'Site próprio' },
+      { value: 'pagamentos_online', label: 'Forma de receber pagamentos online' },
+      { value: 'nenhum', label: 'Nenhuma destas opções' },
+    ];
+    const PROBLEMA_OPTIONS = [
+      { value: 'resposta_lenta', label: 'Demoro a responder aos clientes' },
+      { value: 'nao_vende_online', label: 'Não consigo vender online' },
+      { value: 'pagamentos_manuais', label: 'Pagamentos são manuais/confusos' },
+      { value: 'sem_presenca', label: 'Ainda não tenho presença online' },
+      { value: 'outro', label: 'Outro' },
+    ];
+
+    const QUESTIONS = [
+      { id: 'service', type: 'single', title: 'Que tipo de ajuda precisas?', options: SERVICE_OPTIONS },
+      { id: 'status', type: 'single', title: 'O teu negócio já está a funcionar?', options: [
+        { value: 'ativo', label: 'Sim, já vendo/atendo clientes' },
+        { value: 'comecando', label: 'Ainda estou a começar' },
+      ]},
+      { id: 'tem', type: 'multi', title: 'O que já tens hoje?', options: TEM_OPTIONS },
+      { id: 'problema', type: 'single', title: 'Qual é o maior problema agora?', options: PROBLEMA_OPTIONS, allowOther: true },
+    ];
+
+    const overlay = document.getElementById('quizOverlay');
+    const optionsEl = document.getElementById('quizOptions');
+    const titleEl = document.getElementById('quizStepTitle');
+    const progressBar = document.getElementById('quizProgressBar');
+    const backBtn = document.getElementById('quizBack');
+    const nextBtn = document.getElementById('quizNext');
+    const closeBtn = document.getElementById('quizClose');
+
+    let stepIndex = 0;
+    let answers = {};
+    let lastFocused = null;
+
+    function isAnswered(){
+      const q = QUESTIONS[stepIndex];
+      if(q.type === 'multi') return Array.isArray(answers[q.id]) && answers[q.id].length > 0;
+      if(q.id === 'problema' && answers.problema === 'outro') return !!(answers.problema_outro && answers.problema_outro.trim());
+      return !!answers[q.id];
+    }
+
+    function render(){
+      const q = QUESTIONS[stepIndex];
+      titleEl.textContent = q.title;
+      progressBar.style.width = Math.round(((stepIndex) / QUESTIONS.length) * 100) + '%';
+      backBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
+      nextBtn.textContent = stepIndex === QUESTIONS.length - 1 ? 'Ver no WhatsApp →' : 'Seguinte →';
+
+      optionsEl.innerHTML = '';
+      q.options.forEach(opt => {
+        const selected = q.type === 'multi'
+          ? Array.isArray(answers[q.id]) && answers[q.id].includes(opt.value)
+          : answers[q.id] === opt.value;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-option' + (selected ? ' selected' : '');
+        btn.innerHTML = '<span class="quiz-mark"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span>' + opt.label + '</span>';
+        btn.addEventListener('click', () => {
+          if(q.type === 'multi'){
+            const current = Array.isArray(answers[q.id]) ? answers[q.id].slice() : [];
+            const idx = current.indexOf(opt.value);
+            if(idx >= 0) current.splice(idx, 1); else current.push(opt.value);
+            answers[q.id] = current;
+          } else {
+            answers[q.id] = opt.value;
+          }
+          render();
+        });
+        optionsEl.appendChild(btn);
+      });
+
+      if(q.allowOther && answers[q.id] === 'outro'){
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'quiz-other-input';
+        input.placeholder = 'Descreve em poucas palavras…';
+        input.maxLength = 140;
+        input.value = answers[q.id + '_outro'] || '';
+        input.addEventListener('input', () => {
+          answers[q.id + '_outro'] = input.value;
+          nextBtn.disabled = !isAnswered();
+        });
+        optionsEl.appendChild(input);
+      }
+
+      nextBtn.disabled = !isAnswered();
+    }
+
+    function buildMessage(){
+      const serviceLabel = (SERVICE_OPTIONS.find(o => o.value === answers.service) || {}).label || 'Não especificado';
+      const statusLabel = answers.status === 'ativo' ? 'Já a funcionar' : 'Ainda a começar';
+      const temLabels = (answers.tem || []).map(v => (TEM_OPTIONS.find(o => o.value === v) || {}).label).filter(Boolean).join(', ') || 'Nenhuma';
+      let problemaLabel = (PROBLEMA_OPTIONS.find(o => o.value === answers.problema) || {}).label || '';
+      if(answers.problema === 'outro' && answers.problema_outro) problemaLabel = answers.problema_outro.trim();
+
+      return 'Olá! Preenchi o quiz do site sobre o meu negócio:\n' +
+        '- Serviço: ' + serviceLabel + '\n' +
+        '- Negócio: ' + statusLabel + '\n' +
+        '- Já tenho: ' + temLabels + '\n' +
+        '- Maior problema: ' + problemaLabel + '\n\n' +
+        'Quero saber mais.';
+    }
+
+    function openQuiz(preselectService){
+      answers = preselectService ? { service: preselectService } : {};
+      stepIndex = preselectService ? 1 : 0;
+      lastFocused = document.activeElement;
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      render();
+      closeBtn.focus();
+      track('cta_click', 'quiz_open');
+    }
+
+    function closeQuiz(){
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      if(lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if(!isAnswered()) return;
+      if(stepIndex < QUESTIONS.length - 1){
+        stepIndex += 1;
+        render();
+      } else {
+        const message = buildMessage();
+        track('cta_click', 'quiz_complete_' + (answers.service || 'geral'));
+        window.open('https://wa.me/258849311757?text=' + encodeURIComponent(message), '_blank', 'noopener');
+        closeQuiz();
+      }
+    });
+
+    backBtn.addEventListener('click', () => {
+      if(stepIndex > 0){
+        stepIndex -= 1;
+        render();
+      }
+    });
+
+    closeBtn.addEventListener('click', closeQuiz);
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeQuiz(); });
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && overlay.classList.contains('open')) closeQuiz();
+    });
+
+    document.querySelectorAll('.quiz-trigger').forEach(el => {
+      el.addEventListener('click', () => openQuiz(el.dataset.service || null));
+    });
   })();
 </script>
 
