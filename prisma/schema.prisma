@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  agents       Agent[]
+}
+
+model Agent {
+  id                 String          @id @default(cuid())
+  name               String
+  phoneNumber        String?
+  status             String          @default("disconnected") // disconnected | pairing | connected
+  pairingCode        String?
+  customInstructions String          @default("")
+  ownerId            String
+  owner              User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  trainingEntries    TrainingEntry[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model TrainingEntry {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
