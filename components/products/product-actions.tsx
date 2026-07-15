@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Pause, Play, Trash2 } from "lucide-react";
+import { Pause, Play, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteProduct, toggleProductStatus } from "@/lib/actions/products";
 import type { Product } from "@/types/database";
@@ -11,14 +11,6 @@ import type { Product } from "@/types/database";
 export function ProductActions({ product }: { product: Product }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-
-  const saleLink =
-    typeof window !== "undefined" ? `${window.location.origin}/p/${product.slug}` : `/p/${product.slug}`;
-
-  async function copyLink() {
-    await navigator.clipboard.writeText(saleLink);
-    toast.success("Link copiado!");
-  }
 
   async function handleToggle() {
     setBusy(true);
@@ -42,11 +34,6 @@ export function ProductActions({ product }: { product: Product }) {
 
   return (
     <div className="flex gap-2">
-      {product.status === "approved" && (
-        <Button variant="outline" size="sm" onClick={copyLink}>
-          <Copy className="h-4 w-4" /> Copiar Link
-        </Button>
-      )}
       {(product.status === "approved" || product.status === "paused") && (
         <Button variant="outline" size="sm" disabled={busy} onClick={handleToggle}>
           {product.status === "approved" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

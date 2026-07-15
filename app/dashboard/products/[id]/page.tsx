@@ -4,6 +4,7 @@ import { getCategories, getProductForOwner } from "@/lib/data/products";
 import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductActions } from "@/components/products/product-actions";
+import { ShareLinkCard } from "@/components/products/share-link-card";
 import { StatusBadge } from "@/components/ui/badge";
 import type { ProductFile } from "@/types/database";
 
@@ -37,6 +38,12 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         </div>
         <ProductActions product={product} />
       </div>
+
+      {(product.status === "approved" || product.status === "paused") && (
+        <div className="mt-6">
+          <ShareLinkCard productTitle={product.title} slug={product.slug} />
+        </div>
+      )}
 
       <div className="mt-8">
         <ProductForm

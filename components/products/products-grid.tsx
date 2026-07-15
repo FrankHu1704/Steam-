@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/badge";
+import { QuickCopyButton } from "@/components/products/quick-copy-button";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/database";
 
@@ -57,12 +58,17 @@ export function ProductsGrid({ products }: { products: Product[] }) {
           <Link
             key={p.id}
             href={`/dashboard/products/${p.id}`}
-            className="rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-lg"
+            className="relative rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-lg"
           >
-            <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
               {p.cover_image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover" />
+              )}
+              {(p.status === "approved" || p.status === "paused") && (
+                <div className="absolute right-2 top-2">
+                  <QuickCopyButton slug={p.slug} />
+                </div>
               )}
             </div>
             <div className="mt-3 flex items-start justify-between gap-2">
