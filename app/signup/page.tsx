@@ -51,7 +51,15 @@ export default function SignupPage() {
           {pending ? "A criar…" : "Começar Gratuitamente"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          Ao criar conta, concorda com os Termos de Serviço e Política de Privacidade da PagaJá.
+          Ao criar conta, concorda com os{" "}
+          <Link href="/termos" className="underline hover:text-foreground">
+            Termos de Serviço
+          </Link>{" "}
+          e{" "}
+          <Link href="/privacidade" className="underline hover:text-foreground">
+            Política de Privacidade
+          </Link>{" "}
+          da PagaJá.
         </p>
       </form>
     </AuthCard>
