@@ -19,6 +19,7 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
       to,
       subject,
       html,
+      ...(process.env.RESEND_REPLY_TO_EMAIL ? { replyTo: process.env.RESEND_REPLY_TO_EMAIL } : {}),
     });
   } catch {
     // Non-fatal — the in-app notification already recorded the event.
@@ -76,7 +77,15 @@ export async function sendBulkEmail(recipients: string[], subject: string, messa
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const chunk = recipients.slice(i, i + BATCH_SIZE);
     try {
-      await resend.batch.send(chunk.map((to) => ({ from, to, subject, html })));
+      await resend.batch.send(
+        chunk.map((to) => ({
+          from,
+          to,
+          subject,
+          html,
+          ...(process.env.RESEND_REPLY_TO_EMAIL ? { replyTo: process.env.RESEND_REPLY_TO_EMAIL } : {}),
+        }))
+      );
       sent += chunk.length;
     } catch {
       // Continue with remaining chunks even if one batch fails.
