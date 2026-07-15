@@ -5,8 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductActions } from "@/components/products/product-actions";
 import { ShareLinkCard } from "@/components/products/share-link-card";
+import { CourseBuilder } from "@/components/courses/course-builder";
 import { StatusBadge } from "@/components/ui/badge";
+import { getProducerCourseStructure } from "@/lib/data/courses";
 import type { ProductFile } from "@/types/database";
+
+const COURSE_CATEGORY_SLUGS = ["cursos", "mentorias"];
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,6 +27,10 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     .select("*")
     .eq("product_id", id)
     .order("sort_order");
+
+  const category = categories.find((c) => c.id === product.category_id);
+  const isCourseProduct = category ? COURSE_CATEGORY_SLUGS.includes(category.slug) : false;
+  const courseModules = isCourseProduct ? await getProducerCourseStructure(id) : [];
 
   return (
     <div>
@@ -42,6 +50,12 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       {(product.status === "approved" || product.status === "paused") && (
         <div className="mt-6">
           <ShareLinkCard productTitle={product.title} slug={product.slug} />
+        </div>
+      )}
+
+      {isCourseProduct && (
+        <div className="mt-6">
+          <CourseBuilder productId={id} modules={courseModules} />
         </div>
       )}
 

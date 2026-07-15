@@ -210,6 +210,41 @@ export interface LogEntry {
   created_at: string;
 }
 
+export interface CourseModule {
+  id: string;
+  product_id: string;
+  title: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface CourseLesson {
+  id: string;
+  module_id: string;
+  title: string;
+  description: string;
+  video_url: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface LessonProgress {
+  id: string;
+  lesson_id: string;
+  buyer_id: string;
+  completed: boolean;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface LessonComment {
+  id: string;
+  lesson_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
+}
+
 type Row<T> = { Row: T; Insert: Partial<T>; Update: Partial<T> };
 
 export interface Database {
@@ -231,6 +266,10 @@ export interface Database {
       notifications: Row<Notification>;
       settings: Row<Setting>;
       logs: Row<LogEntry>;
+      course_modules: Row<CourseModule>;
+      course_lessons: Row<CourseLesson>;
+      lesson_progress: Row<LessonProgress>;
+      lesson_comments: Row<LessonComment>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

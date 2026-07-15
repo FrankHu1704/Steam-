@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
-import { sendProductApprovedEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendBulkEmail } from "@/lib/email";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -100,6 +100,23 @@ export async function deleteCategory(categoryId: string) {
   const { error } = await supabase.from("categories").delete().eq("id", categoryId);
   if (error) return { error: error.message };
   return { ok: true };
+}
+
+export async function sendBroadcastEmail(subject: string, message: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (!subject.trim() || !message.trim()) return { error: "Preencha o assunto e a mensagem." };
+
+  const supabase = createAdminClient();
+  const { data: profiles } = await supabase.from("profiles").select("email");
+  const recipients = (profiles ?? []).map((p) => p.email).filter(Boolean);
+
+  if (recipients.length === 0) return { error: "Nenhum utilizador encontrado." };
+
+  const { sent } = await sendBulkEmail(recipients, subject, message);
+  if (sent === 0) return { error: "Falha ao enviar — verifique se RESEND_API_KEY está configurada." };
+
+  return { ok: true, sent, total: recipients.length };
 }
 
 export async function updateSetting(key: string, value: unknown) {

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { Package, GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getMyOrders } from "@/lib/data/buyer";
+import { productHasCourseContent } from "@/lib/data/courses";
 
 export default async function MyProductsPage() {
   const orders = await getMyOrders();
@@ -13,6 +14,7 @@ export default async function MyProductsPage() {
     if (!byProduct.has(order.product_id)) byProduct.set(order.product_id, order);
   }
   const products = Array.from(byProduct.values());
+  const courseFlags = await Promise.all(products.map((p) => productHasCourseContent(p.product_id)));
 
   return (
     <div className="space-y-6">
@@ -33,7 +35,7 @@ export default async function MyProductsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((order) => (
+          {products.map((order, i) => (
             <Card key={order.product_id} className="overflow-hidden">
               {order.product_cover && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -44,9 +46,18 @@ export default async function MyProductsPage() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   Comprado em {new Date(order.created_at).toLocaleDateString("pt-MZ")}
                 </p>
-                <Button asChild size="sm" className="mt-3 w-full">
-                  <Link href="/account/downloads">Ver downloads</Link>
-                </Button>
+                <div className="mt-3 space-y-2">
+                  {courseFlags[i] && (
+                    <Button asChild size="sm" className="w-full gap-1.5">
+                      <Link href={`/account/courses/${order.product_id}`}>
+                        <GraduationCap className="h-4 w-4" /> Acessar Curso
+                      </Link>
+                    </Button>
+                  )}
+                  <Button asChild size="sm" variant={courseFlags[i] ? "outline" : "default"} className="w-full">
+                    <Link href="/account/downloads">Ver downloads</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
