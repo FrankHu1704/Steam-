@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
 import { sendProductApprovedEmail, sendBulkEmail } from "@/lib/email";
+import { creditOrder } from "@/lib/order-fulfillment";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -69,6 +70,26 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
   }
 
   await supabase.from("withdrawals").update(updates).eq("id", withdrawalId);
+  return { ok: true };
+}
+
+export async function markOrderPaid(orderId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
+  if (!order) return { error: "Pedido não encontrado." };
+  if (order.status === "paid") return { error: "Este pedido já está marcado como pago." };
+
+  await supabase
+    .from("payments")
+    .update({ status: "paid", updated_at: new Date().toISOString() })
+    .eq("order_id", orderId);
+  await supabase.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", orderId);
+
+  await creditOrder(orderId);
+
   return { ok: true };
 }
 

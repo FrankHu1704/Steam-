@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
+import { MarkPaidButton } from "@/components/admin/mark-paid-button";
 import { getAllOrders } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export default async function AdminOrdersPage() {
                   <th className="p-4 font-medium">Método</th>
                   <th className="p-4 font-medium">Estado</th>
                   <th className="p-4 font-medium">Data</th>
+                  <th className="p-4 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
@@ -41,6 +43,9 @@ export default async function AdminOrdersPage() {
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {new Date(order.created_at).toLocaleDateString("pt-MZ")}
+                    </td>
+                    <td className="p-4">
+                      {order.status === "pending" && <MarkPaidButton orderId={order.id} />}
                     </td>
                   </tr>
                 ))}

@@ -102,12 +102,13 @@ export async function checkChargeStatus(paymentId: string) {
 
 export function verifyWebhookSignature(rawBody: string, signature: string | undefined | null): boolean {
   if (!signature) return false;
-  const expected = crypto
-    .createHmac("sha256", process.env.DEBITO_PAY_WEBHOOK_SECRET!)
-    .update(rawBody)
-    .digest("hex");
+  const secret = process.env.DEBITO_PAY_WEBHOOK_SECRET?.trim();
+  if (!secret) return false;
+
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const cleanSignature = signature.trim().replace(/^sha256=/, "");
   try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(cleanSignature));
   } catch {
     return false;
   }
