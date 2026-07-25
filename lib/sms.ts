@@ -31,9 +31,21 @@ export async function sendSms(to: string, message: string): Promise<void> {
   }
 }
 
+const SMS_MAX_LENGTH = 160;
+
 export async function sendSaleSms(input: { phone: string; productTitle: string; amount: number; currency: string }) {
-  await sendSms(
-    input.phone,
-    `PagaJá: Nova venda! "${input.productTitle}" vendido por ${input.amount} ${input.currency}. Saldo já atualizado no seu painel.`
-  );
+  // Kept free of accented characters on purpose: a single non-GSM-7 char
+  // (á, ã, ç, ...) forces UCS-2 encoding, which drops the per-segment
+  // limit from 160 to 70 — this stays a true single-segment SMS.
+  const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
+  const prefix = `CONFIRMADO\n+${amountLabel} adicionado a sua conta referente a venda de `;
+  const suffix = " na PagaJa.";
+
+  const maxTitleLength = SMS_MAX_LENGTH - prefix.length - suffix.length;
+  const title =
+    input.productTitle.length > maxTitleLength
+      ? `${input.productTitle.slice(0, Math.max(0, maxTitleLength - 3))}...`
+      : input.productTitle;
+
+  await sendSms(input.phone, `${prefix}${title}${suffix}`);
 }
