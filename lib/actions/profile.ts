@@ -15,6 +15,7 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
   const phone = String(formData.get("phone") ?? "").trim();
 
   if (!name) return { error: "O nome é obrigatório." };
+  if (!phone) return { error: "O telefone é obrigatório para receber notificações de vendas." };
 
   const avatarFile = formData.get("avatar") as File | null;
   let avatar_url: string | undefined;

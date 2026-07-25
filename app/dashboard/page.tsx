@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wallet, TrendingUp, CalendarDays, Users2, ArrowUpRight } from "lucide-react";
+import { Wallet, TrendingUp, CalendarDays, Users2, ArrowUpRight, PhoneCall } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
@@ -49,6 +49,20 @@ export default async function DashboardOverviewPage() {
           <Link href="/dashboard/products/new">Criar produto</Link>
         </Button>
       </div>
+
+      {!profile.phone && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
+          <div className="flex items-center gap-3">
+            <PhoneCall className="h-5 w-5 shrink-0 text-amber-600" />
+            <p className="text-amber-900 dark:text-amber-200">
+              Adicione o seu número de telemóvel para receber notificações de vendas.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/dashboard/settings">Atualizar Perfil</Link>
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((tile) => (

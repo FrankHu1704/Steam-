@@ -55,7 +55,10 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </div>
       <div>
         <Label htmlFor="phone">Telefone</Label>
-        <Input id="phone" name="phone" defaultValue={profile.phone ?? ""} placeholder="+258841234567" />
+        <Input id="phone" name="phone" defaultValue={profile.phone ?? ""} placeholder="+258841234567" required />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Usado para o contactarmos sobre as suas vendas (em breve também por SMS).
+        </p>
       </div>
       <div>
         <Label>Email</Label>
