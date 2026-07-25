@@ -26,17 +26,64 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
   }
 }
 
+function siteUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://pagaja.vercel.app";
+}
+
 function emailShell(title: string, bodyHtml: string): string {
+  const url = siteUrl();
   return `
-    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-      <p style="font-size:20px;font-weight:bold;margin:0 0 24px;">
-        Paga<span style="color:#7C3AED;">Já</span>
-      </p>
-      <h1 style="font-size:18px;margin:0 0 12px;">${title}</h1>
-      ${bodyHtml}
-      <p style="margin-top:32px;font-size:12px;color:#6b7280;">
-        by FRANK AI SOLUTIONS
-      </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+            <tr>
+              <td style="padding:32px 32px 4px;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="width:36px;height:36px;border-radius:10px;background:#2563EB;text-align:center;vertical-align:middle;">
+                      <span style="color:#ffffff;font-weight:700;font-size:18px;line-height:36px;">P</span>
+                    </td>
+                    <td style="padding-left:10px;font-size:18px;font-weight:700;color:#111827;">
+                      Paga<span style="color:#7C3AED;">Já</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 32px 8px;">
+                <h1 style="font-size:19px;line-height:1.3;margin:0 0 14px;color:#111827;">${title}</h1>
+                ${bodyHtml}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 28px;">
+                <div style="height:1px;background:#e5e7eb;margin:20px 0;"></div>
+                <p style="font-size:12px;color:#9ca3af;margin:0 0 6px;">
+                  <a href="${url}" style="color:#9ca3af;text-decoration:none;">PagaJá</a> ·
+                  <a href="${url}/privacidade" style="color:#9ca3af;text-decoration:none;">Privacidade</a> ·
+                  <a href="${url}/termos" style="color:#9ca3af;text-decoration:none;">Termos</a>
+                </p>
+                <p style="font-size:12px;color:#9ca3af;margin:0;">Recebeu este email porque tem uma conta PagaJá.</p>
+                <p style="font-size:11px;color:#d1d5db;margin:14px 0 0;">by FRANK AI SOLUTIONS</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailParagraph(text: string): string {
+  return `<p style="font-size:14px;line-height:1.6;color:#374151;margin:0 0 14px;">${text}</p>`;
+}
+
+function emailHighlight(text: string): string {
+  return `
+    <div style="background:#EEF2FF;border-left:3px solid #7C3AED;border-radius:8px;padding:14px 16px;margin:16px 0;">
+      <p style="margin:0;font-size:14px;font-style:italic;color:#4338CA;">${text}</p>
     </div>
   `;
 }
@@ -52,15 +99,11 @@ export async function sendSaleNotificationEmail(input: {
     subject: "Nova venda na PagaJá! 🎉",
     html: emailShell(
       "Você tem uma nova venda!",
-      `
-        <p style="font-size:14px;color:#374151;">
-          O produto <strong>${input.productTitle}</strong> acabou de ser vendido por
-          <strong>${input.amount} ${input.currency}</strong>.
-        </p>
-        <p style="font-size:14px;color:#374151;">
-          O valor já está disponível no seu saldo no painel da PagaJá.
-        </p>
-      `
+      emailParagraph(
+        `O produto <strong>${input.productTitle}</strong> acabou de ser vendido por <strong>${input.amount} ${input.currency}</strong>.`
+      ) +
+        emailParagraph("O valor já está disponível no seu saldo no painel da PagaJá.") +
+        emailHighlight("Cada venda é uma prova de que o seu conteúdo está a gerar valor real.")
     ),
   });
 }
@@ -71,7 +114,13 @@ export async function sendBulkEmail(recipients: string[], subject: string, messa
   if (!resend || recipients.length === 0) return { sent: 0 };
 
   const from = process.env.RESEND_FROM_EMAIL || "PagaJá <onboarding@resend.dev>";
-  const html = emailShell(subject, `<p style="font-size:14px;color:#374151;white-space:pre-line;">${message}</p>`);
+  const html = emailShell(
+    subject,
+    message
+      .split("\n\n")
+      .map((paragraph) => emailParagraph(paragraph.replace(/\n/g, "<br/>")))
+      .join("")
+  );
 
   let sent = 0;
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
@@ -100,12 +149,9 @@ export async function sendProductApprovedEmail(input: { producerEmail: string; p
     subject: "O seu produto foi aprovado! ✅",
     html: emailShell(
       "Produto aprovado",
-      `
-        <p style="font-size:14px;color:#374151;">
-          O seu produto <strong>${input.productTitle}</strong> foi revisto e aprovado.
-          Já está disponível para venda na PagaJá.
-        </p>
-      `
+      emailParagraph(
+        `O seu produto <strong>${input.productTitle}</strong> foi revisto e aprovado. Já está disponível para venda na PagaJá.`
+      ) + emailHighlight("Um bom produto merece chegar a quem precisa dele. Boa sorte com as vendas!")
     ),
   });
 }
