@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/debito-pay";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendSaleNotificationEmail } from "@/lib/email";
+import { sendSaleSms } from "@/lib/sms";
 
 interface WebhookBody {
   event: "payment.completed" | "payment.failed" | "payment.refunded" | "payment.chargeback";
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
 
     const { data: producer } = await supabase
       .from("profiles")
-      .select("balance_available, email")
+      .select("balance_available, email, phone")
       .eq("id", order.producer_id)
       .single();
     await supabase
@@ -146,6 +147,15 @@ export async function POST(request: Request) {
     if (producer?.email) {
       await sendSaleNotificationEmail({
         producerEmail: producer.email,
+        productTitle: product?.title ?? "o seu produto",
+        amount: order.total_amount,
+        currency: order.currency,
+      });
+    }
+
+    if (producer?.phone) {
+      await sendSaleSms({
+        phone: producer.phone,
         productTitle: product?.title ?? "o seu produto",
         amount: order.total_amount,
         currency: order.currency,
