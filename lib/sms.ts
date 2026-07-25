@@ -3,6 +3,8 @@
 // break the webhook that credits a sale — the email notification already
 // covers the same event.
 
+import { createAdminClient } from "@/lib/supabase/admin";
+
 const TSEMBA_BASE_URL = process.env.TSEMBA_API_URL || "https://hdxqelinqivwgmggolhs.supabase.co/functions/v1/api-gateway";
 
 function normalizePhone(phone: string): string {
@@ -17,20 +19,37 @@ function normalizePhone(phone: string): string {
 
 export async function sendSms(to: string, message: string): Promise<void> {
   const apiKey = process.env.TSEMBA_API_KEY;
-  if (!apiKey || !to) return;
+  const supabase = createAdminClient();
 
+  if (!apiKey || !to) {
+    await supabase.from("logs").insert({
+      action: "sms_debug",
+      metadata: { skipped: true, reason: !apiKey ? "no TSEMBA_API_KEY" : "no phone", to },
+    });
+    return;
+  }
+
+  const normalizedTo = normalizePhone(to);
   try {
-    await fetch(`${TSEMBA_BASE_URL}/sms/send`, {
+    const res = await fetch(`${TSEMBA_BASE_URL}/sms/send`, {
       method: "POST",
       headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
-        to: normalizePhone(to),
+        to: normalizedTo,
         message,
         ...(process.env.TSEMBA_SENDER_ID ? { sender_id: process.env.TSEMBA_SENDER_ID } : {}),
       }),
     });
-  } catch {
-    // Non-fatal — the email notification already covers this event.
+    const responseBody = await res.text();
+    await supabase.from("logs").insert({
+      action: "sms_debug",
+      metadata: { to: normalizedTo, status: res.status, ok: res.ok, response: responseBody },
+    });
+  } catch (err) {
+    await supabase.from("logs").insert({
+      action: "sms_debug",
+      metadata: { to: normalizedTo, error: (err as Error).message },
+    });
   }
 }
 
