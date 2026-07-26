@@ -1,18 +1,26 @@
 import Link from "next/link";
-import { Wallet, TrendingUp, CalendarDays, Users2, ArrowUpRight, PhoneCall } from "lucide-react";
+import { Wallet, TrendingUp, CalendarDays, Users2, ArrowUpRight, PhoneCall, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
 import { SalesChart } from "@/components/dashboard/sales-chart";
+import { cn, formatCurrency } from "@/lib/utils";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getDashboardStats } from "@/lib/data/dashboard";
-import { formatCurrency } from "@/lib/utils";
+import { getDashboardStats, DASHBOARD_PERIODS, type DashboardPeriod } from "@/lib/data/dashboard";
 
-export default async function DashboardOverviewPage() {
+export default async function DashboardOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string }>;
+}) {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const stats = await getDashboardStats(user.id);
+  const { days: daysParam } = await searchParams;
+  const requestedDays = Number(daysParam);
+  const days = (DASHBOARD_PERIODS.includes(requestedDays as DashboardPeriod) ? requestedDays : 14) as DashboardPeriod;
+
+  const stats = await getDashboardStats(user.id, days);
   const currency = profile.currency as "MZN" | "ZAR";
 
   const tiles = [
@@ -82,8 +90,22 @@ export default async function DashboardOverviewPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Vendas (últimos 14 dias)</CardTitle>
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+            <CardTitle>Vendas (últimos {days} dias)</CardTitle>
+            <div className="flex gap-1 rounded-lg bg-muted p-1">
+              {DASHBOARD_PERIODS.map((p) => (
+                <Link
+                  key={p}
+                  href={`/dashboard?days=${p}`}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    p === days ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {p}d
+                </Link>
+              ))}
+            </div>
           </CardHeader>
           <CardContent>
             <SalesChart data={stats.chart} currency={profile.currency} />
@@ -101,11 +123,50 @@ export default async function DashboardOverviewPage() {
             <p className="text-sm text-muted-foreground">clientes únicos até hoje</p>
             <div className="mt-4 border-t border-border pt-4">
               <p className="text-3xl font-bold">{stats.ordersCount}</p>
-              <p className="text-sm text-muted-foreground">vendas nos últimos 14 dias</p>
+              <p className="text-sm text-muted-foreground">vendas nos últimos {days} dias</p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" /> Produtos mais vendidos (últimos {days} dias)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {stats.topProducts.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Ainda não tem vendas neste período.</p>
+          ) : (
+            <div className="space-y-3">
+              {stats.topProducts.map((p, i) => {
+                const maxRevenue = stats.topProducts[0].revenue || 1;
+                return (
+                  <div key={p.id} className="flex items-center gap-3">
+                    <span className="w-5 shrink-0 text-sm font-semibold text-muted-foreground">{i + 1}º</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p className="truncate text-sm font-medium">{p.title}</p>
+                        <p className="shrink-0 text-sm font-semibold">
+                          {formatCurrency(p.revenue, currency)}
+                        </p>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-brand-gradient"
+                          style={{ width: `${Math.max(4, (p.revenue / maxRevenue) * 100)}%` }}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{p.salesCount} vendas</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -113,6 +113,27 @@ export async function payWithdrawalViaZumboPay(withdrawalId: string) {
   return { ok: true, reference: result.providerReference ?? result.reference };
 }
 
+export async function markProductionUnlockPaid(unlockId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: unlock } = await supabase.from("production_unlocks").select("*").eq("id", unlockId).single();
+  if (!unlock) return { error: "Registo não encontrado." };
+  if (unlock.status === "paid") return { error: "Este desbloqueio já está marcado como pago." };
+
+  await supabase
+    .from("production_unlocks")
+    .update({ status: "paid", paid_at: new Date().toISOString() })
+    .eq("id", unlockId);
+  await supabase
+    .from("profiles")
+    .update({ production_unlocked_at: new Date().toISOString() })
+    .eq("id", unlock.producer_id);
+
+  return { ok: true };
+}
+
 export async function markOrderPaid(orderId: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Category, LogEntry, Order, Product, Profile, Setting, Withdrawal } from "@/types/database";
+import type { Category, LogEntry, Order, Product, ProductionUnlock, Profile, Setting, Withdrawal } from "@/types/database";
 
 export async function requireAdminUser() {
   const supabase = await createClient();
@@ -98,6 +98,24 @@ export async function getAllWithdrawals(status?: string): Promise<AdminWithdrawa
     ...w,
     producer_name: w.profiles?.name ?? "—",
     producer_email: w.profiles?.email ?? "—",
+  }));
+}
+
+export interface AdminProductionUnlock extends ProductionUnlock {
+  producer_name: string;
+  producer_email: string;
+}
+
+export async function getAllProductionUnlocks(): Promise<AdminProductionUnlock[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("production_unlocks")
+    .select("*, profiles!producer_id(name, email)")
+    .order("created_at", { ascending: false });
+  return ((data ?? []) as (ProductionUnlock & { profiles: { name: string; email: string } | null })[]).map((u) => ({
+    ...u,
+    producer_name: u.profiles?.name ?? "—",
+    producer_email: u.profiles?.email ?? "—",
   }));
 }
 
