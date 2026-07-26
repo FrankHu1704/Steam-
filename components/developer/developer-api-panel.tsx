@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
-import { CheckCircle2, Copy, KeyRound, Lock, Plus, Smartphone, Trash2, Unlock, Webhook } from "lucide-react";
+import { CheckCircle2, Copy, KeyRound, Lock, Plus, ReceiptText, ShieldCheck, Trash2, Unlock, Webhook } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +26,9 @@ function copy(text: string) {
 
 type UnlockMethod = "mpesa" | "emola";
 
-const UNLOCK_METHODS: { value: UnlockMethod; label: string; color: string }[] = [
-  { value: "mpesa", label: "M-Pesa", color: "bg-red-600" },
-  { value: "emola", label: "e-Mola", color: "bg-orange-500" },
+const UNLOCK_METHODS: { value: UnlockMethod; label: string; logo: string }[] = [
+  { value: "mpesa", label: "M-Pesa", logo: "/payment-logos/mpesa.png" },
+  { value: "emola", label: "e-Mola", logo: "/payment-logos/emola.png" },
 ];
 
 function RevealedSecret({ clientId, clientSecret }: { clientId: string; clientSecret: string }) {
@@ -290,13 +291,15 @@ export function DeveloperApiPanel({
           ) : (
             <>
               <p className="mt-1 text-sm text-muted-foreground">
-                Tudo a funcionar no teste? Desbloqueie cobranças reais com um pagamento único de 300 MT.
+                Tudo a funcionar no teste? Desbloqueie cobranças reais com um pagamento único.
               </p>
-              <div className="mt-4 max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                <div className="bg-primary/5 px-5 py-4">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">Desbloquear modo produção</p>
-                  <p className="mt-0.5 text-2xl font-bold">300,00 MT</p>
-                  <p className="text-xs text-muted-foreground">Pagamento único — acesso vitalício a chaves live</p>
+              <div className="mt-4 max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-md">
+                <div className="bg-brand-gradient px-5 py-4 text-white">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-white/80">
+                    <ReceiptText className="h-3.5 w-3.5" /> Desbloquear modo produção
+                  </p>
+                  <p className="mt-1 text-3xl font-bold">300,00 MT</p>
+                  <p className="text-xs text-white/80">Pagamento único — acesso vitalício a chaves live</p>
                 </div>
                 <div className="space-y-4 p-5">
                   <div className="space-y-1.5">
@@ -310,14 +313,21 @@ export function DeveloperApiPanel({
                             type="button"
                             onClick={() => setUnlockMethod(m.value)}
                             className={cn(
-                              "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-colors",
-                              selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                              "relative flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-white p-3 transition-all",
+                              selected
+                                ? "border-primary shadow-md shadow-primary/10"
+                                : "border-border hover:border-primary/40 hover:shadow-sm"
                             )}
                           >
-                            <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", m.color)}>
-                              <Smartphone className="h-4 w-4" />
+                            {selected && (
+                              <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+                                <CheckCircle2 className="h-3 w-3" />
+                              </span>
+                            )}
+                            <span className="flex h-9 w-full items-center justify-center">
+                              <Image src={m.logo} alt={m.label} width={72} height={36} className="h-8 w-auto object-contain" />
                             </span>
-                            <span className="text-xs font-medium">{m.label}</span>
+                            <span className="text-xs font-medium text-slate-700">{m.label}</span>
                           </button>
                         );
                       })}
@@ -342,9 +352,19 @@ export function DeveloperApiPanel({
                     </div>
                   </div>
 
-                  <Button type="button" onClick={handleUnlock} disabled={unlocking} className="w-full">
-                    {unlocking ? "A confirmar…" : "Pagar 300,00 MT"}
+                  <Button
+                    type="button"
+                    onClick={handleUnlock}
+                    disabled={unlocking}
+                    className="w-full gap-2 shadow-lg shadow-primary/20"
+                  >
+                    {unlocking ? "A confirmar…" : <Lock className="h-4 w-4" />}
+                    {unlocking ? "" : "Pagar 300,00 MT"}
                   </Button>
+
+                  <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Pagamento seguro via ZumboPay
+                  </p>
                 </div>
               </div>
             </>
