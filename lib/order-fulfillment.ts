@@ -18,7 +18,7 @@ export async function creditOrder(orderId: string): Promise<void> {
     .select("value")
     .eq("key", "platform_fee_percent")
     .single();
-  const platformFeePercent = Number(platformFeeSetting?.value ?? 0);
+  const platformFeePercent = Number(platformFeeSetting?.value ?? 10);
 
   const commission = order.affiliate_commission_amount ?? 0;
   const platformFeeAmount = Math.round((order.total_amount - commission) * (platformFeePercent / 100) * 100) / 100;

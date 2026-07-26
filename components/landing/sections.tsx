@@ -74,7 +74,7 @@ const BENEFITS = [
 ];
 
 const STATS = [
-  { value: "5%", label: "Taxa por venda" },
+  { value: "90%", label: "Você recebe por venda" },
   { value: "24h", label: "Saques processados" },
   { value: "100%", label: "Em Português" },
 ];
@@ -94,7 +94,7 @@ const TESTIMONIALS = [
 ];
 
 const FAQS = [
-  { q: "É realmente gratuito começar?", a: "Sim. Não há mensalidade — a PagaJá só fica com uma pequena percentagem quando você vende." },
+  { q: "É realmente gratuito começar?", a: "Sim. Não há mensalidade — a PagaJá fica com 10% sobre cada venda (você recebe 90%) e 5% sobre cada saque solicitado." },
   { q: "Como recebo o dinheiro das vendas?", a: "O valor fica disponível no seu saldo e pode ser sacado via M-Pesa, e-Mola ou transferência bancária." },
   { q: "Posso vender cursos com vídeo?", a: "Sim, pode adicionar vídeos, PDFs, templates e outros ficheiros digitais ao seu produto." },
   { q: "Existe programa de afiliados?", a: "Sim — ative a afiliação no seu produto e qualquer pessoa pode promovê-lo por comissão." },

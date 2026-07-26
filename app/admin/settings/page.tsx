@@ -5,7 +5,7 @@ import { getAllSettings } from "@/lib/data/admin";
 export default async function AdminSettingsPage() {
   const settings = await getAllSettings();
   const withdrawalFeePercent = Number(settings.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
-  const platformFeePercent = Number(settings.find((s) => s.key === "platform_fee_percent")?.value ?? 0);
+  const platformFeePercent = Number(settings.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
   const withdrawalMinimumAmount = Number(settings.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
   const paymentProvider =
     (settings.find((s) => s.key === "payment_provider")?.value as "debito_pay" | "zumbopay" | undefined) ??

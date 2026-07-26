@@ -17,22 +17,24 @@ export default async function TaxasPage() {
     .select("key, value")
     .in("key", ["platform_fee_percent", "withdrawal_fee_percent", "withdrawal_minimum_amount"]);
 
-  const platformFee = Number(settings?.find((s) => s.key === "platform_fee_percent")?.value ?? 5);
+  const platformFee = Number(settings?.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
   const withdrawalFee = Number(settings?.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
   const minimumWithdrawal = Number(settings?.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
 
   const items = [
     {
       icon: Percent,
-      title: "Taxa por venda",
+      title: "Sobre Vendas Realizadas",
       value: `${platformFee}%`,
+      youReceive: 100 - platformFee,
       description:
         "Cobrada apenas quando um produto é vendido com sucesso. Descontada automaticamente do valor da venda antes de entrar no seu saldo disponível.",
     },
     {
       icon: ArrowDownToLine,
-      title: "Taxa de saque",
+      title: "Sobre Saques Solicitados",
       value: `${withdrawalFee}%`,
+      youReceive: 100 - withdrawalFee,
       description:
         "Cobrada sobre o valor pedido no levantamento, para cobrir os custos de transferência para M-Pesa, e-Mola, mKesh ou conta bancária.",
     },
@@ -40,6 +42,7 @@ export default async function TaxasPage() {
       icon: Wallet,
       title: "Valor mínimo para saque",
       value: formatCurrency(minimumWithdrawal, "MZN"),
+      youReceive: null,
       description: "O valor mínimo que pode pedir para levantar do seu saldo disponível de cada vez.",
     },
   ];
@@ -66,6 +69,11 @@ export default async function TaxasPage() {
                   <p className="font-semibold">{item.title}</p>
                   <p className="text-lg font-bold text-primary">{item.value}</p>
                 </div>
+                {item.youReceive != null && (
+                  <p className="mt-0.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    Você recebe {item.youReceive}%
+                  </p>
+                )}
                 <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
               </div>
             </div>

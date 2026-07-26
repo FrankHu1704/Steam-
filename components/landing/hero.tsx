@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles, Lock, CheckCircle2, TrendingUp, Wallet } from "lu
 import { Button } from "@/components/ui/button";
 
 const TRUST_POINTS = [
-  { icon: Wallet, text: "Só 5% de taxa por venda" },
+  { icon: Wallet, text: "Você recebe 90% em cada venda" },
   { icon: CheckCircle2, text: "Saques via M-Pesa & e-Mola" },
   { icon: Sparkles, text: "Suporte em Português" },
 ];
