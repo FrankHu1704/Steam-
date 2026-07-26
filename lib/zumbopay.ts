@@ -163,6 +163,59 @@ export async function checkChargeStatus(paymentId: string) {
   return { status: result.status };
 }
 
+interface PayoutInput {
+  method: "mpesa" | "emola";
+  amount: number;
+  destination: string;
+  notes?: string;
+  /** Only supported for method="mpesa" — instant B2C, synchronous result. */
+  autoDispatch?: boolean;
+}
+
+interface PayoutResult {
+  success: boolean;
+  status?: "pending" | "success" | "failed";
+  reference?: string;
+  providerReference?: string;
+  feeAmount?: number;
+  netAmount?: number;
+  error?: string;
+}
+
+/** Sends money OUT from PagaJá's own ZumboPay wallet to a producer's phone
+ * — the payout side, used to automate withdrawal payouts. Real money
+ * movement: requires the PagaJá merchant account to have passed KYC. */
+export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
+  const walletId =
+    input.method === "mpesa" ? process.env.ZUMBOPAY_WALLET_MPESA : process.env.ZUMBOPAY_WALLET_EMOLA;
+  if (!walletId) {
+    return { success: false, error: `Nenhuma wallet ZumboPay configurada para "${input.method}".` };
+  }
+
+  const { status, body } = await request("POST", "/payouts", {
+    wallet_id: walletId,
+    amount: input.amount,
+    method: input.method,
+    destination: input.destination.replace(/\D/g, "").slice(-9),
+    ...(input.notes ? { notes: input.notes } : {}),
+    ...(input.autoDispatch ? { auto_dispatch: true } : {}),
+  });
+
+  const data = body?.data;
+  if (!data) {
+    return { success: false, error: body?.error?.message || body?.error || `ZumboPay error (HTTP ${status})` };
+  }
+
+  return {
+    success: true,
+    status: mapStatus(String(data.status ?? "pending")),
+    reference: data.reference,
+    providerReference: data.provider_reference,
+    feeAmount: data.fee_amount,
+    netAmount: data.net_amount,
+  };
+}
+
 export function verifyWebhookSignature(rawBody: string, signature: string | undefined | null, timestamp: string | undefined | null): boolean {
   if (!signature || !timestamp) return false;
   const secret = process.env.ZUMBOPAY_WEBHOOK_SECRET?.trim();

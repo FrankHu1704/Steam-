@@ -31,7 +31,7 @@ export default async function AdminWithdrawalsPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={w.status} />
-                    <WithdrawalReviewActions withdrawalId={w.id} status={w.status} />
+                    <WithdrawalReviewActions withdrawalId={w.id} status={w.status} payoutMethod={w.payout_method} />
                   </div>
                 </div>
               ))}

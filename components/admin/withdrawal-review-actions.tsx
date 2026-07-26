@@ -2,13 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { updateWithdrawalStatus } from "@/lib/actions/admin";
-import type { WithdrawalStatus } from "@/types/database";
+import { updateWithdrawalStatus, payWithdrawalViaZumboPay } from "@/lib/actions/admin";
+import type { PayoutMethod, WithdrawalStatus } from "@/types/database";
 
-export function WithdrawalReviewActions({ withdrawalId, status }: { withdrawalId: string; status: WithdrawalStatus }) {
+export function WithdrawalReviewActions({
+  withdrawalId,
+  status,
+  payoutMethod,
+}: {
+  withdrawalId: string;
+  status: WithdrawalStatus;
+  payoutMethod: PayoutMethod;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [reference, setReference] = useState("");
@@ -17,6 +26,18 @@ export function WithdrawalReviewActions({ withdrawalId, status }: { withdrawalId
     setPending(true);
     await updateWithdrawalStatus(withdrawalId, newStatus, note);
     setPending(false);
+    router.refresh();
+  }
+
+  async function handleAutoPayout() {
+    setPending(true);
+    const res = await payWithdrawalViaZumboPay(withdrawalId);
+    setPending(false);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Pago automaticamente via ZumboPay!");
     router.refresh();
   }
 
@@ -37,6 +58,12 @@ export function WithdrawalReviewActions({ withdrawalId, status }: { withdrawalId
   if (status === "approved") {
     return (
       <div className="flex flex-wrap items-center gap-2">
+        {payoutMethod === "mpesa" && (
+          <Button size="sm" variant="outline" onClick={handleAutoPayout} disabled={pending} className="gap-1.5">
+            <Zap className="h-3.5 w-3.5" />
+            Pagar via ZumboPay
+          </Button>
+        )}
         <Input
           className="h-9 w-40"
           placeholder="Referência"
