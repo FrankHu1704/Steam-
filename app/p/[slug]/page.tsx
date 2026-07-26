@@ -3,20 +3,30 @@ import { Flame } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { StarRating } from "@/components/reviews/star-rating";
+import { TrackingScriptInjector } from "@/components/products/tracking-script-injector";
 import { getActivePaymentProvider, methodsForProvider } from "@/lib/payments";
 import { getProductReviews, getProductRatingSummary } from "@/lib/data/reviews";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/database";
+
+interface ProductSearchParams {
+  ref?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+}
 
 export default async function ProductSalePage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ ref?: string }>;
+  searchParams: Promise<ProductSearchParams>;
 }) {
   const { slug } = await params;
-  const { ref } = await searchParams;
+  const { ref, utm_source, utm_medium, utm_campaign, utm_content, utm_term } = await searchParams;
   const supabase = createAdminClient();
 
   const { data: product } = await supabase
@@ -51,6 +61,7 @@ export default async function ProductSalePage({
 
   return (
     <div className="min-h-screen bg-muted/30 py-12">
+      {product.tracking_script && <TrackingScriptInjector html={product.tracking_script} />}
       <div className="container grid max-w-5xl gap-10 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -135,7 +146,13 @@ export default async function ProductSalePage({
                   </div>
                 </div>
               </div>
-              <CheckoutForm product={product} bumps={bumps ?? []} affiliateRef={ref} paymentMethods={paymentMethods} />
+              <CheckoutForm
+                product={product}
+                bumps={bumps ?? []}
+                affiliateRef={ref}
+                paymentMethods={paymentMethods}
+                utm={{ source: utm_source, medium: utm_medium, campaign: utm_campaign, content: utm_content, term: utm_term }}
+              />
             </div>
           </div>
         </div>

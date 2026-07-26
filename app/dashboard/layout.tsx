@@ -8,6 +8,7 @@ import {
   Settings,
   Tag,
   Code2,
+  Megaphone,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +20,7 @@ const NAV: ShellNavItem[] = [
   { href: "/dashboard/products", label: "Produtos", icon: <Package className="h-4 w-4" /> },
   { href: "/dashboard/orders", label: "Pedidos", icon: <ShoppingCart className="h-4 w-4" /> },
   { href: "/dashboard/coupons", label: "Cupões", icon: <Tag className="h-4 w-4" /> },
+  { href: "/dashboard/campaigns", label: "Campanhas", icon: <Megaphone className="h-4 w-4" /> },
   { href: "/dashboard/affiliates", label: "Afiliados", icon: <Users2 className="h-4 w-4" /> },
   { href: "/dashboard/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
   { href: "/dashboard/developer", label: "Programador", icon: <Code2 className="h-4 w-4" /> },

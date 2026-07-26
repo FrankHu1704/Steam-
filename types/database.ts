@@ -103,6 +103,7 @@ export interface Product {
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  tracking_script: string | null;
 }
 
 export interface ProductFile {
@@ -150,6 +151,11 @@ export interface Order {
   paid_at: string | null;
   credited_at: string | null;
   platform_fee_amount: number | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
 }
 
 export interface OrderBump {

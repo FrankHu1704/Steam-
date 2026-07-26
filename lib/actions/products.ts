@@ -20,6 +20,7 @@ interface UpsertProductInput {
   affiliateCommissionPercent: number;
   seoTitle: string | null;
   seoDescription: string | null;
+  trackingScript: string | null;
   files: { name: string; storage_path: string; size_bytes: number }[];
 }
 
@@ -54,6 +55,7 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     affiliate_commission_percent: Math.min(90, Math.max(0, input.affiliateCommissionPercent)),
     seo_title: input.seoTitle,
     seo_description: input.seoDescription,
+    tracking_script: input.trackingScript,
   };
 
   let productId = input.id;

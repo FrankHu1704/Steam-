@@ -40,6 +40,7 @@ export function ProductForm({
   );
   const [seoTitle, setSeoTitle] = useState(product?.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(product?.seo_description ?? "");
+  const [trackingScript, setTrackingScript] = useState(product?.tracking_script ?? "");
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(product?.cover_image_url ?? null);
@@ -97,6 +98,7 @@ export function ProductForm({
         affiliateCommissionPercent: Number(commissionPercent),
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
+        trackingScript: trackingScript || null,
         files,
       });
 
@@ -232,6 +234,24 @@ export function ProductForm({
               <Label htmlFor="seoDescription">Meta Descrição</Label>
               <Textarea id="seoDescription" rows={2} value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} />
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-semibold">Rastreamento (Pixels)</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cole aqui o script de rastreamento do Meta Pixel, Google Ads, TikTok Pixel, UTMify ou outro — será
+            inserido na página deste produto.
+          </p>
+          <div className="mt-4">
+            <Textarea
+              id="trackingScript"
+              rows={5}
+              placeholder="<script>...</script>"
+              className="font-mono text-xs"
+              value={trackingScript}
+              onChange={(e) => setTrackingScript(e.target.value)}
+            />
           </div>
         </div>
       </div>

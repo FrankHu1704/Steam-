@@ -67,6 +67,11 @@ interface CreateOrderInput {
   bumpProductIds?: string[];
   affiliateCode?: string;
   returnUrl?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -156,6 +161,11 @@ export async function createOrder(input: CreateOrderInput) {
       status: "pending",
       affiliate_id: affiliateId,
       affiliate_commission_amount: affiliateCommissionAmount,
+      utm_source: input.utmSource ?? null,
+      utm_medium: input.utmMedium ?? null,
+      utm_campaign: input.utmCampaign ?? null,
+      utm_content: input.utmContent ?? null,
+      utm_term: input.utmTerm ?? null,
     })
     .select("id")
     .single();

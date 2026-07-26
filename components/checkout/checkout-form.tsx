@@ -65,16 +65,25 @@ function PaymentIcon({ method }: { method: PaymentMethod }) {
   );
 }
 
+interface UtmParams {
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  content?: string;
+  term?: string;
+}
+
 interface CheckoutFormProps {
   product: Product;
   bumps: Product[];
   affiliateRef?: string;
   paymentMethods: PaymentMethod[];
+  utm?: UtmParams;
 }
 
 type Step = "form" | "pending" | "paid" | "failed";
 
-export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: CheckoutFormProps) {
+export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm }: CheckoutFormProps) {
   const currency = product.currency;
   const methods = paymentMethods;
 
@@ -149,6 +158,11 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: C
       bumpProductIds: selectedBumps,
       affiliateCode: affiliateRef,
       returnUrl: typeof window !== "undefined" ? window.location.href : undefined,
+      utmSource: utm?.source,
+      utmMedium: utm?.medium,
+      utmCampaign: utm?.campaign,
+      utmContent: utm?.content,
+      utmTerm: utm?.term,
     });
 
     setPending(false);
