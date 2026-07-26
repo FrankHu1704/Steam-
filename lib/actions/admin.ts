@@ -127,6 +127,22 @@ export async function markOrderPaid(orderId: string) {
   return { ok: true };
 }
 
+export async function adminDeleteProduct(productId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: product } = await supabase.from("products").select("sales_count").eq("id", productId).single();
+  if (!product) return { error: "Produto não encontrado." };
+  if (product.sales_count > 0) {
+    return { error: "Produtos com vendas não podem ser apagados — peça ao produtor para pausá-lo." };
+  }
+
+  const { error } = await supabase.from("products").delete().eq("id", productId);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
 export async function updateUserRole(userId: string, role: UserRole) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

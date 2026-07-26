@@ -238,6 +238,50 @@ export async function getApiUsageSummary(): Promise<{
   };
 }
 
+export interface AdminUserDetail {
+  profile: Profile;
+  products: Product[];
+  ordersAsProducer: AdminOrder[];
+  purchasesAsBuyer: AdminOrder[];
+  withdrawals: Withdrawal[];
+}
+
+export async function getUserDetail(userId: string): Promise<AdminUserDetail | null> {
+  const supabase = await createClient();
+
+  const [{ data: profile }, { data: products }, { data: ordersAsProducer }, { data: purchasesAsBuyer }, { data: withdrawals }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).single(),
+      supabase.from("products").select("*").eq("producer_id", userId).order("created_at", { ascending: false }),
+      supabase
+        .from("orders")
+        .select("*, products(title)")
+        .eq("producer_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("orders")
+        .select("*, products(title)")
+        .eq("buyer_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase.from("withdrawals").select("*").eq("producer_id", userId).order("requested_at", { ascending: false }),
+    ]);
+
+  if (!profile) return null;
+
+  const mapOrders = (rows: (Order & { products: { title: string } | null })[] | null) =>
+    (rows ?? []).map((o) => ({ ...o, product_title: o.products?.title ?? "—" }));
+
+  return {
+    profile: profile as Profile,
+    products: (products as Product[]) ?? [],
+    ordersAsProducer: mapOrders(ordersAsProducer as (Order & { products: { title: string } | null })[] | null),
+    purchasesAsBuyer: mapOrders(purchasesAsBuyer as (Order & { products: { title: string } | null })[] | null),
+    withdrawals: (withdrawals as Withdrawal[]) ?? [],
+  };
+}
+
 export async function getAllCategories(): Promise<Category[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("categories").select("*").order("name");
