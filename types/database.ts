@@ -10,6 +10,36 @@ export type WithdrawalStatus = "pending" | "approved" | "rejected" | "paid" | "c
 export type CouponDiscountType = "percent" | "fixed";
 export type CommissionStatus = "pending" | "paid";
 
+export interface ApiKey {
+  id: string;
+  producer_id: string;
+  label: string;
+  client_id: string;
+  client_secret_hash: string;
+  revoked_at: string | null;
+  created_at: string;
+}
+
+export interface ApiAccessToken {
+  id: string;
+  api_key_id: string;
+  producer_id: string;
+  token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface DeveloperWebhook {
+  id: string;
+  producer_id: string;
+  url: string;
+  secret: string;
+  events: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -270,6 +300,9 @@ export interface Database {
       course_lessons: Row<CourseLesson>;
       lesson_progress: Row<LessonProgress>;
       lesson_comments: Row<LessonComment>;
+      api_keys: Row<ApiKey>;
+      api_access_tokens: Row<ApiAccessToken>;
+      developer_webhooks: Row<DeveloperWebhook>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

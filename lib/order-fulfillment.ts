@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendSaleNotificationEmail } from "@/lib/email";
 import { sendSaleSms } from "@/lib/sms";
+import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
 
 // Shared by the Debito Pay webhook and the admin "mark as paid" fallback —
 // whichever one gets there first does the crediting; the `credited_at`
@@ -93,6 +94,8 @@ export async function creditOrder(orderId: string): Promise<void> {
       currency: order.currency,
     });
   }
+
+  await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: product?.title ?? "Produto" });
 
   await supabase.from("orders").update({ credited_at: new Date().toISOString() }).eq("id", order.id);
 }
