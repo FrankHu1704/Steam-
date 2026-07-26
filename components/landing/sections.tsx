@@ -30,6 +30,21 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
+const ICON_STYLES = [
+  "bg-brand-gradient text-white",
+  "bg-primary/10 text-primary",
+  "bg-secondary/10 text-secondary",
+];
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 const FEATURES = [
   { icon: Rocket, title: "Publicação Instantânea", text: "Crie o seu produto e comece a vender em minutos, sem burocracia." },
   { icon: Wallet, title: "Saques Rápidos", text: "Peça o seu saque a qualquer momento via M-Pesa, e-Mola ou levantamento automático (B2C)." },
@@ -56,6 +71,12 @@ const BENEFITS = [
   "Notificações push em tempo real",
   "Cupões de desconto e order bumps",
   "Marketplace para ganhar visibilidade extra",
+];
+
+const STATS = [
+  { value: "5%", label: "Taxa por venda" },
+  { value: "24h", label: "Saques processados" },
+  { value: "100%", label: "Em Português" },
 ];
 
 const METHODS: { label: string; logo?: string }[] = [
@@ -92,8 +113,8 @@ export function Features() {
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((f, i) => (
           <Reveal key={f.title} delay={i * 0.05}>
-            <Card className="glass h-full p-6 transition-transform hover:-translate-y-1">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white">
+            <Card className="glass h-full p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${ICON_STYLES[i % ICON_STYLES.length]}`}>
                 <f.icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 font-semibold">{f.title}</h3>
@@ -119,9 +140,11 @@ export function HowItWorks() {
         <div className="mt-14 grid gap-6 md:grid-cols-4">
           {STEPS.map((s, i) => (
             <Reveal key={s.n} delay={i * 0.08}>
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <span className="text-gradient text-3xl font-bold">{s.n}</span>
-                <h3 className="mt-3 font-semibold">{s.title}</h3>
+              <div className="h-full rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-gradient text-base font-bold text-white shadow-lg shadow-primary/20">
+                  {s.n}
+                </span>
+                <h3 className="mt-4 font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
               </div>
             </Reveal>
@@ -144,6 +167,14 @@ export function Benefits() {
             A PagaJá cuida da parte técnica — pagamentos, entrega, afiliados — para você focar em
             criar o próximo infoproduto.
           </p>
+          <div className="mt-8 grid grid-cols-3 gap-3">
+            {STATS.map((s) => (
+              <div key={s.label} className="rounded-xl border border-border bg-card p-4 text-center">
+                <p className="text-gradient text-2xl font-bold">{s.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </Reveal>
         <Reveal delay={0.1}>
           <ul className="space-y-3">
@@ -175,7 +206,7 @@ export function PaymentMethods() {
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-5">
           {METHODS.map((m, i) => (
             <Reveal key={m.label} delay={i * 0.05}>
-              <div className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-6">
+              <div className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-6 transition-all hover:-translate-y-1 hover:shadow-lg">
                 {m.logo ? (
                   <Image src={m.logo} alt={m.label} width={88} height={36} className="h-8 w-auto object-contain" />
                 ) : (
@@ -201,16 +232,21 @@ export function Testimonials() {
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {TESTIMONIALS.map((t, i) => (
           <Reveal key={t.name} delay={i * 0.08}>
-            <Card className="h-full p-6">
+            <Card className="h-full p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
               <div className="flex gap-1 text-amber-400">
                 {Array.from({ length: 5 }).map((_, idx) => (
                   <Star key={idx} className="h-4 w-4 fill-current" />
                 ))}
               </div>
               <p className="mt-4 text-sm text-muted-foreground">&ldquo;{t.text}&rdquo;</p>
-              <div className="mt-5">
-                <p className="text-sm font-semibold">{t.name}</p>
-                <p className="text-xs text-muted-foreground">{t.role}</p>
+              <div className="mt-5 flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold text-white">
+                  {initials(t.name)}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">{t.name}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                </div>
               </div>
             </Card>
           </Reveal>
@@ -230,13 +266,13 @@ export function Faq() {
         </Reveal>
         <div className="mt-10 space-y-3">
           {FAQS.map((f, i) => (
-            <div key={f.q} className="rounded-xl border border-border bg-card">
+            <div key={f.q} className="rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold"
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold"
               >
                 {f.q}
-                <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open === i ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open === i ? "rotate-180" : ""}`} />
               </button>
               {open === i && <p className="px-5 pb-4 text-sm text-muted-foreground">{f.a}</p>}
             </div>
