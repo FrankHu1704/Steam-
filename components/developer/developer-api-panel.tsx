@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Copy, KeyRound, Lock, Plus, Smartphone, Trash2, Unlock, Webhook } from "lucide-react";
+import { CheckCircle2, Copy, KeyRound, Lock, Plus, Smartphone, Trash2, Unlock, Webhook } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,28 @@ const UNLOCK_METHODS: { value: UnlockMethod; label: string; color: string }[] = 
   { value: "emola", label: "e-Mola", color: "bg-orange-500" },
 ];
 
+function RevealedSecret({ clientId, clientSecret }: { clientId: string; clientSecret: string }) {
+  return (
+    <div className="mt-4 space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
+      <p className="font-semibold text-amber-800 dark:text-amber-200">
+        Guarde o client_secret agora — não será mostrado novamente.
+      </p>
+      <div className="flex items-center justify-between gap-2 rounded-lg bg-background/70 px-3 py-2 font-mono text-xs">
+        <span className="truncate">client_id: {clientId}</span>
+        <button type="button" onClick={() => copy(clientId)}>
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="flex items-center justify-between gap-2 rounded-lg bg-background/70 px-3 py-2 font-mono text-xs">
+        <span className="truncate">client_secret: {clientSecret}</span>
+        <button type="button" onClick={() => copy(clientSecret)}>
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function DeveloperApiPanel({
   apiKeys,
   webhook,
@@ -44,10 +66,18 @@ export function DeveloperApiPanel({
   pendingUnlockId?: string;
 }) {
   const [keys, setKeys] = useState(apiKeys);
-  const [label, setLabel] = useState("");
-  const [mode, setMode] = useState<ApiKeyMode>("test");
-  const [creating, setCreating] = useState(false);
-  const [revealedSecret, setRevealedSecret] = useState<{ clientId: string; clientSecret: string } | null>(null);
+
+  const [testLabel, setTestLabel] = useState("");
+  const [creatingTest, setCreatingTest] = useState(false);
+  const [revealedTestSecret, setRevealedTestSecret] = useState<{ clientId: string; clientSecret: string } | null>(
+    null
+  );
+
+  const [liveLabel, setLiveLabel] = useState("");
+  const [creatingLive, setCreatingLive] = useState(false);
+  const [revealedLiveSecret, setRevealedLiveSecret] = useState<{ clientId: string; clientSecret: string } | null>(
+    null
+  );
 
   const [webhookUrl, setWebhookUrl] = useState(webhook?.url ?? "");
   const [savingWebhook, setSavingWebhook] = useState(false);
@@ -59,7 +89,16 @@ export function DeveloperApiPanel({
   const [unlockPhone, setUnlockPhone] = useState("");
   const [unlocking, setUnlocking] = useState(!!pendingUnlockId);
 
-  async function handleCreateKey() {
+  const hasTestKey = keys.some((k) => k.mode === "test" && !k.revoked_at);
+  const step2Unlocked = hasTestKey || unlocked;
+
+  async function createKey(
+    mode: ApiKeyMode,
+    label: string,
+    setCreating: (v: boolean) => void,
+    setRevealed: (v: { clientId: string; clientSecret: string }) => void,
+    clearLabel: () => void
+  ) {
     setCreating(true);
     const res = await createApiKey(label, mode);
     setCreating(false);
@@ -67,7 +106,7 @@ export function DeveloperApiPanel({
       toast.error(res.error ?? "Falha ao criar chave.");
       return;
     }
-    setRevealedSecret({ clientId: res.clientId, clientSecret: res.clientSecret });
+    setRevealed({ clientId: res.clientId, clientSecret: res.clientSecret });
     setKeys((prev) => [
       {
         id: res.id!,
@@ -81,7 +120,7 @@ export function DeveloperApiPanel({
       },
       ...prev,
     ]);
-    setLabel("");
+    clearLabel();
   }
 
   async function handleRevoke(id: string) {
@@ -125,7 +164,9 @@ export function DeveloperApiPanel({
       toast.error(res.error ?? "Falha ao iniciar o pagamento.");
       return;
     }
-    toast.info(`Confirme o pagamento de 300 MT no seu telemóvel (${UNLOCK_METHODS.find((m) => m.value === unlockMethod)?.label}).`);
+    toast.info(
+      `Confirme o pagamento de 300 MT no seu telemóvel (${UNLOCK_METHODS.find((m) => m.value === unlockMethod)?.label}).`
+    );
     void pollUnlock(res.unlockId);
   }
 
@@ -156,140 +197,169 @@ export function DeveloperApiPanel({
 
   return (
     <div className="space-y-6">
+      {/* Step 1 — test */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-2">
-            {unlocked ? <Unlock className="h-5 w-5 text-emerald-600" /> : <Lock className="h-5 w-5 text-primary" />}
-            <h2 className="font-semibold">Checkout personalizado</h2>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+              1
+            </span>
+            <h2 className="font-semibold">Teste a sua integração</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Use uma chave de <strong>teste</strong> (grátis, cobranças simuladas) para construir o seu próprio
-            checkout via <code>POST /api/v1/charges</code>. Para cobranças reais, desbloqueie o{" "}
-            <strong>modo produção</strong> com um pagamento único de 300 MT.
+            Crie uma chave de <strong>teste</strong> (grátis, cobranças simuladas, sem dinheiro real) e confirme que
+            o seu checkout personalizado funciona chamando <code>POST /api/v1/charges</code>. Só depois disso avance
+            para o modo produção.
           </p>
 
-          {unlocked ? (
-            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
-              Modo produção desbloqueado — já pode criar chaves live.
-            </div>
-          ) : (
-            <div className="mt-4 max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <div className="bg-primary/5 px-5 py-4">
-                <p className="text-xs font-semibold uppercase text-muted-foreground">Desbloquear modo produção</p>
-                <p className="mt-0.5 text-2xl font-bold">300,00 MT</p>
-                <p className="text-xs text-muted-foreground">Pagamento único — acesso vitalício a chaves live</p>
-              </div>
-              <div className="space-y-4 p-5">
-                <div className="space-y-1.5">
-                  <Label>Método de pagamento</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {UNLOCK_METHODS.map((m) => {
-                      const selected = unlockMethod === m.value;
-                      return (
-                        <button
-                          key={m.value}
-                          type="button"
-                          onClick={() => setUnlockMethod(m.value)}
-                          className={cn(
-                            "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-colors",
-                            selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-                          )}
-                        >
-                          <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", m.color)}>
-                            <Smartphone className="h-4 w-4" />
-                          </span>
-                          <span className="text-xs font-medium">{m.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+          {revealedTestSecret && <RevealedSecret {...revealedTestSecret} />}
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="unlockPhone">Número {UNLOCK_METHODS.find((m) => m.value === unlockMethod)?.label}</Label>
-                  <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-                    <span className="flex items-center bg-muted px-3 text-sm font-medium text-muted-foreground">+258</span>
-                    <Input
-                      id="unlockPhone"
-                      placeholder="84xxxxxxx"
-                      value={unlockPhone}
-                      onChange={(e) => setUnlockPhone(e.target.value)}
-                      className="rounded-none border-0 focus:ring-0"
-                    />
-                  </div>
-                </div>
+          <div className="mt-4 flex gap-2">
+            <Input
+              placeholder="Nome da chave de teste (opcional)"
+              value={testLabel}
+              onChange={(e) => setTestLabel(e.target.value)}
+            />
+            <Button
+              type="button"
+              onClick={() => void createKey("test", testLabel, setCreatingTest, setRevealedTestSecret, () => setTestLabel(""))}
+              disabled={creatingTest}
+              className="shrink-0 gap-1.5"
+            >
+              <Plus className="h-4 w-4" /> {creatingTest ? "A criar…" : "Criar chave de teste"}
+            </Button>
+          </div>
 
-                <Button type="button" onClick={handleUnlock} disabled={unlocking} className="w-full">
-                  {unlocking ? "A confirmar…" : "Pagar 300,00 MT"}
-                </Button>
-              </div>
-            </div>
+          {hasTestKey && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Chave de teste criada — já pode avançar para o passo 2.
+            </p>
           )}
         </CardContent>
       </Card>
 
+      {/* Step 2 — production */}
+      <Card className={cn(!step2Unlocked && "opacity-60")}>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white",
+                step2Unlocked ? "bg-primary" : "bg-muted-foreground"
+              )}
+            >
+              2
+            </span>
+            <h2 className="font-semibold">Ativar modo produção</h2>
+            {unlocked ? (
+              <Unlock className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+
+          {!step2Unlocked ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Crie e confirme uma chave de teste no passo 1 primeiro. Depois disso pode desbloquear cobranças reais
+              com um pagamento único de 300 MT.
+            </p>
+          ) : unlocked ? (
+            <>
+              <p className="mt-1 text-sm text-muted-foreground">Crie uma chave live para cobrar de verdade.</p>
+
+              {revealedLiveSecret && <RevealedSecret {...revealedLiveSecret} />}
+
+              <div className="mt-4 flex gap-2">
+                <Input
+                  placeholder="Nome da chave live (opcional)"
+                  value={liveLabel}
+                  onChange={(e) => setLiveLabel(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  onClick={() =>
+                    void createKey("live", liveLabel, setCreatingLive, setRevealedLiveSecret, () => setLiveLabel(""))
+                  }
+                  disabled={creatingLive}
+                  className="shrink-0 gap-1.5"
+                >
+                  <Plus className="h-4 w-4" /> {creatingLive ? "A criar…" : "Criar chave live"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Tudo a funcionar no teste? Desbloqueie cobranças reais com um pagamento único de 300 MT.
+              </p>
+              <div className="mt-4 max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-primary/5 px-5 py-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Desbloquear modo produção</p>
+                  <p className="mt-0.5 text-2xl font-bold">300,00 MT</p>
+                  <p className="text-xs text-muted-foreground">Pagamento único — acesso vitalício a chaves live</p>
+                </div>
+                <div className="space-y-4 p-5">
+                  <div className="space-y-1.5">
+                    <Label>Método de pagamento</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {UNLOCK_METHODS.map((m) => {
+                        const selected = unlockMethod === m.value;
+                        return (
+                          <button
+                            key={m.value}
+                            type="button"
+                            onClick={() => setUnlockMethod(m.value)}
+                            className={cn(
+                              "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-colors",
+                              selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                            )}
+                          >
+                            <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", m.color)}>
+                              <Smartphone className="h-4 w-4" />
+                            </span>
+                            <span className="text-xs font-medium">{m.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="unlockPhone">
+                      Número {UNLOCK_METHODS.find((m) => m.value === unlockMethod)?.label}
+                    </Label>
+                    <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                      <span className="flex items-center bg-muted px-3 text-sm font-medium text-muted-foreground">
+                        +258
+                      </span>
+                      <Input
+                        id="unlockPhone"
+                        placeholder="84xxxxxxx"
+                        value={unlockPhone}
+                        onChange={(e) => setUnlockPhone(e.target.value)}
+                        className="rounded-none border-0 focus:ring-0"
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="button" onClick={handleUnlock} disabled={unlocking} className="w-full">
+                    {unlocking ? "A confirmar…" : "Pagar 300,00 MT"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Key list */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-primary" />
             <h2 className="font-semibold">Chaves de API</h2>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Use estas credenciais para autenticar chamadas à API pública da PagaJá (produtos, ofertas, pedidos,
-            cobranças e webhooks da sua conta).
-          </p>
-
-          {revealedSecret && (
-            <div className="mt-4 space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950">
-              <p className="font-semibold text-amber-800 dark:text-amber-200">
-                Guarde o client_secret agora — não será mostrado novamente.
-              </p>
-              <div className="flex items-center justify-between gap-2 rounded-lg bg-background/70 px-3 py-2 font-mono text-xs">
-                <span className="truncate">client_id: {revealedSecret.clientId}</span>
-                <button type="button" onClick={() => copy(revealedSecret.clientId)}>
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="flex items-center justify-between gap-2 rounded-lg bg-background/70 px-3 py-2 font-mono text-xs">
-                <span className="truncate">client_secret: {revealedSecret.clientSecret}</span>
-                <button type="button" onClick={() => copy(revealedSecret.clientSecret)}>
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 space-y-2">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setMode("test")}
-                className={cn(
-                  "rounded-lg border-2 px-3 py-1.5 text-sm font-medium",
-                  mode === "test" ? "border-primary bg-primary/5" : "border-border"
-                )}
-              >
-                Teste
-              </button>
-              <button
-                type="button"
-                onClick={() => unlocked && setMode("live")}
-                disabled={!unlocked}
-                className={cn(
-                  "rounded-lg border-2 px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
-                  mode === "live" ? "border-primary bg-primary/5" : "border-border"
-                )}
-              >
-                Produção {!unlocked && "🔒"}
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <Input placeholder="Nome da chave (opcional)" value={label} onChange={(e) => setLabel(e.target.value)} />
-              <Button type="button" onClick={handleCreateKey} disabled={creating} className="shrink-0 gap-1.5">
-                <Plus className="h-4 w-4" /> {creating ? "A criar…" : "Criar chave"}
-              </Button>
-            </div>
-          </div>
+          <p className="mt-1 text-sm text-muted-foreground">Todas as suas chaves de teste e produção, num só lugar.</p>
 
           <div className="mt-4 space-y-2">
             {keys.length === 0 && <p className="text-sm text-muted-foreground">Ainda não tem chaves de API.</p>}

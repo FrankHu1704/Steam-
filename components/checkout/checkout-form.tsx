@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Loader2,
   CheckCircle2,
   Download,
   Tag,
   ExternalLink,
-  Smartphone,
-  CreditCard,
   Landmark,
+  User,
+  Mail,
+  Lock,
   ShieldCheck,
   Zap,
-  ShoppingCart,
+  ReceiptText,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,12 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   payfast: "PayFast",
 };
 
+const PAYMENT_LOGOS: Partial<Record<PaymentMethod, string>> = {
+  mpesa: "/payment-logos/mpesa.png",
+  emola: "/payment-logos/emola.png",
+  visa_mastercard: "/payment-logos/visa-mastercard.png",
+};
+
 const PAYMENT_STYLES: Record<PaymentMethod, string> = {
   mpesa: "bg-red-600",
   emola: "bg-orange-500",
@@ -42,9 +50,19 @@ const PAYMENT_STYLES: Record<PaymentMethod, string> = {
 };
 
 function PaymentIcon({ method }: { method: PaymentMethod }) {
-  if (method === "visa_mastercard") return <CreditCard className="h-4 w-4" />;
-  if (method === "payfast") return <Landmark className="h-4 w-4" />;
-  return <Smartphone className="h-4 w-4" />;
+  const logo = PAYMENT_LOGOS[method];
+  if (logo) {
+    return (
+      <span className="flex h-9 w-full items-center justify-center">
+        <Image src={logo} alt={PAYMENT_LABELS[method]} width={72} height={36} className="h-8 w-auto object-contain" />
+      </span>
+    );
+  }
+  return (
+    <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-white", PAYMENT_STYLES[method])}>
+      <Landmark className="h-4 w-4" />
+    </span>
+  );
 }
 
 interface CheckoutFormProps {
@@ -264,19 +282,37 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: C
 
       <div className="space-y-1.5">
         <Label htmlFor="name">Nome completo</Label>
-        <Input id="name" required placeholder="O seu nome" value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="flex items-center overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <span className="flex items-center pl-3 text-muted-foreground">
+            <User className="h-4 w-4" />
+          </span>
+          <Input
+            id="name"
+            required
+            placeholder="O seu nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="border-0 focus-visible:ring-0"
+          />
+        </div>
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          required
-          placeholder="seu@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <div className="flex items-center overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <span className="flex items-center pl-3 text-muted-foreground">
+            <Mail className="h-4 w-4" />
+          </span>
+          <Input
+            id="email"
+            type="email"
+            required
+            placeholder="seu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border-0 focus-visible:ring-0"
+          />
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -290,14 +326,17 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: C
                 type="button"
                 onClick={() => setPaymentMethod(m)}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-colors",
-                  selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                  "relative flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-white p-3 transition-all",
+                  selected ? "border-primary shadow-md shadow-primary/10" : "border-border hover:border-primary/40 hover:shadow-sm"
                 )}
               >
-                <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", PAYMENT_STYLES[m])}>
-                  <PaymentIcon method={m} />
-                </span>
-                <span className="text-xs font-medium">{PAYMENT_LABELS[m]}</span>
+                {selected && (
+                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+                    <CheckCircle2 className="h-3 w-3" />
+                  </span>
+                )}
+                <PaymentIcon method={m} />
+                <span className="text-xs font-medium text-slate-700">{PAYMENT_LABELS[m]}</span>
               </button>
             );
           })}
@@ -347,7 +386,10 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: C
         )}
       </div>
 
-      <div className="space-y-1.5 rounded-xl bg-muted/60 p-4 text-sm">
+      <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4 text-sm">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
+          <ReceiptText className="h-3.5 w-3.5" /> Resumo do pedido
+        </p>
         <div className="flex justify-between text-muted-foreground">
           <span>Subtotal</span>
           <span>{formatCurrency(baseAmount, currency as "MZN" | "ZAR")}</span>
@@ -364,25 +406,25 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: C
             <span>-{formatCurrency(discount, currency as "MZN" | "ZAR")}</span>
           </div>
         )}
-        <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold">
+        <div className="flex justify-between border-t border-border pt-2 text-base font-bold">
           <span>Total a pagar</span>
-          <span>{formatCurrency(total, currency as "MZN" | "ZAR")}</span>
+          <span className="text-primary">{formatCurrency(total, currency as "MZN" | "ZAR")}</span>
         </div>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" className="w-full gap-2" size="lg" disabled={pending}>
-        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+      <Button type="submit" className="w-full gap-2 shadow-lg shadow-primary/20" size="lg" disabled={pending}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
         Pagar {formatCurrency(total, currency as "MZN" | "ZAR")}
       </Button>
 
-      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <ShieldCheck className="h-3.5 w-3.5" /> Compra 100% segura
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Compra 100% segura
         </span>
         <span className="flex items-center gap-1">
-          <Zap className="h-3.5 w-3.5" /> Entrega imediata
+          <Zap className="h-3.5 w-3.5 text-amber-500" /> Entrega imediata
         </span>
       </div>
     </form>
