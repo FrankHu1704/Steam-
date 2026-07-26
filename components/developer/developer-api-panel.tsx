@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Copy, KeyRound, Lock, Plus, Trash2, Unlock, Webhook } from "lucide-react";
+import { Copy, KeyRound, Lock, Plus, Smartphone, Trash2, Unlock, Webhook } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,13 @@ function copy(text: string) {
   navigator.clipboard.writeText(text);
   toast.success("Copiado.");
 }
+
+type UnlockMethod = "mpesa" | "emola";
+
+const UNLOCK_METHODS: { value: UnlockMethod; label: string; color: string }[] = [
+  { value: "mpesa", label: "M-Pesa", color: "bg-red-600" },
+  { value: "emola", label: "e-Mola", color: "bg-orange-500" },
+];
 
 export function DeveloperApiPanel({
   apiKeys,
@@ -48,6 +55,7 @@ export function DeveloperApiPanel({
   const [hasWebhook, setHasWebhook] = useState(!!webhook);
 
   const [unlocked, setUnlocked] = useState(productionUnlocked);
+  const [unlockMethod, setUnlockMethod] = useState<UnlockMethod>("mpesa");
   const [unlockPhone, setUnlockPhone] = useState("");
   const [unlocking, setUnlocking] = useState(!!pendingUnlockId);
 
@@ -111,13 +119,13 @@ export function DeveloperApiPanel({
       return;
     }
     setUnlocking(true);
-    const res = await requestProductionUnlock(unlockPhone.trim());
+    const res = await requestProductionUnlock(unlockPhone.trim(), unlockMethod);
     if (res.error || !res.unlockId) {
       setUnlocking(false);
       toast.error(res.error ?? "Falha ao iniciar o pagamento.");
       return;
     }
-    toast.info("Confirme o pagamento de 300 MT no seu telemóvel.");
+    toast.info(`Confirme o pagamento de 300 MT no seu telemóvel (${UNLOCK_METHODS.find((m) => m.value === unlockMethod)?.label}).`);
     void pollUnlock(res.unlockId);
   }
 
@@ -165,15 +173,56 @@ export function DeveloperApiPanel({
               Modo produção desbloqueado — já pode criar chaves live.
             </div>
           ) : (
-            <div className="mt-4 flex gap-2">
-              <Input
-                placeholder="Número de telemóvel (M-Pesa/e-Mola)"
-                value={unlockPhone}
-                onChange={(e) => setUnlockPhone(e.target.value)}
-              />
-              <Button type="button" onClick={handleUnlock} disabled={unlocking} className="shrink-0">
-                {unlocking ? "A confirmar…" : "Desbloquear — 300 MT"}
-              </Button>
+            <div className="mt-4 max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="bg-primary/5 px-5 py-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Desbloquear modo produção</p>
+                <p className="mt-0.5 text-2xl font-bold">300,00 MT</p>
+                <p className="text-xs text-muted-foreground">Pagamento único — acesso vitalício a chaves live</p>
+              </div>
+              <div className="space-y-4 p-5">
+                <div className="space-y-1.5">
+                  <Label>Método de pagamento</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {UNLOCK_METHODS.map((m) => {
+                      const selected = unlockMethod === m.value;
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setUnlockMethod(m.value)}
+                          className={cn(
+                            "flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-colors",
+                            selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                          )}
+                        >
+                          <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-white", m.color)}>
+                            <Smartphone className="h-4 w-4" />
+                          </span>
+                          <span className="text-xs font-medium">{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="unlockPhone">Número {UNLOCK_METHODS.find((m) => m.value === unlockMethod)?.label}</Label>
+                  <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                    <span className="flex items-center bg-muted px-3 text-sm font-medium text-muted-foreground">+258</span>
+                    <Input
+                      id="unlockPhone"
+                      placeholder="84xxxxxxx"
+                      value={unlockPhone}
+                      onChange={(e) => setUnlockPhone(e.target.value)}
+                      className="rounded-none border-0 focus:ring-0"
+                    />
+                  </div>
+                </div>
+
+                <Button type="button" onClick={handleUnlock} disabled={unlocking} className="w-full">
+                  {unlocking ? "A confirmar…" : "Pagar 300,00 MT"}
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

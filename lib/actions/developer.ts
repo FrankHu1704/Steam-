@@ -85,7 +85,8 @@ export async function getProductionUnlockStatus(): Promise<{
 }
 
 export async function requestProductionUnlock(
-  phone: string
+  phone: string,
+  paymentMethod: "mpesa" | "emola"
 ): Promise<ActionResult & { unlockId?: string; checkoutUrl?: string; status?: string }> {
   const supabase = await createClient();
   const {
@@ -109,7 +110,7 @@ export async function requestProductionUnlock(
 
   try {
     const charge = await providerModule(providerName).createCharge({
-      paymentMethod: "mpesa",
+      paymentMethod,
       amount: PRODUCTION_UNLOCK_AMOUNT,
       currency: "MZN",
       sourceId: unlock.id,
