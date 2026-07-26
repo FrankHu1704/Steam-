@@ -74,3 +74,25 @@ export async function updatePassword(formData: FormData): Promise<ActionResult> 
   if (error) return { error: error.message };
   redirect("/dashboard");
 }
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<ActionResult> {
+  if (newPassword.length < 6) {
+    return { error: "A nova palavra-passe deve ter pelo menos 6 caracteres." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return { error: "Sessão expirada." };
+
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (verifyError) return { error: "Senha atual incorreta." };
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: error.message };
+  return {};
+}
