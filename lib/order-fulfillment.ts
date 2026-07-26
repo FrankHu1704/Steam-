@@ -31,9 +31,23 @@ export async function creditOrder(orderId: string): Promise<void> {
     .update({ balance_available: (producer?.balance_available ?? 0) + ownerNet })
     .eq("id", order.producer_id);
 
-  const { data: product } = await supabase.from("products").select("title").eq("id", order.product_id).single();
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, product_type, stock_quantity")
+    .eq("id", order.product_id)
+    .single();
 
   await supabase.rpc("increment_product_sales", { p_id: order.product_id });
+
+  if (product?.product_type === "physical") {
+    if (product.stock_quantity != null) {
+      await supabase
+        .from("products")
+        .update({ stock_quantity: Math.max(0, product.stock_quantity - 1) })
+        .eq("id", order.product_id);
+    }
+    await supabase.from("orders").update({ shipping_status: "pending" }).eq("id", order.id);
+  }
 
   if (order.affiliate_id && commission > 0) {
     const { data: affiliate } = await supabase.from("affiliates").select("*").eq("id", order.affiliate_id).single();

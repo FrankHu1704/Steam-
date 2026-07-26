@@ -9,6 +9,8 @@ export type PayoutMethod = "mpesa" | "emola" | "mkesh" | "bank_transfer";
 export type WithdrawalStatus = "pending" | "approved" | "rejected" | "paid" | "confirmed";
 export type CouponDiscountType = "percent" | "fixed";
 export type CommissionStatus = "pending" | "paid";
+export type ProductType = "digital" | "physical";
+export type ShippingStatus = "pending" | "processing" | "shipped" | "delivered" | "returned";
 
 export interface Profile {
   id: string;
@@ -55,6 +57,8 @@ export interface Product {
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  product_type: ProductType;
+  stock_quantity: number | null;
 }
 
 export interface ProductFile {
@@ -101,6 +105,11 @@ export interface Order {
   created_at: string;
   paid_at: string | null;
   credited_at: string | null;
+  shipping_address: string | null;
+  shipping_city: string | null;
+  shipping_province: string | null;
+  shipping_status: ShippingStatus | null;
+  tracking_reference: string | null;
 }
 
 export interface OrderBump {
@@ -281,6 +290,8 @@ export interface Database {
       withdrawal_status: WithdrawalStatus;
       coupon_discount_type: CouponDiscountType;
       commission_status: CommissionStatus;
+      product_type: ProductType;
+      shipping_status: ShippingStatus;
     };
     CompositeTypes: Record<string, never>;
   };

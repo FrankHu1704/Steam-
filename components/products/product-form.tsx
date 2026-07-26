@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { uploadCoverImage, uploadProductFile, type UploadedFile } from "@/lib/upload";
 import { upsertProduct } from "@/lib/actions/products";
 import { slugify } from "@/lib/utils";
-import type { Category, Product, ProductFile } from "@/types/database";
+import type { Category, Product, ProductFile, ProductType } from "@/types/database";
 
 export function ProductForm({
   userId,
@@ -40,6 +40,10 @@ export function ProductForm({
   );
   const [seoTitle, setSeoTitle] = useState(product?.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(product?.seo_description ?? "");
+  const [productType, setProductType] = useState<ProductType>(product?.product_type ?? "digital");
+  const [stockQuantity, setStockQuantity] = useState(
+    product?.stock_quantity != null ? String(product.stock_quantity) : ""
+  );
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(product?.cover_image_url ?? null);
@@ -97,7 +101,9 @@ export function ProductForm({
         affiliateCommissionPercent: Number(commissionPercent),
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
-        files,
+        productType,
+        stockQuantity: productType === "physical" ? Number(stockQuantity) || 0 : null,
+        files: productType === "digital" ? files : [],
       });
 
       if (res.error) {
@@ -123,6 +129,31 @@ export function ProductForm({
             <div>
               <Label htmlFor="title">Título</Label>
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Tipo de produto</Label>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setProductType("digital")}
+                  className={`rounded-xl border-2 p-3 text-left text-sm transition-colors ${
+                    productType === "digital" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <span className="block font-semibold">Digital</span>
+                  <span className="text-xs text-muted-foreground">Entrega automática por download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProductType("physical")}
+                  className={`rounded-xl border-2 p-3 text-left text-sm transition-colors ${
+                    productType === "physical" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <span className="block font-semibold">Físico</span>
+                  <span className="text-xs text-muted-foreground">Enviado por si após a compra</span>
+                </button>
+              </div>
             </div>
             <div>
               <Label htmlFor="category">Categoria</Label>
@@ -191,35 +222,57 @@ export function ProductForm({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-semibold">Ficheiros do Produto</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Entregues automaticamente por download após o pagamento confirmado.
-          </p>
-          <label className="mt-4 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-8 text-center hover:border-primary">
-            <Upload className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold text-primary">
-              {uploadingFiles ? "A enviar…" : "Adicionar Ficheiros"}
-            </span>
-            <input type="file" multiple className="hidden" onChange={handleFilesChange} />
-          </label>
-          {files.length > 0 && (
-            <ul className="mt-4 space-y-2">
-              {files.map((f, i) => (
-                <li key={f.storage_path} className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
-                  <span className="truncate">{f.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        {productType === "digital" ? (
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="font-semibold">Ficheiros do Produto</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Entregues automaticamente por download após o pagamento confirmado.
+            </p>
+            <label className="mt-4 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-8 text-center hover:border-primary">
+              <Upload className="h-5 w-5 text-primary" />
+              <span className="text-sm font-semibold text-primary">
+                {uploadingFiles ? "A enviar…" : "Adicionar Ficheiros"}
+              </span>
+              <input type="file" multiple className="hidden" onChange={handleFilesChange} />
+            </label>
+            {files.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {files.map((f, i) => (
+                  <li key={f.storage_path} className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
+                    <span className="truncate">{f.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="font-semibold">Estoque</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Após uma venda confirmada, deve enviar o produto ao comprador e atualizar o estado de envio no seu
+              painel de Pedidos.
+            </p>
+            <div className="mt-4">
+              <Label htmlFor="stock">Quantidade em estoque</Label>
+              <Input
+                id="stock"
+                type="number"
+                min="0"
+                step="1"
+                value={stockQuantity}
+                onChange={(e) => setStockQuantity(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="font-semibold">SEO</h2>

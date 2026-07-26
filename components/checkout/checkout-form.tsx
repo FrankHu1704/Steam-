@@ -63,9 +63,13 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
   const currency = product.currency;
   const methods = paymentMethodsForCurrency(currency);
 
+  const isPhysical = product.product_type === "physical";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
+  const [shippingProvince, setShippingProvince] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(methods[0]);
   const [selectedBumps, setSelectedBumps] = useState<string[]>([]);
   const [couponCode, setCouponCode] = useState("");
@@ -134,6 +138,9 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
       bumpProductIds: selectedBumps,
       affiliateCode: affiliateRef,
       returnUrl: typeof window !== "undefined" ? window.location.href : undefined,
+      shippingAddress: isPhysical ? shippingAddress : undefined,
+      shippingCity: isPhysical ? shippingCity : undefined,
+      shippingProvince: isPhysical ? shippingProvince : undefined,
     });
 
     setPending(false);
@@ -167,23 +174,32 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
       <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-900 dark:bg-emerald-950">
         <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
         <p className="mt-3 font-semibold">Pagamento confirmado!</p>
-        <p className="text-sm text-muted-foreground">
-          Enviámos os ficheiros para {email}. Também pode transferi-los abaixo.
-        </p>
-        <div className="mt-4 space-y-2 text-left">
-          {files.map((f, i) => (
-            <a
-              key={i}
-              href={f.url ?? "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:border-primary"
-            >
-              <Download className="h-4 w-4 text-primary" />
-              {f.name}
-            </a>
-          ))}
-        </div>
+        {isPhysical ? (
+          <p className="text-sm text-muted-foreground">
+            O vendedor foi notificado e vai preparar o envio para a morada indicada. Acompanhe o estado da entrega no
+            seu histórico de compras.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Enviámos os ficheiros para {email}. Também pode transferi-los abaixo.
+            </p>
+            <div className="mt-4 space-y-2 text-left">
+              {files.map((f, i) => (
+                <a
+                  key={i}
+                  href={f.url ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:border-primary"
+                >
+                  <Download className="h-4 w-4 text-primary" />
+                  {f.name}
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -320,6 +336,37 @@ export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps
               onChange={(e) => setPhone(e.target.value)}
               className="rounded-none border-0 focus:ring-0"
             />
+          </div>
+        </div>
+      )}
+
+      {isPhysical && (
+        <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Morada de entrega</p>
+          <div className="space-y-1.5">
+            <Label htmlFor="shippingAddress">Endereço (rua, bairro, referência)</Label>
+            <Input
+              id="shippingAddress"
+              required
+              placeholder="Av. Exemplo, 123, Bairro Central"
+              value={shippingAddress}
+              onChange={(e) => setShippingAddress(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="shippingCity">Cidade</Label>
+              <Input id="shippingCity" required value={shippingCity} onChange={(e) => setShippingCity(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="shippingProvince">Província</Label>
+              <Input
+                id="shippingProvince"
+                required
+                value={shippingProvince}
+                onChange={(e) => setShippingProvince(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       )}
