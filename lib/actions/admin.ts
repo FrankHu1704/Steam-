@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendBulkEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendBulkEmail } from "@/lib/email";
 import { creditOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
@@ -19,11 +19,16 @@ export async function approveProduct(productId: string) {
 
   const { data: product } = await supabase
     .from("products")
-    .select("title, profiles!producer_id(email)")
+    .select("title, slug, profiles!producer_id(name, email)")
     .eq("id", productId)
-    .single<{ title: string; profiles: { email: string } | null }>();
+    .single<{ title: string; slug: string; profiles: { name: string; email: string } | null }>();
   if (product?.profiles?.email) {
-    await sendProductApprovedEmail({ producerEmail: product.profiles.email, productTitle: product.title });
+    await sendProductApprovedEmail({
+      producerEmail: product.profiles.email,
+      producerName: product.profiles.name,
+      productTitle: product.title,
+      productSlug: product.slug,
+    });
   }
 
   return { ok: true };
@@ -38,6 +43,21 @@ export async function rejectProduct(productId: string, reason: string) {
     .from("products")
     .update({ status: "rejected", reviewed_at: new Date().toISOString(), reviewed_by: admin.user.id, rejection_reason: reason })
     .eq("id", productId);
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, profiles!producer_id(name, email)")
+    .eq("id", productId)
+    .single<{ title: string; profiles: { name: string; email: string } | null }>();
+  if (product?.profiles?.email) {
+    await sendProductRejectedEmail({
+      producerEmail: product.profiles.email,
+      producerName: product.profiles.name,
+      productTitle: product.title,
+      reason,
+    });
+  }
+
   return { ok: true };
 }
 
@@ -132,7 +152,11 @@ export async function adminDeleteProduct(productId: string) {
   if (!admin) return { error: "Acesso negado." };
 
   const supabase = createAdminClient();
-  const { data: product } = await supabase.from("products").select("sales_count").eq("id", productId).single();
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, sales_count, profiles!producer_id(name, email)")
+    .eq("id", productId)
+    .single<{ title: string; sales_count: number; profiles: { name: string; email: string } | null }>();
   if (!product) return { error: "Produto não encontrado." };
   if (product.sales_count > 0) {
     return { error: "Produtos com vendas não podem ser apagados — peça ao produtor para pausá-lo." };
@@ -140,6 +164,15 @@ export async function adminDeleteProduct(productId: string) {
 
   const { error } = await supabase.from("products").delete().eq("id", productId);
   if (error) return { error: error.message };
+
+  if (product.profiles?.email) {
+    await sendProductDeletedEmail({
+      producerEmail: product.profiles.email,
+      producerName: product.profiles.name,
+      productTitle: product.title,
+    });
+  }
+
   return { ok: true };
 }
 

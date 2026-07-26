@@ -102,6 +102,58 @@ function emailButton(text: string, url: string): string {
   `;
 }
 
+function emailBannerCard(input: { bannerColor: string; icon: string; title: string; bodyHtml: string }): string {
+  const url = siteUrl();
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+            <tr>
+              <td align="center" style="background:${input.bannerColor};padding:36px 24px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                  <tr>
+                    <td style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.2);text-align:center;vertical-align:middle;font-size:24px;line-height:52px;">
+                      ${input.icon}
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:16px 0 0;font-size:20px;font-weight:800;color:#ffffff;">${input.title}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 8px;">
+                ${input.bodyHtml}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 28px;">
+                <div style="height:1px;background:#e5e7eb;margin:20px 0;"></div>
+                <p style="font-size:12px;color:#9ca3af;margin:0 0 6px;">
+                  <a href="${url}" style="color:#9ca3af;text-decoration:none;">PagaJá</a> ·
+                  <a href="${url}/privacidade" style="color:#9ca3af;text-decoration:none;">Privacidade</a> ·
+                  <a href="${url}/termos" style="color:#9ca3af;text-decoration:none;">Termos</a>
+                </p>
+                <p style="font-size:12px;color:#9ca3af;margin:0;">Recebeu este email porque tem uma conta PagaJá.</p>
+                <p style="font-size:11px;color:#d1d5db;margin:14px 0 0;">by FRANK AI SOLUTIONS</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailReasonBox(label: string, text: string): string {
+  return `
+    <div style="background:#FEF2F2;border-left:3px solid #DC2626;border-radius:8px;padding:14px 16px;margin:16px 0;">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#DC2626;">${label}</p>
+      <p style="margin:0;font-size:14px;line-height:1.5;color:#7f1d1d;">${text}</p>
+    </div>
+  `;
+}
+
 function emailInfoBox(rows: { label: string; value: string; emphasize?: boolean }[]): string {
   const rowsHtml = rows
     .map(
@@ -197,15 +249,75 @@ export async function sendBulkEmail(recipients: string[], subject: string, messa
   return { sent };
 }
 
-export async function sendProductApprovedEmail(input: { producerEmail: string; productTitle: string }) {
+export async function sendProductApprovedEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  productTitle: string;
+  productSlug: string;
+}) {
   await sendEmail({
     to: input.producerEmail,
-    subject: "O seu produto foi aprovado! ✅",
-    html: emailShell(
-      "Produto aprovado",
-      emailParagraph(
-        `O seu produto <strong>${input.productTitle}</strong> foi revisto e aprovado. Já está disponível para venda na PagaJá.`
-      ) + emailHighlight("Um bom produto merece chegar a quem precisa dele. Boa sorte com as vendas!")
-    ),
+    subject: "O seu produto foi aprovado! 🎉",
+    html: emailBannerCard({
+      bannerColor: "#059669",
+      icon: "✅",
+      title: "Produto aprovado 🎉",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi revisto e aprovado — já está disponível para venda na PagaJá.`
+        ) +
+        emailInfoBox([{ label: "Produto aprovado", value: input.productTitle }]) +
+        emailButton("Ver Produto", `${siteUrl()}/p/${input.productSlug}`) +
+        emailHighlight("Um bom produto merece chegar a quem precisa dele. Boa sorte com as vendas!"),
+    }),
+  });
+}
+
+export async function sendProductDeletedEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  productTitle: string;
+}) {
+  await sendEmail({
+    to: input.producerEmail,
+    subject: `O seu produto foi removido — ${input.productTitle}`,
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "🗑️",
+      title: "Produto removido",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi removido da PagaJá pela nossa equipa e já não está disponível para venda.`
+        ) +
+        emailInfoBox([{ label: "Produto removido", value: input.productTitle }]) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Se considera que isto foi um engano, entre em contacto com o suporte da PagaJá.</span>`
+        ),
+    }),
+  });
+}
+
+export async function sendProductRejectedEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  productTitle: string;
+  reason: string;
+}) {
+  await sendEmail({
+    to: input.producerEmail,
+    subject: `O seu produto não foi aprovado — ${input.productTitle}`,
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "⚠️",
+      title: "Produto rejeitado",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi analisado e não foi aprovado para venda na PagaJá.`
+        ) +
+        emailInfoBox([{ label: "Produto rejeitado", value: input.productTitle }]) +
+        emailReasonBox("Motivo da rejeição", input.reason || "Não especificado.") +
+        emailParagraph("Pode corrigir o produto e submetê-lo novamente para revisão a qualquer momento.") +
+        emailButton("Editar Produto", `${siteUrl()}/dashboard/products`),
+    }),
   });
 }
