@@ -363,7 +363,7 @@ export function DeveloperApiPanel({
                   </Button>
 
                   <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Pagamento seguro via ZumboPay
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Pagamento 100% seguro
                   </p>
                 </div>
               </div>

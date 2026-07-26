@@ -27,14 +27,14 @@ function walletIdForMethod(method: PaymentMethod): string {
   };
   const id = byMethod[method];
   if (!id) {
-    throw new Error(`Nenhuma wallet ZumboPay configurada para "${method}".`);
+    throw new Error(`Nenhuma carteira configurada para "${method}".`);
   }
   return id;
 }
 
 async function request(method: string, path: string, body?: unknown) {
   const key = apiKey();
-  if (!key) throw new Error("ZumboPay: ZUMBOPAY_API_KEY não configurada.");
+  if (!key) throw new Error("Processador de pagamento não configurado.");
 
   const res = await fetch(`${baseUrl()}${path}`, {
     method,
@@ -93,7 +93,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     const data = body?.data ?? {};
     const reference = data.reference as string | undefined;
     if (!reference) {
-      throw new Error(body?.error?.message || body?.error || `ZumboPay error (HTTP ${status})`);
+      throw new Error(body?.error?.message || body?.error || `Falha no pagamento (HTTP ${status})`);
     }
     return {
       success: true,
@@ -120,7 +120,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
   const checkoutUrl = body?.checkout_url ?? body?.data?.checkout_url;
   const reference = body?.data?.reference ?? body?.reference;
   if (!checkoutUrl || !reference) {
-    throw new Error(body?.error?.message || body?.error || `ZumboPay error (HTTP ${status})`);
+    throw new Error(body?.error?.message || body?.error || `Falha no pagamento (HTTP ${status})`);
   }
   return { success: true, payment_id: reference, reference, status: "pending", checkout_url: checkoutUrl };
 }
@@ -189,7 +189,7 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
   const walletId =
     input.method === "mpesa" ? process.env.ZUMBOPAY_WALLET_MPESA : process.env.ZUMBOPAY_WALLET_EMOLA;
   if (!walletId) {
-    return { success: false, error: `Nenhuma wallet ZumboPay configurada para "${input.method}".` };
+    return { success: false, error: `Nenhuma carteira configurada para "${input.method}".` };
   }
 
   const { status, body } = await request("POST", "/payouts", {
@@ -203,7 +203,7 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
 
   const data = body?.data;
   if (!data) {
-    return { success: false, error: body?.error?.message || body?.error || `ZumboPay error (HTTP ${status})` };
+    return { success: false, error: body?.error?.message || body?.error || `Falha no pagamento (HTTP ${status})` };
   }
 
   return {

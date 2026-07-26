@@ -37,7 +37,7 @@ export function WithdrawalReviewActions({
       toast.error(res.error);
       return;
     }
-    toast.success("Pago automaticamente via ZumboPay!");
+    toast.success("Pago automaticamente via B2C!");
     router.refresh();
   }
 
@@ -47,7 +47,7 @@ export function WithdrawalReviewActions({
         {payoutMethod === "mpesa" && (
           <Button size="sm" variant="outline" onClick={handleAutoPayout} disabled={pending} className="gap-1.5">
             <Zap className="h-3.5 w-3.5" />
-            Pagar via ZumboPay (B2C)
+            Pagar via B2C
           </Button>
         )}
         <Button size="sm" onClick={() => act("approved")} disabled={pending}>
@@ -67,7 +67,7 @@ export function WithdrawalReviewActions({
         {payoutMethod === "mpesa" && (
           <Button size="sm" variant="outline" onClick={handleAutoPayout} disabled={pending} className="gap-1.5">
             <Zap className="h-3.5 w-3.5" />
-            Pagar via ZumboPay
+            Pagar via B2C
           </Button>
         )}
         <Input

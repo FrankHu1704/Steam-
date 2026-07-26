@@ -29,7 +29,7 @@ export async function payWithdrawalB2C(
   });
 
   if (!result.success || result.status !== "success") {
-    return { ok: false, error: result.error ?? "Pagamento não confirmado pela ZumboPay." };
+    return { ok: false, error: result.error ?? "Pagamento não confirmado pelo processador." };
   }
 
   await supabase
