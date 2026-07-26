@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendSaleNotificationEmail } from "@/lib/email";
 import { sendSaleSms } from "@/lib/sms";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
+import { sendPushToUser } from "@/lib/push";
 
 // Shared by the Debito Pay webhook and the admin "mark as paid" fallback —
 // whichever one gets there first does the crediting; the `credited_at`
@@ -76,6 +77,12 @@ export async function creditOrder(orderId: string): Promise<void> {
     type: "sale",
     title: "Nova venda!",
     message: `Você vendeu por ${order.total_amount} ${order.currency}.`,
+  });
+
+  await sendPushToUser(order.producer_id, {
+    title: "Nova venda! 🎉",
+    body: `Vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
+    url: "/dashboard",
   });
 
   if (producer?.email) {

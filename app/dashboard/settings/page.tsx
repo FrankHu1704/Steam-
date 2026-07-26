@@ -6,16 +6,21 @@ import { SecurityCard } from "@/components/dashboard/security-card";
 import { TrustScoreCard } from "@/components/dashboard/trust-score-card";
 import { ToolCard } from "@/components/dashboard/tool-card";
 import { ClearCacheButton } from "@/components/dashboard/clear-cache-button";
+import { PushNotificationToggle } from "@/components/dashboard/push-notification-toggle";
 import { Button } from "@/components/ui/button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getTrustScore } from "@/lib/data/trust-score";
+import { hasPushSubscription } from "@/lib/actions/push";
 import { signOut } from "@/lib/actions/auth";
 
 export default async function DashboardSettingsPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) redirect("/login");
 
-  const score = await getTrustScore(user.id, profile.created_at);
+  const [score, pushSubscribed] = await Promise.all([
+    getTrustScore(user.id, profile.created_at),
+    hasPushSubscription(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -50,9 +55,7 @@ export default async function DashboardSettingsPage() {
             href="/dashboard"
           />
           <ToolCard icon={Bell} title="Notificações Push" description="Receba alertas de vendas em tempo real no seu navegador.">
-            <Button size="sm" variant="outline" disabled className="w-full">
-              Em breve
-            </Button>
+            <PushNotificationToggle initiallySubscribed={pushSubscribed} />
           </ToolCard>
           <ToolCard
             icon={ScrollText}
