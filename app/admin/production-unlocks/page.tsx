@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { MarkUnlockPaidButton } from "@/components/admin/mark-unlock-paid-button";
+import { RecheckUnlockButton } from "@/components/admin/recheck-unlock-button";
 import { getAllProductionUnlocks } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
 
@@ -48,7 +49,14 @@ export default async function AdminProductionUnlocksPage() {
                       <td className="p-4 text-muted-foreground">
                         {new Date(u.created_at).toLocaleDateString("pt-MZ")}
                       </td>
-                      <td className="p-4">{u.status === "pending" && <MarkUnlockPaidButton unlockId={u.id} />}</td>
+                      <td className="p-4">
+                        {u.status === "pending" && (
+                          <div className="flex items-center justify-end gap-1">
+                            <RecheckUnlockButton unlockId={u.id} />
+                            <MarkUnlockPaidButton unlockId={u.id} />
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
