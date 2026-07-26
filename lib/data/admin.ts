@@ -1,5 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Category, LogEntry, Order, Product, ProductionUnlock, Profile, Setting, Withdrawal } from "@/types/database";
+import type {
+  ApiCallLog,
+  ApiKey,
+  Category,
+  LogEntry,
+  Order,
+  Product,
+  ProductionUnlock,
+  Profile,
+  Setting,
+  Withdrawal,
+} from "@/types/database";
 
 export async function requireAdminUser() {
   const supabase = await createClient();
@@ -117,6 +128,114 @@ export async function getAllProductionUnlocks(): Promise<AdminProductionUnlock[]
     producer_name: u.profiles?.name ?? "—",
     producer_email: u.profiles?.email ?? "—",
   }));
+}
+
+export interface PlatformRevenue {
+  salesFeesTotal: number;
+  salesFeesMonth: number;
+  withdrawalFeesTotal: number;
+  withdrawalFeesMonth: number;
+  totalRevenue: number;
+  monthRevenue: number;
+}
+
+export async function getPlatformRevenue(): Promise<PlatformRevenue> {
+  const supabase = await createClient();
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const [{ data: orders }, { data: withdrawals }] = await Promise.all([
+    supabase.from("orders").select("platform_fee_amount, paid_at").eq("status", "paid").not("platform_fee_amount", "is", null),
+    supabase.from("withdrawals").select("fee_amount, paid_at").in("status", ["paid", "confirmed"]),
+  ]);
+
+  let salesFeesTotal = 0;
+  let salesFeesMonth = 0;
+  for (const o of orders ?? []) {
+    const fee = o.platform_fee_amount ?? 0;
+    salesFeesTotal += fee;
+    if (o.paid_at && new Date(o.paid_at) >= startOfMonth) salesFeesMonth += fee;
+  }
+
+  let withdrawalFeesTotal = 0;
+  let withdrawalFeesMonth = 0;
+  for (const w of withdrawals ?? []) {
+    withdrawalFeesTotal += w.fee_amount;
+    if (w.paid_at && new Date(w.paid_at) >= startOfMonth) withdrawalFeesMonth += w.fee_amount;
+  }
+
+  return {
+    salesFeesTotal,
+    salesFeesMonth,
+    withdrawalFeesTotal,
+    withdrawalFeesMonth,
+    totalRevenue: salesFeesTotal + withdrawalFeesTotal,
+    monthRevenue: salesFeesMonth + withdrawalFeesMonth,
+  };
+}
+
+export interface ApiUsageProducer {
+  producerId: string;
+  producerName: string;
+  producerEmail: string;
+  testKeys: number;
+  liveKeys: number;
+  callsLast30Days: number;
+}
+
+export async function getApiUsageSummary(): Promise<{
+  totalKeys: number;
+  activeKeys: number;
+  liveKeys: number;
+  callsLast30Days: number;
+  producers: ApiUsageProducer[];
+  recentCalls: ApiCallLog[];
+}> {
+  const supabase = await createClient();
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [{ data: keys }, { data: calls }, { data: recentCalls }] = await Promise.all([
+    supabase.from("api_keys").select("*, profiles!producer_id(name, email)"),
+    supabase.from("api_call_logs").select("producer_id").gte("created_at", thirtyDaysAgo.toISOString()),
+    supabase.from("api_call_logs").select("*").order("created_at", { ascending: false }).limit(50),
+  ]);
+
+  const keyRows = (keys ?? []) as (ApiKey & { profiles: { name: string; email: string } | null })[];
+  const callsByProducer = new Map<string, number>();
+  for (const c of calls ?? []) {
+    if (!c.producer_id) continue;
+    callsByProducer.set(c.producer_id, (callsByProducer.get(c.producer_id) ?? 0) + 1);
+  }
+
+  const byProducer = new Map<string, ApiUsageProducer>();
+  for (const k of keyRows) {
+    const existing = byProducer.get(k.producer_id) ?? {
+      producerId: k.producer_id,
+      producerName: k.profiles?.name ?? "—",
+      producerEmail: k.profiles?.email ?? "—",
+      testKeys: 0,
+      liveKeys: 0,
+      callsLast30Days: callsByProducer.get(k.producer_id) ?? 0,
+    };
+    if (!k.revoked_at) {
+      if (k.mode === "live") existing.liveKeys += 1;
+      else existing.testKeys += 1;
+    }
+    byProducer.set(k.producer_id, existing);
+  }
+
+  return {
+    totalKeys: keyRows.length,
+    activeKeys: keyRows.filter((k) => !k.revoked_at).length,
+    liveKeys: keyRows.filter((k) => !k.revoked_at && k.mode === "live").length,
+    callsLast30Days: calls?.length ?? 0,
+    producers: Array.from(byProducer.values()).sort((a, b) => b.callsLast30Days - a.callsLast30Days),
+    recentCalls: (recentCalls as ApiCallLog[]) ?? [],
+  };
 }
 
 export async function getAllCategories(): Promise<Category[]> {

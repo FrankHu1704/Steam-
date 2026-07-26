@@ -1,10 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyBearerToken, apiError } from "@/lib/api-auth";
+import { verifyBearerToken, apiError, logApiCall } from "@/lib/api-auth";
 
 // Lists the account's confirmed sales.
 export async function GET(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/orders", "GET", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const supabase = createAdminClient();
   const { data: orders } = await supabase
@@ -27,6 +30,7 @@ export async function GET(req: Request) {
     products: { id: string; title: string } | null;
   };
 
+  await logApiCall(auth.producerId, "/api/v1/orders", "GET", 200);
   return Response.json({
     success: true,
     orders: ((orders ?? []) as unknown as Row[]).map((o) => ({

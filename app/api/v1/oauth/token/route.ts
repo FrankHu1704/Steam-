@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { hashSecret, issueAccessToken, apiError } from "@/lib/api-auth";
+import { hashSecret, issueAccessToken, apiError, logApiCall } from "@/lib/api-auth";
 
 function secretMatches(expectedHash: string, providedSecret: string): boolean {
   const providedHash = hashSecret(providedSecret);
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
   }
 
   if (!clientId || !clientSecret) {
+    await logApiCall(null, "/api/v1/oauth/token", "POST", 400);
     return apiError("client_id e client_secret são obrigatórios.", 400);
   }
 
@@ -39,11 +40,13 @@ export async function POST(req: Request) {
     .single();
 
   if (!apiKey || !secretMatches(apiKey.client_secret_hash, clientSecret)) {
+    await logApiCall(apiKey?.producer_id ?? null, "/api/v1/oauth/token", "POST", 401);
     return apiError("Credenciais inválidas.", 401);
   }
 
   const { token, expiresIn } = await issueAccessToken(apiKey.id, apiKey.producer_id);
 
+  await logApiCall(apiKey.producer_id, "/api/v1/oauth/token", "POST", 200);
   return Response.json({
     access_token: token,
     token_type: "Bearer",

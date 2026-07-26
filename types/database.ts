@@ -149,6 +149,7 @@ export interface Order {
   created_at: string;
   paid_at: string | null;
   credited_at: string | null;
+  platform_fee_amount: number | null;
 }
 
 export interface OrderBump {
@@ -293,6 +294,24 @@ export interface LessonComment {
   created_at: string;
 }
 
+export interface ApiCallLog {
+  id: string;
+  producer_id: string | null;
+  endpoint: string;
+  method: string;
+  status_code: number;
+  created_at: string;
+}
+
+export interface PushSubscriptionRow {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}
+
 type Row<T> = { Row: T; Insert: Partial<T>; Update: Partial<T> };
 
 export interface Database {
@@ -322,6 +341,8 @@ export interface Database {
       api_access_tokens: Row<ApiAccessToken>;
       developer_webhooks: Row<DeveloperWebhook>;
       production_unlocks: Row<ProductionUnlock>;
+      api_call_logs: Row<ApiCallLog>;
+      push_subscriptions: Row<PushSubscriptionRow>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

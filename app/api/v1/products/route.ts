@@ -1,10 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyBearerToken, apiError } from "@/lib/api-auth";
+import { verifyBearerToken, apiError, logApiCall } from "@/lib/api-auth";
 import { slugify } from "@/lib/utils";
 
 export async function GET(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/products", "GET", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const supabase = createAdminClient();
   const { data: products } = await supabase
@@ -13,6 +16,7 @@ export async function GET(req: Request) {
     .eq("producer_id", auth.producerId)
     .order("created_at", { ascending: false });
 
+  await logApiCall(auth.producerId, "/api/v1/products", "GET", 200);
   return Response.json({
     success: true,
     products: (products ?? []).map((p) => ({
@@ -28,7 +32,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/products", "POST", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const body = await req.json().catch(() => ({}));
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -36,6 +43,7 @@ export async function POST(req: Request) {
   const description = typeof body.description === "string" ? body.description : "";
 
   if (!title || !Number.isFinite(priceMzn) || priceMzn <= 0) {
+    await logApiCall(auth.producerId, "/api/v1/products", "POST", 400);
     return apiError("title e price_mzn (maior que zero) são obrigatórios.", 400);
   }
 
@@ -56,8 +64,12 @@ export async function POST(req: Request) {
     .select("id, title, price, status")
     .single();
 
-  if (error || !product) return apiError(error?.message ?? "Falha ao criar o produto.", 400);
+  if (error || !product) {
+    await logApiCall(auth.producerId, "/api/v1/products", "POST", 400);
+    return apiError(error?.message ?? "Falha ao criar o produto.", 400);
+  }
 
+  await logApiCall(auth.producerId, "/api/v1/products", "POST", 201);
   return Response.json(
     {
       success: true,

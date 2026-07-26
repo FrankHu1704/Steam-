@@ -1,9 +1,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyBearerToken, apiError, generateWebhookSecret, maskSecret } from "@/lib/api-auth";
+import { verifyBearerToken, apiError, generateWebhookSecret, maskSecret, logApiCall } from "@/lib/api-auth";
 
 export async function GET(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/webhooks", "GET", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const supabase = createAdminClient();
   const { data: webhook } = await supabase
@@ -12,6 +15,7 @@ export async function GET(req: Request) {
     .eq("producer_id", auth.producerId)
     .single();
 
+  await logApiCall(auth.producerId, "/api/v1/webhooks", "GET", 200);
   if (!webhook) return Response.json({ success: true, webhook: null });
 
   return Response.json({
@@ -27,13 +31,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/webhooks", "POST", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const body = await req.json().catch(() => ({}));
   const url = typeof body.url === "string" ? body.url.trim() : "";
   const events = Array.isArray(body.events) && body.events.length > 0 ? body.events : ["payment.completed"];
 
   if (!url || !/^https:\/\//.test(url)) {
+    await logApiCall(auth.producerId, "/api/v1/webhooks", "POST", 400);
     return apiError("url é obrigatório e deve começar com https://.", 400);
   }
 
@@ -49,8 +57,12 @@ export async function POST(req: Request) {
     .select("*")
     .single();
 
-  if (error || !webhook) return apiError(error?.message ?? "Falha ao configurar o webhook.", 400);
+  if (error || !webhook) {
+    await logApiCall(auth.producerId, "/api/v1/webhooks", "POST", 400);
+    return apiError(error?.message ?? "Falha ao configurar o webhook.", 400);
+  }
 
+  await logApiCall(auth.producerId, "/api/v1/webhooks", "POST", 200);
   return Response.json({
     success: true,
     message: "Webhook configurado com sucesso.",
@@ -60,10 +72,14 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/webhooks", "DELETE", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const supabase = createAdminClient();
   await supabase.from("developer_webhooks").delete().eq("producer_id", auth.producerId);
 
+  await logApiCall(auth.producerId, "/api/v1/webhooks", "DELETE", 200);
   return Response.json({ success: true, message: "Webhook removido." });
 }

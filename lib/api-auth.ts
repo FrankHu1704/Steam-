@@ -69,3 +69,19 @@ export function generateWebhookSecret(): string {
 export function maskSecret(secret: string): string {
   return `${secret.slice(0, 10)}${"*".repeat(Math.max(0, secret.length - 14))}${secret.slice(-4)}`;
 }
+
+/** Best-effort call logging for the Admin -> Uso da API page — never
+ * throws, so a logging failure can't break the actual API response. */
+export async function logApiCall(
+  producerId: string | null,
+  endpoint: string,
+  method: string,
+  statusCode: number
+): Promise<void> {
+  try {
+    const supabase = createAdminClient();
+    await supabase.from("api_call_logs").insert({ producer_id: producerId, endpoint, method, status_code: statusCode });
+  } catch {
+    // best-effort only
+  }
+}

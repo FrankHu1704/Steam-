@@ -20,7 +20,8 @@ export async function creditOrder(orderId: string): Promise<void> {
   const platformFeePercent = Number(platformFeeSetting?.value ?? 0);
 
   const commission = order.affiliate_commission_amount ?? 0;
-  const ownerNet = (order.total_amount - commission) * (1 - platformFeePercent / 100);
+  const platformFeeAmount = Math.round((order.total_amount - commission) * (platformFeePercent / 100) * 100) / 100;
+  const ownerNet = order.total_amount - commission - platformFeeAmount;
 
   const { data: producer } = await supabase
     .from("profiles")
@@ -97,5 +98,8 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: product?.title ?? "Produto" });
 
-  await supabase.from("orders").update({ credited_at: new Date().toISOString() }).eq("id", order.id);
+  await supabase
+    .from("orders")
+    .update({ credited_at: new Date().toISOString(), platform_fee_amount: platformFeeAmount })
+    .eq("id", order.id);
 }

@@ -1,11 +1,14 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyBearerToken, apiError } from "@/lib/api-auth";
+import { verifyBearerToken, apiError, logApiCall } from "@/lib/api-auth";
 
 // Each product exposes a default "offer" (1:1 mapping), useful for
 // integrations that work with the offer concept instead of raw products.
 export async function GET(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/offers", "GET", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const supabase = createAdminClient();
   const { data: products } = await supabase
@@ -14,6 +17,7 @@ export async function GET(req: Request) {
     .eq("producer_id", auth.producerId)
     .order("created_at", { ascending: false });
 
+  await logApiCall(auth.producerId, "/api/v1/offers", "GET", 200);
   return Response.json({
     success: true,
     offers: (products ?? []).map((p) => ({

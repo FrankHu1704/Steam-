@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyBearerToken, apiError } from "@/lib/api-auth";
+import { verifyBearerToken, apiError, logApiCall } from "@/lib/api-auth";
 import { createOrder } from "@/lib/actions/checkout";
 import type { PaymentMethod } from "@/lib/debito-pay";
 
@@ -12,7 +12,10 @@ import type { PaymentMethod } from "@/lib/debito-pay";
 // and the producer's own outgoing webhook all still apply.
 export async function POST(req: Request) {
   const auth = await verifyBearerToken(req.headers.get("authorization"));
-  if (!auth) return apiError("Token inválido ou expirado.", 401);
+  if (!auth) {
+    await logApiCall(null, "/api/v1/charges", "POST", 401);
+    return apiError("Token inválido ou expirado.", 401);
+  }
 
   const body = await req.json().catch(() => ({}));
   const productId = typeof body.product_id === "string" ? body.product_id : "";
@@ -22,10 +25,12 @@ export async function POST(req: Request) {
   const paymentMethod = (body.payment_method as PaymentMethod) || "mpesa";
 
   if (!productId || !buyerName || !buyerEmail) {
+    await logApiCall(auth.producerId, "/api/v1/charges", "POST", 400);
     return apiError("product_id, customer_name e customer_email são obrigatórios.", 400);
   }
 
   if (auth.mode === "test") {
+    await logApiCall(auth.producerId, "/api/v1/charges", "POST", 200);
     return Response.json({
       success: true,
       data: {
@@ -43,6 +48,7 @@ export async function POST(req: Request) {
     .eq("id", auth.producerId)
     .single();
   if (!profile?.production_unlocked_at) {
+    await logApiCall(auth.producerId, "/api/v1/charges", "POST", 403);
     return apiError("Modo produção não desbloqueado para esta conta.", 403);
   }
 
@@ -52,6 +58,7 @@ export async function POST(req: Request) {
     .eq("id", productId)
     .single();
   if (!product || product.producer_id !== auth.producerId || product.status !== "approved") {
+    await logApiCall(auth.producerId, "/api/v1/charges", "POST", 404);
     return apiError("Produto não encontrado ou não pertence a esta conta.", 404);
   }
 
@@ -64,9 +71,11 @@ export async function POST(req: Request) {
   });
 
   if (result.error || !result.orderId) {
+    await logApiCall(auth.producerId, "/api/v1/charges", "POST", 400);
     return apiError(result.error ?? "Falha ao criar a cobrança.", 400);
   }
 
+  await logApiCall(auth.producerId, "/api/v1/charges", "POST", 201);
   return Response.json(
     {
       success: true,
