@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Flame } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { getActivePaymentProvider, methodsForProvider } from "@/lib/payments";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/database";
 
@@ -27,6 +28,9 @@ export default async function ProductSalePage({
 
   await supabase.rpc("increment_product_views", { p_id: product.id });
   if (ref) await supabase.rpc("increment_affiliate_clicks", { affiliate_code: ref });
+
+  const providerName = await getActivePaymentProvider();
+  const paymentMethods = methodsForProvider(providerName, product.currency);
 
   const { data: bumps } = await supabase
     .from("products")
@@ -91,7 +95,7 @@ export default async function ProductSalePage({
                   </div>
                 </div>
               </div>
-              <CheckoutForm product={product} bumps={bumps ?? []} affiliateRef={ref} />
+              <CheckoutForm product={product} bumps={bumps ?? []} affiliateRef={ref} paymentMethods={paymentMethods} />
             </div>
           </div>
         </div>

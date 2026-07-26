@@ -2,18 +2,21 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Copy, KeyRound, Plus, Trash2, Webhook } from "lucide-react";
+import { Copy, KeyRound, Lock, Plus, Trash2, Unlock, Webhook } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
   createApiKey,
   revokeApiKey,
   saveDeveloperWebhook,
   deleteDeveloperWebhook,
+  requestProductionUnlock,
+  checkProductionUnlockStatus,
 } from "@/lib/actions/developer";
-import type { ApiKey, DeveloperWebhook } from "@/types/database";
+import type { ApiKey, ApiKeyMode, DeveloperWebhook } from "@/types/database";
 
 function copy(text: string) {
   navigator.clipboard.writeText(text);
@@ -24,13 +27,18 @@ export function DeveloperApiPanel({
   apiKeys,
   webhook,
   baseUrl,
+  productionUnlocked,
+  pendingUnlockId,
 }: {
   apiKeys: ApiKey[];
   webhook: DeveloperWebhook | null;
   baseUrl: string;
+  productionUnlocked: boolean;
+  pendingUnlockId?: string;
 }) {
   const [keys, setKeys] = useState(apiKeys);
   const [label, setLabel] = useState("");
+  const [mode, setMode] = useState<ApiKeyMode>("test");
   const [creating, setCreating] = useState(false);
   const [revealedSecret, setRevealedSecret] = useState<{ clientId: string; clientSecret: string } | null>(null);
 
@@ -39,9 +47,13 @@ export function DeveloperApiPanel({
   const [revealedWebhookSecret, setRevealedWebhookSecret] = useState<string | null>(null);
   const [hasWebhook, setHasWebhook] = useState(!!webhook);
 
+  const [unlocked, setUnlocked] = useState(productionUnlocked);
+  const [unlockPhone, setUnlockPhone] = useState("");
+  const [unlocking, setUnlocking] = useState(!!pendingUnlockId);
+
   async function handleCreateKey() {
     setCreating(true);
-    const res = await createApiKey(label);
+    const res = await createApiKey(label, mode);
     setCreating(false);
     if (res.error || !res.id || !res.clientId || !res.clientSecret) {
       toast.error(res.error ?? "Falha ao criar chave.");
@@ -55,6 +67,7 @@ export function DeveloperApiPanel({
         label: label.trim() || "Chave de API",
         client_id: res.clientId!,
         client_secret_hash: "",
+        mode,
         revoked_at: null,
         created_at: new Date().toISOString(),
       },
@@ -71,6 +84,41 @@ export function DeveloperApiPanel({
     }
     setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, revoked_at: new Date().toISOString() } : k)));
     toast.success("Chave revogada.");
+  }
+
+  async function pollUnlock(unlockId: string) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const res = await checkProductionUnlockStatus(unlockId);
+      if (res.status === "paid") {
+        setUnlocked(true);
+        setUnlocking(false);
+        toast.success("Modo produção desbloqueado!");
+        return;
+      }
+      if (res.status === "failed") {
+        setUnlocking(false);
+        toast.error("Pagamento não confirmado. Tente novamente.");
+        return;
+      }
+    }
+    setUnlocking(false);
+  }
+
+  async function handleUnlock() {
+    if (!unlockPhone.trim()) {
+      toast.error("Indique o número de telemóvel.");
+      return;
+    }
+    setUnlocking(true);
+    const res = await requestProductionUnlock(unlockPhone.trim());
+    if (res.error || !res.unlockId) {
+      setUnlocking(false);
+      toast.error(res.error ?? "Falha ao iniciar o pagamento.");
+      return;
+    }
+    toast.info("Confirme o pagamento de 300 MT no seu telemóvel.");
+    void pollUnlock(res.unlockId);
   }
 
   async function handleSaveWebhook() {
@@ -103,12 +151,43 @@ export function DeveloperApiPanel({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-2">
+            {unlocked ? <Unlock className="h-5 w-5 text-emerald-600" /> : <Lock className="h-5 w-5 text-primary" />}
+            <h2 className="font-semibold">Checkout personalizado</h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Use uma chave de <strong>teste</strong> (grátis, cobranças simuladas) para construir o seu próprio
+            checkout via <code>POST /api/v1/charges</code>. Para cobranças reais, desbloqueie o{" "}
+            <strong>modo produção</strong> com um pagamento único de 300 MT.
+          </p>
+
+          {unlocked ? (
+            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
+              Modo produção desbloqueado — já pode criar chaves live.
+            </div>
+          ) : (
+            <div className="mt-4 flex gap-2">
+              <Input
+                placeholder="Número de telemóvel (M-Pesa/e-Mola)"
+                value={unlockPhone}
+                onChange={(e) => setUnlockPhone(e.target.value)}
+              />
+              <Button type="button" onClick={handleUnlock} disabled={unlocking} className="shrink-0">
+                {unlocking ? "A confirmar…" : "Desbloquear — 300 MT"}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-primary" />
             <h2 className="font-semibold">Chaves de API</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Use estas credenciais para autenticar chamadas à API pública da PagaJá (produtos, ofertas, pedidos e
-            webhooks da sua conta).
+            Use estas credenciais para autenticar chamadas à API pública da PagaJá (produtos, ofertas, pedidos,
+            cobranças e webhooks da sua conta).
           </p>
 
           {revealedSecret && (
@@ -131,11 +210,36 @@ export function DeveloperApiPanel({
             </div>
           )}
 
-          <div className="mt-4 flex gap-2">
-            <Input placeholder="Nome da chave (opcional)" value={label} onChange={(e) => setLabel(e.target.value)} />
-            <Button type="button" onClick={handleCreateKey} disabled={creating} className="shrink-0 gap-1.5">
-              <Plus className="h-4 w-4" /> {creating ? "A criar…" : "Criar chave"}
-            </Button>
+          <div className="mt-4 space-y-2">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMode("test")}
+                className={cn(
+                  "rounded-lg border-2 px-3 py-1.5 text-sm font-medium",
+                  mode === "test" ? "border-primary bg-primary/5" : "border-border"
+                )}
+              >
+                Teste
+              </button>
+              <button
+                type="button"
+                onClick={() => unlocked && setMode("live")}
+                disabled={!unlocked}
+                className={cn(
+                  "rounded-lg border-2 px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50",
+                  mode === "live" ? "border-primary bg-primary/5" : "border-border"
+                )}
+              >
+                Produção {!unlocked && "🔒"}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <Input placeholder="Nome da chave (opcional)" value={label} onChange={(e) => setLabel(e.target.value)} />
+              <Button type="button" onClick={handleCreateKey} disabled={creating} className="shrink-0 gap-1.5">
+                <Plus className="h-4 w-4" /> {creating ? "A criar…" : "Criar chave"}
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 space-y-2">
@@ -146,7 +250,17 @@ export function DeveloperApiPanel({
                 className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
               >
                 <div>
-                  <p className="font-medium">{k.label}</p>
+                  <p className="font-medium">
+                    {k.label}{" "}
+                    <span
+                      className={cn(
+                        "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase",
+                        k.mode === "live" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {k.mode}
+                    </span>
+                  </p>
                   <p className="font-mono text-xs text-muted-foreground">{k.client_id}</p>
                 </div>
                 {k.revoked_at ? (
@@ -224,12 +338,14 @@ curl -X POST ${baseUrl}/api/v1/oauth/token \\
   -H "Content-Type: application/json" \\
   -d '{ "client_id": "SEU_CLIENT_ID", "client_secret": "SEU_CLIENT_SECRET" }'
 
-# 2. Usar o token
-curl ${baseUrl}/api/v1/orders \\
-  -H "Authorization: Bearer SEU_ACCESS_TOKEN"`}
+# 2. Criar uma cobrança (checkout personalizado)
+curl -X POST ${baseUrl}/api/v1/charges \\
+  -H "Authorization: Bearer SEU_ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "product_id": "...", "customer_name": "...", "customer_email": "...", "customer_phone": "84...", "payment_method": "mpesa" }'`}
           </pre>
           <p className="text-xs text-muted-foreground">
-            Endpoints disponíveis: <code>GET/POST /api/v1/products</code>, <code>GET /api/v1/offers</code>,{" "}
+            Outros endpoints: <code>GET/POST /api/v1/products</code>, <code>GET /api/v1/offers</code>,{" "}
             <code>GET /api/v1/orders</code>, <code>GET/POST/DELETE /api/v1/webhooks</code>.
           </p>
         </CardContent>

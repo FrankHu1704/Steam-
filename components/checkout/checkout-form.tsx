@@ -47,21 +47,18 @@ function PaymentIcon({ method }: { method: PaymentMethod }) {
   return <Smartphone className="h-4 w-4" />;
 }
 
-function paymentMethodsForCurrency(currency: string): PaymentMethod[] {
-  return currency === "ZAR" ? ["payfast", "visa_mastercard"] : ["mpesa", "emola", "mkesh", "visa_mastercard"];
-}
-
 interface CheckoutFormProps {
   product: Product;
   bumps: Product[];
   affiliateRef?: string;
+  paymentMethods: PaymentMethod[];
 }
 
 type Step = "form" | "pending" | "paid" | "failed";
 
-export function CheckoutForm({ product, bumps, affiliateRef }: CheckoutFormProps) {
+export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods }: CheckoutFormProps) {
   const currency = product.currency;
-  const methods = paymentMethodsForCurrency(currency);
+  const methods = paymentMethods;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

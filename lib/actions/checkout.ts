@@ -2,7 +2,9 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createCharge, checkChargeStatus, type PaymentMethod } from "@/lib/debito-pay";
+import type { PaymentMethod } from "@/lib/debito-pay";
+import { getActivePaymentProvider, providerModule, methodsForProvider } from "@/lib/payments";
+import { creditOrder } from "@/lib/order-fulfillment";
 import type { Product } from "@/types/database";
 
 export interface CouponPreview {
@@ -84,6 +86,11 @@ export async function createOrder(input: CreateOrderInput) {
 
   if (!product) return { error: "Produto não encontrado ou indisponível." };
 
+  const providerName = await getActivePaymentProvider();
+  if (!methodsForProvider(providerName, product.currency).includes(input.paymentMethod)) {
+    return { error: "Método de pagamento indisponível." };
+  }
+
   const baseAmount = product.promo_price ?? product.price;
 
   let discountAmount = 0;
@@ -163,7 +170,7 @@ export async function createOrder(input: CreateOrderInput) {
 
   let charge;
   try {
-    charge = await createCharge({
+    charge = await providerModule(providerName).createCharge({
       paymentMethod: input.paymentMethod,
       amount: totalAmount,
       currency: product.currency as "MZN" | "ZAR",
@@ -178,16 +185,25 @@ export async function createOrder(input: CreateOrderInput) {
     return { error: (err as Error).message };
   }
 
+  // orders/payments.status is the order_status enum (pending/paid/failed/
+  // refunded/expired) — providers report "success", not "paid".
+  const paymentStatus = charge.status === "success" ? "paid" : (charge.status ?? "pending");
+
   await supabase.from("orders").update({ payment_method: input.paymentMethod }).eq("id", order.id);
   await supabase.from("payments").insert({
     order_id: order.id,
-    provider: "debito_pay",
+    provider: providerName,
     provider_payment_id: charge.payment_id,
     reference: charge.reference,
     checkout_url: charge.checkout_url,
-    status: charge.status ?? "pending",
+    status: paymentStatus,
     raw_response: charge,
   });
+
+  if (charge.status === "success") {
+    await supabase.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", order.id);
+    await creditOrder(order.id);
+  }
 
   if (couponId) {
     await supabase.rpc("increment_coupon_usage", { coupon_id: couponId }).then(
@@ -221,10 +237,19 @@ export async function getOrderStatus(orderId: string) {
 
     if (payment?.provider_payment_id) {
       try {
-        const remote = await checkChargeStatus(payment.provider_payment_id);
-        if (remote.status !== order.status) {
-          await supabase.from("orders").update({ status: remote.status }).eq("id", orderId);
-          return { status: remote.status };
+        const providerName = payment.provider === "zumbopay" ? "zumbopay" : "debito_pay";
+        const remote = await providerModule(providerName).checkChargeStatus(payment.provider_payment_id);
+        // remote.status is the provider's vocabulary ("success"/"pending"/
+        // "failed"/"expired") — orders.status is the order_status enum,
+        // which uses "paid" instead of "success".
+        const mappedStatus = remote.status === "success" ? "paid" : remote.status;
+        if (mappedStatus !== order.status) {
+          await supabase.from("orders").update({ status: mappedStatus }).eq("id", orderId);
+          if (mappedStatus === "paid" && !order.credited_at) {
+            await supabase.from("orders").update({ paid_at: new Date().toISOString() }).eq("id", orderId);
+            await creditOrder(orderId);
+          }
+          return { status: mappedStatus };
         }
       } catch {
         // best-effort reconciliation; webhook remains the source of truth

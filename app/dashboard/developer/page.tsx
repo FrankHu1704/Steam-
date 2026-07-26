@@ -1,8 +1,12 @@
 import { DeveloperApiPanel } from "@/components/developer/developer-api-panel";
-import { getApiKeys, getDeveloperWebhook } from "@/lib/actions/developer";
+import { getApiKeys, getDeveloperWebhook, getProductionUnlockStatus } from "@/lib/actions/developer";
 
 export default async function DeveloperPage() {
-  const [apiKeys, webhook] = await Promise.all([getApiKeys(), getDeveloperWebhook()]);
+  const [apiKeys, webhook, unlockStatus] = await Promise.all([
+    getApiKeys(),
+    getDeveloperWebhook(),
+    getProductionUnlockStatus(),
+  ]);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pagaja.vercel.app";
 
   return (
@@ -13,7 +17,13 @@ export default async function DeveloperPage() {
           Integre a sua conta PagaJá com as suas próprias ferramentas via API.
         </p>
       </div>
-      <DeveloperApiPanel apiKeys={apiKeys} webhook={webhook} baseUrl={baseUrl} />
+      <DeveloperApiPanel
+        apiKeys={apiKeys}
+        webhook={webhook}
+        baseUrl={baseUrl}
+        productionUnlocked={unlockStatus.unlocked}
+        pendingUnlockId={unlockStatus.pendingOrderId}
+      />
     </div>
   );
 }

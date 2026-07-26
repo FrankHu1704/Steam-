@@ -10,14 +10,31 @@ export type WithdrawalStatus = "pending" | "approved" | "rejected" | "paid" | "c
 export type CouponDiscountType = "percent" | "fixed";
 export type CommissionStatus = "pending" | "paid";
 
+export type ApiKeyMode = "test" | "live";
+
 export interface ApiKey {
   id: string;
   producer_id: string;
   label: string;
   client_id: string;
   client_secret_hash: string;
+  mode: ApiKeyMode;
   revoked_at: string | null;
   created_at: string;
+}
+
+export type ProductionUnlockStatus = "pending" | "paid" | "failed";
+
+export interface ProductionUnlock {
+  id: string;
+  producer_id: string;
+  amount: number;
+  currency: string;
+  provider: string;
+  provider_payment_id: string | null;
+  status: ProductionUnlockStatus;
+  created_at: string;
+  paid_at: string | null;
 }
 
 export interface ApiAccessToken {
@@ -51,6 +68,7 @@ export interface Profile {
   balance_available: number;
   balance_pending: number;
   currency: string;
+  production_unlocked_at: string | null;
   created_at: string;
 }
 
@@ -303,6 +321,7 @@ export interface Database {
       api_keys: Row<ApiKey>;
       api_access_tokens: Row<ApiAccessToken>;
       developer_webhooks: Row<DeveloperWebhook>;
+      production_unlocks: Row<ProductionUnlock>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

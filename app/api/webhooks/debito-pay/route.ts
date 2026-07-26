@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/debito-pay";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { creditOrder } from "@/lib/order-fulfillment";
+import { completeProductionUnlock } from "@/lib/production-unlock-fulfillment";
 
 interface WebhookBody {
   event: "payment.completed" | "payment.failed" | "payment.refunded" | "payment.chargeback";
@@ -62,7 +63,21 @@ export async function POST(request: Request) {
     .limit(1)
     .single();
 
-  if (!payment) return NextResponse.json({ ok: true, note: "no matching payment" });
+  if (!payment) {
+    if (body.event === "payment.completed") {
+      const { data: unlock } = await supabase
+        .from("production_unlocks")
+        .select("id")
+        .eq("provider_payment_id", paymentId)
+        .single();
+      if (unlock) {
+        const result = await completeProductionUnlock(unlock.id, {});
+        if (result.error) return NextResponse.json({ ok: false, error: result.error }, { status: 409 });
+        return NextResponse.json({ ok: true, production_unlock: unlock.id });
+      }
+    }
+    return NextResponse.json({ ok: true, note: "no matching payment" });
+  }
 
   const { data: order } = await supabase.from("orders").select("*").eq("id", payment.order_id).single();
   if (!order) return NextResponse.json({ ok: true, note: "no matching order" });

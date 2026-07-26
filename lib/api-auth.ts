@@ -13,9 +13,9 @@ export function hashSecret(secret: string): string {
   return crypto.createHash("sha256").update(secret).digest("hex");
 }
 
-export function generateClientCredentials(): { clientId: string; clientSecret: string } {
+export function generateClientCredentials(mode: "test" | "live"): { clientId: string; clientSecret: string } {
   const clientId = `pgj_id_${crypto.randomBytes(12).toString("hex")}`;
-  const clientSecret = `pgj_live_${crypto.randomBytes(24).toString("hex")}`;
+  const clientSecret = `pgj_${mode}_${crypto.randomBytes(24).toString("hex")}`;
   return { clientId, clientSecret };
 }
 
@@ -35,7 +35,9 @@ export async function issueAccessToken(apiKeyId: string, producerId: string) {
   return { token, expiresIn: TOKEN_TTL_SECONDS };
 }
 
-export async function verifyBearerToken(authHeader: string | null): Promise<{ producerId: string } | null> {
+export async function verifyBearerToken(
+  authHeader: string | null
+): Promise<{ producerId: string; mode: "test" | "live" } | null> {
   if (!authHeader?.startsWith("Bearer ")) return null;
   const token = authHeader.slice("Bearer ".length).trim();
   if (!token) return null;
@@ -43,12 +45,17 @@ export async function verifyBearerToken(authHeader: string | null): Promise<{ pr
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("api_access_tokens")
-    .select("producer_id, expires_at")
+    .select("producer_id, expires_at, api_keys(mode, revoked_at)")
     .eq("token", token)
-    .single();
+    .single<{
+      producer_id: string;
+      expires_at: string;
+      api_keys: { mode: "test" | "live"; revoked_at: string | null } | null;
+    }>();
 
   if (!data || new Date(data.expires_at) < new Date()) return null;
-  return { producerId: data.producer_id };
+  if (!data.api_keys || data.api_keys.revoked_at) return null;
+  return { producerId: data.producer_id, mode: data.api_keys.mode };
 }
 
 export function apiError(message: string, status: number) {
