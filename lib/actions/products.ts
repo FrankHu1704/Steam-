@@ -20,8 +20,6 @@ interface UpsertProductInput {
   affiliateCommissionPercent: number;
   seoTitle: string | null;
   seoDescription: string | null;
-  productType: "digital" | "physical";
-  stockQuantity: number | null;
   files: { name: string; storage_path: string; size_bytes: number }[];
 }
 
@@ -37,9 +35,6 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
   }
   if (input.promoPrice != null && input.promoPrice >= input.price) {
     return { error: "O preço promocional deve ser menor que o preço normal." };
-  }
-  if (input.productType === "physical" && (input.stockQuantity == null || input.stockQuantity < 0)) {
-    return { error: "Indique a quantidade em estoque do produto físico." };
   }
 
   const baseSlug = slugify(input.title);
@@ -59,8 +54,6 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     affiliate_commission_percent: Math.min(90, Math.max(0, input.affiliateCommissionPercent)),
     seo_title: input.seoTitle,
     seo_description: input.seoDescription,
-    product_type: input.productType,
-    stock_quantity: input.productType === "physical" ? input.stockQuantity : null,
   };
 
   let productId = input.id;

@@ -65,9 +65,6 @@ interface CreateOrderInput {
   bumpProductIds?: string[];
   affiliateCode?: string;
   returnUrl?: string;
-  shippingAddress?: string;
-  shippingCity?: string;
-  shippingProvince?: string;
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -86,15 +83,6 @@ export async function createOrder(input: CreateOrderInput) {
     .single<Product>();
 
   if (!product) return { error: "Produto não encontrado ou indisponível." };
-
-  if (product.product_type === "physical") {
-    if (!input.shippingAddress || !input.shippingCity || !input.shippingProvince) {
-      return { error: "Indique a morada de entrega completa." };
-    }
-    if (product.stock_quantity != null && product.stock_quantity <= 0) {
-      return { error: "Produto esgotado." };
-    }
-  }
 
   const baseAmount = product.promo_price ?? product.price;
 
@@ -161,9 +149,6 @@ export async function createOrder(input: CreateOrderInput) {
       status: "pending",
       affiliate_id: affiliateId,
       affiliate_commission_amount: affiliateCommissionAmount,
-      shipping_address: input.shippingAddress ?? null,
-      shipping_city: input.shippingCity ?? null,
-      shipping_province: input.shippingProvince ?? null,
     })
     .select("id")
     .single();

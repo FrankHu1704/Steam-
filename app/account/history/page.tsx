@@ -3,14 +3,6 @@ import { StatusBadge } from "@/components/ui/badge";
 import { getMyOrders } from "@/lib/data/buyer";
 import { formatCurrency } from "@/lib/utils";
 
-const SHIPPING_LABELS: Record<string, string> = {
-  pending: "Pendente",
-  processing: "Em preparação",
-  shipped: "Enviado",
-  delivered: "Entregue",
-  returned: "Devolvido",
-};
-
 export default async function HistoryPage() {
   const orders = await getMyOrders();
 
@@ -34,7 +26,6 @@ export default async function HistoryPage() {
                     <th className="p-4 font-medium">Valor</th>
                     <th className="p-4 font-medium">Método</th>
                     <th className="p-4 font-medium">Estado</th>
-                    <th className="p-4 font-medium">Envio</th>
                     <th className="p-4 font-medium">Data</th>
                   </tr>
                 </thead>
@@ -48,9 +39,6 @@ export default async function HistoryPage() {
                       </td>
                       <td className="p-4">
                         <StatusBadge status={order.status} />
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {order.shipping_status ? SHIPPING_LABELS[order.shipping_status] : "—"}
                       </td>
                       <td className="p-4 text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString("pt-MZ")}

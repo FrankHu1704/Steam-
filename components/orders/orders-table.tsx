@@ -5,7 +5,6 @@ import { Download, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { ShippingStatusControl } from "@/components/orders/shipping-status-control";
 import { formatCurrency } from "@/lib/utils";
 import type { ProducerOrder } from "@/lib/data/orders";
 
@@ -78,14 +77,13 @@ export function OrdersTable({ orders }: { orders: ProducerOrder[] }) {
               <th className="p-4 font-medium">Valor</th>
               <th className="p-4 font-medium">Método</th>
               <th className="p-4 font-medium">Estado</th>
-              <th className="p-4 font-medium">Envio</th>
               <th className="p-4 font-medium">Data</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                <td colSpan={6} className="p-8 text-center text-muted-foreground">
                   Nenhum pedido encontrado.
                 </td>
               </tr>
@@ -103,22 +101,6 @@ export function OrdersTable({ orders }: { orders: ProducerOrder[] }) {
                   </td>
                   <td className="p-4">
                     <StatusBadge status={order.status} />
-                  </td>
-                  <td className="p-4">
-                    {order.product_type === "physical" && order.status === "paid" ? (
-                      <ShippingStatusControl
-                        orderId={order.id}
-                        status={order.shipping_status}
-                        trackingReference={order.tracking_reference}
-                        address={
-                          [order.shipping_address, order.shipping_city, order.shipping_province]
-                            .filter(Boolean)
-                            .join(", ") || null
-                        }
-                      />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
                   </td>
                   <td className="p-4 text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-MZ")}</td>
                 </tr>
