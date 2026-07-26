@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   Rocket,
   ShieldCheck,
@@ -10,6 +11,8 @@ import {
   Smartphone,
   Star,
   ChevronDown,
+  Code2,
+  Megaphone,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
@@ -29,10 +32,13 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 const FEATURES = [
   { icon: Rocket, title: "Publicação Instantânea", text: "Crie o seu produto e comece a vender em minutos, sem burocracia." },
-  { icon: Wallet, title: "Saques Rápidos", text: "Peça o seu saque a qualquer momento via M-Pesa, e-Mola ou transferência." },
+  { icon: Wallet, title: "Saques Rápidos", text: "Peça o seu saque a qualquer momento via M-Pesa, e-Mola ou levantamento automático (B2C)." },
   { icon: BarChart3, title: "Dashboard Completo", text: "Acompanhe vendas, clientes e afiliados em tempo real." },
   { icon: Users2, title: "Programa de Afiliados", text: "Deixe outras pessoas venderem por si e pague comissão só quando vender." },
   { icon: ShieldCheck, title: "Pagamentos Seguros", text: "Checkout protegido, entrega automática após confirmação do pagamento." },
+  { icon: Code2, title: "API para Programadores", text: "Integre a PagaJá no seu próprio sistema com checkout personalizado — comece em modo teste, avance para produção." },
+  { icon: Star, title: "Avaliações Verificadas", text: "Os seus clientes deixam avaliações reais que aumentam a confiança na compra." },
+  { icon: Megaphone, title: "Campanhas & Pixels", text: "Rastreie as suas campanhas com UTMs e adicione pixels do Meta, Google ou TikTok ao seu produto." },
   { icon: Smartphone, title: "100% Responsivo", text: "Gerencie o seu negócio do telemóvel, instale como aplicativo (PWA)." },
 ];
 
@@ -47,12 +53,18 @@ const BENEFITS = [
   "Sem mensalidade — só paga quando vender",
   "Suporte dedicado em português",
   "Entrega automática de ficheiros",
-  "Relatórios e exportação em CSV",
+  "Notificações push em tempo real",
   "Cupões de desconto e order bumps",
-  "Dark mode e instalação como app",
+  "Marketplace para ganhar visibilidade extra",
 ];
 
-const METHODS = ["M-Pesa", "e-Mola", "mKesh", "Visa & Mastercard", "PayPal (em breve)"];
+const METHODS: { label: string; logo?: string }[] = [
+  { label: "M-Pesa", logo: "/payment-logos/mpesa.png" },
+  { label: "e-Mola", logo: "/payment-logos/emola.png" },
+  { label: "mKesh" },
+  { label: "Visa & Mastercard", logo: "/payment-logos/visa-mastercard.png" },
+  { label: "PayFast" },
+];
 
 const TESTIMONIALS = [
   { name: "Aisha M.", role: "Criadora de Cursos", text: "Em uma semana já tinha vendido mais eBooks do que em 3 meses fazendo tudo manualmente." },
@@ -65,6 +77,7 @@ const FAQS = [
   { q: "Como recebo o dinheiro das vendas?", a: "O valor fica disponível no seu saldo e pode ser sacado via M-Pesa, e-Mola ou transferência bancária." },
   { q: "Posso vender cursos com vídeo?", a: "Sim, pode adicionar vídeos, PDFs, templates e outros ficheiros digitais ao seu produto." },
   { q: "Existe programa de afiliados?", a: "Sim — ative a afiliação no seu produto e qualquer pessoa pode promovê-lo por comissão." },
+  { q: "Posso integrar a PagaJá no meu próprio sistema?", a: "Sim — disponibilizamos uma API para programadores com checkout personalizado, chaves de teste e produção." },
 ];
 
 export function Features() {
@@ -161,9 +174,13 @@ export function PaymentMethods() {
         </Reveal>
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-5">
           {METHODS.map((m, i) => (
-            <Reveal key={m} delay={i * 0.05}>
-              <div className="rounded-xl border border-border bg-card px-4 py-6 text-sm font-semibold">
-                {m}
+            <Reveal key={m.label} delay={i * 0.05}>
+              <div className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-6">
+                {m.logo ? (
+                  <Image src={m.logo} alt={m.label} width={88} height={36} className="h-8 w-auto object-contain" />
+                ) : (
+                  <span className="text-sm font-semibold">{m.label}</span>
+                )}
               </div>
             </Reveal>
           ))}
