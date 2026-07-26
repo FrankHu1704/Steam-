@@ -43,7 +43,13 @@ export function WithdrawalReviewActions({
 
   if (status === "pending") {
     return (
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {payoutMethod === "mpesa" && (
+          <Button size="sm" variant="outline" onClick={handleAutoPayout} disabled={pending} className="gap-1.5">
+            <Zap className="h-3.5 w-3.5" />
+            Pagar via ZumboPay (B2C)
+          </Button>
+        )}
         <Button size="sm" onClick={() => act("approved")} disabled={pending}>
           {pending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
           Aprovar

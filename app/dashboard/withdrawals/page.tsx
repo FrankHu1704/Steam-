@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
 import { ConfirmReceiptButton } from "@/components/withdrawals/confirm-receipt-button";
+import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyWithdrawals, getWithdrawalFeePercent, getWithdrawalMinimumAmount } from "@/lib/data/withdrawals";
 import { formatCurrency } from "@/lib/utils";
@@ -16,6 +19,7 @@ export default async function WithdrawalsPage() {
     getWithdrawalMinimumAmount(),
   ]);
   const currency = profile.currency as "MZN" | "ZAR";
+  const canUseB2C = !!profile.production_unlocked_at;
 
   return (
     <div className="space-y-6">
@@ -23,6 +27,29 @@ export default async function WithdrawalsPage() {
         <h1 className="text-2xl font-bold">Saques</h1>
         <p className="text-sm text-muted-foreground">Peça o levantamento do seu saldo disponível.</p>
       </div>
+
+      {canUseB2C ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950">
+          <Zap className="h-5 w-5 shrink-0 text-emerald-600" />
+          <p className="text-emerald-900 dark:text-emerald-200">
+            Tem levantamento instantâneo via B2C ativo para M-Pesa — clique em &quot;Levantar agora (B2C)&quot; em
+            qualquer pedido pendente.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Zap className="h-5 w-5 shrink-0 text-primary" />
+            <p className="text-muted-foreground">
+              Desbloqueie o modo produção da API para levantar via M-Pesa instantaneamente (B2C), sem esperar
+              aprovação.
+            </p>
+          </div>
+          <Link href="/dashboard/developer" className="shrink-0 text-sm font-medium text-primary hover:underline">
+            Saber mais
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
@@ -71,7 +98,12 @@ export default async function WithdrawalsPage() {
                         <td className="p-4 text-muted-foreground">
                           {new Date(w.requested_at).toLocaleDateString("pt-MZ")}
                         </td>
-                        <td className="p-4">{w.status === "paid" && <ConfirmReceiptButton withdrawalId={w.id} />}</td>
+                        <td className="p-4">
+                          {w.status === "paid" && <ConfirmReceiptButton withdrawalId={w.id} />}
+                          {w.status === "pending" && canUseB2C && w.payout_method === "mpesa" && (
+                            <B2CPayoutButton withdrawalId={w.id} />
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

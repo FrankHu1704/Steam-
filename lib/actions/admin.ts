@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
 import { sendProductApprovedEmail, sendBulkEmail } from "@/lib/email";
 import { creditOrder } from "@/lib/order-fulfillment";
-import { createPayout } from "@/lib/zumbopay";
+import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -78,39 +78,12 @@ export async function payWithdrawalViaZumboPay(withdrawalId: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };
 
-  const supabase = createAdminClient();
-  const { data: withdrawal } = await supabase.from("withdrawals").select("*").eq("id", withdrawalId).single();
-  if (!withdrawal) return { error: "Levantamento não encontrado." };
-  if (withdrawal.status !== "approved") return { error: "O levantamento precisa estar aprovado primeiro." };
-  // ZumboPay só suporta B2C instantâneo (auto_dispatch) para M-Pesa —
-  // e-Mola fica pendente à espera de aprovação manual do lado deles, o
-  // que não automatiza nada de facto, então mantemos esses no fluxo manual.
-  if (withdrawal.payout_method !== "mpesa") {
-    return { error: "Pagamento automático via ZumboPay só suporta M-Pesa por agora." };
-  }
-
-  const result = await createPayout({
-    method: "mpesa",
-    amount: withdrawal.net_amount,
-    destination: withdrawal.destination,
-    notes: `Levantamento PagaJá ${withdrawal.id}`,
-    autoDispatch: true,
-  });
-
-  if (!result.success || result.status !== "success") {
-    return { error: result.error ?? "Pagamento não confirmado pela ZumboPay." };
-  }
-
-  await supabase
-    .from("withdrawals")
-    .update({
-      status: "paid",
-      paid_at: new Date().toISOString(),
-      payout_reference: result.providerReference ?? result.reference ?? null,
-    })
-    .eq("id", withdrawalId);
-
-  return { ok: true, reference: result.providerReference ?? result.reference };
+  // Admin can trigger B2C straight from "pending" or "approved" — the
+  // manual-approval gate is only meaningful for manual payouts, not for
+  // an instant, auto-dispatched B2C transfer.
+  const result = await payWithdrawalB2C(withdrawalId);
+  if (!result.ok) return { error: result.error };
+  return { ok: true, reference: result.reference };
 }
 
 export async function markProductionUnlockPaid(unlockId: string) {

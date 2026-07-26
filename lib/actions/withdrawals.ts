@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import type { PayoutMethod } from "@/types/database";
 
 export async function requestWithdrawal(input: { amount: number; payoutMethod: PayoutMethod; destination: string }) {
@@ -65,6 +66,35 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
     .eq("id", user.id);
 
   return { withdrawalId: withdrawal.id as string };
+}
+
+// Self-service instant B2C payout — a perk for producers who unlocked the
+// developer API's production mode (paid the one-time 300 MZN fee): they
+// can cash out their own M-Pesa withdrawal instantly instead of waiting
+// for admin to process it manually.
+export async function requestSelfServiceB2CPayout(withdrawalId: string) {
+  const authClient = await createClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+  if (!user) return { error: "Precisa de iniciar sessão." };
+
+  const supabase = createAdminClient();
+  const { data: withdrawal } = await supabase.from("withdrawals").select("producer_id").eq("id", withdrawalId).single();
+  if (!withdrawal || withdrawal.producer_id !== user.id) return { error: "Levantamento não encontrado." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("production_unlocked_at")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.production_unlocked_at) {
+    return { error: "Levantamento instantâneo via B2C é exclusivo para quem desbloqueou o modo produção da API." };
+  }
+
+  const result = await payWithdrawalB2C(withdrawalId);
+  if (!result.ok) return { error: result.error };
+  return { ok: true, reference: result.reference };
 }
 
 export async function confirmWithdrawalReceipt(withdrawalId: string) {
