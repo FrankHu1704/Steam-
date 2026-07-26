@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallAppButton } from "@/components/install-app-button";
 
 const LINKS = [
+  { href: "/marketplace", label: "Marketplace" },
   { href: "#recursos", label: "Recursos" },
   { href: "#como-funciona", label: "Como Funciona" },
   { href: "#beneficios", label: "Benefícios" },
@@ -19,11 +20,17 @@ export function SiteNav() {
           Paga<span className="text-gradient">Já</span>
         </Link>
         <div className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
-          {LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="hover:text-foreground">
-              {l.label}
-            </a>
-          ))}
+          {LINKS.map((l) =>
+            l.href.startsWith("/") ? (
+              <Link key={l.href} href={l.href} className="hover:text-foreground">
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.href} href={l.href} className="hover:text-foreground">
+                {l.label}
+              </a>
+            )
+          )}
         </div>
         <div className="flex items-center gap-2">
           <InstallAppButton />
