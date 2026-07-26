@@ -2,10 +2,14 @@ import Link from "next/link";
 import { Package, GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LeaveReviewButton } from "@/components/reviews/leave-review-button";
 import { getMyOrders } from "@/lib/data/buyer";
 import { productHasCourseContent } from "@/lib/data/courses";
+import { getReviewedOrderIds } from "@/lib/data/reviews";
+import { getCurrentUserAndProfile } from "@/lib/data/profile";
 
 export default async function MyProductsPage() {
+  const { user } = await getCurrentUserAndProfile();
   const orders = await getMyOrders();
   const paid = orders.filter((o) => o.status === "paid");
 
@@ -14,7 +18,10 @@ export default async function MyProductsPage() {
     if (!byProduct.has(order.product_id)) byProduct.set(order.product_id, order);
   }
   const products = Array.from(byProduct.values());
-  const courseFlags = await Promise.all(products.map((p) => productHasCourseContent(p.product_id)));
+  const [courseFlags, reviewedOrderIds] = await Promise.all([
+    Promise.all(products.map((p) => productHasCourseContent(p.product_id))),
+    user ? getReviewedOrderIds(user.id) : Promise.resolve(new Set<string>()),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -57,6 +64,7 @@ export default async function MyProductsPage() {
                   <Button asChild size="sm" variant={courseFlags[i] ? "outline" : "default"} className="w-full">
                     <Link href="/account/downloads">Ver downloads</Link>
                   </Button>
+                  {!reviewedOrderIds.has(order.id) && <LeaveReviewButton orderId={order.id} />}
                 </div>
               </CardContent>
             </Card>

@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { Flame } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { StarRating } from "@/components/reviews/star-rating";
 import { getActivePaymentProvider, methodsForProvider } from "@/lib/payments";
+import { getProductReviews, getProductRatingSummary } from "@/lib/data/reviews";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/database";
 
@@ -40,6 +42,11 @@ export default async function ProductSalePage({
     .neq("id", product.id)
     .limit(2);
 
+  const [reviews, ratingSummary] = await Promise.all([
+    getProductReviews(product.id),
+    getProductRatingSummary(product.id),
+  ]);
+
   const hasPromo = product.promo_price != null;
 
   return (
@@ -60,6 +67,39 @@ export default async function ProductSalePage({
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card p-6">
+            <div className="flex items-center gap-3">
+              <h2 className="font-semibold">Avaliações</h2>
+              {ratingSummary.count > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <StarRating value={ratingSummary.average} />
+                  <span className="text-sm text-muted-foreground">
+                    {ratingSummary.average} · {ratingSummary.count} avaliação{ratingSummary.count === 1 ? "" : "ões"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {reviews.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">Ainda não há avaliações para este produto.</p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {reviews.map((review) => (
+                  <div key={review.id} className="border-t border-border pt-4 first:border-0 first:pt-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{review.buyer_name}</p>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(review.created_at).toLocaleDateString("pt-MZ")}
+                      </span>
+                    </div>
+                    <StarRating value={review.rating} size="h-3.5 w-3.5" />
+                    {review.comment && <p className="mt-1.5 text-sm text-muted-foreground">{review.comment}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
