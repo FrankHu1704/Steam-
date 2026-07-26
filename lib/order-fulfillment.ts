@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendSaleNotificationEmail } from "@/lib/email";
+import { sendSaleNotificationEmail, sendBuyerReceiptEmail, siteUrl } from "@/lib/email";
 import { sendSaleSms } from "@/lib/sms";
+import { sendBuyerWhatsappReceipt } from "@/lib/whatsapp";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
 import { sendPushToUser } from "@/lib/push";
 
@@ -90,6 +91,7 @@ export async function creditOrder(orderId: string): Promise<void> {
       producerEmail: producer.email,
       productTitle: product?.title ?? "o seu produto",
       amount: order.total_amount,
+      netAmount: ownerNet,
       currency: order.currency,
     });
   }
@@ -100,6 +102,24 @@ export async function creditOrder(orderId: string): Promise<void> {
       productTitle: product?.title ?? "o seu produto",
       amount: order.total_amount,
       currency: order.currency,
+    });
+  }
+
+  const accessUrl = `${siteUrl()}/pedido/${order.id}`;
+
+  if (order.buyer_email) {
+    await sendBuyerReceiptEmail({
+      buyerEmail: order.buyer_email,
+      productTitle: product?.title ?? "o seu produto",
+      accessUrl,
+    });
+  }
+
+  if (order.buyer_phone) {
+    await sendBuyerWhatsappReceipt({
+      phone: order.buyer_phone,
+      productTitle: product?.title ?? "o seu produto",
+      accessUrl,
     });
   }
 

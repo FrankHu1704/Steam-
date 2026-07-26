@@ -40,9 +40,13 @@ function ProductMockup() {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.7 }}
+        initial={{ opacity: 0, x: -12, y: 0 }}
+        animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+        transition={{
+          opacity: { duration: 0.6, delay: 0.7 },
+          x: { duration: 0.6, delay: 0.7 },
+          y: { duration: 3, delay: 1.3, repeat: Infinity, ease: "easeInOut" },
+        }}
         className="glass absolute -left-6 -top-5 flex items-center gap-2 rounded-xl px-3 py-2 shadow-lg"
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -52,9 +56,13 @@ function ProductMockup() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, x: 12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.9 }}
+        initial={{ opacity: 0, x: 12, y: 0 }}
+        animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+        transition={{
+          opacity: { duration: 0.6, delay: 0.9 },
+          x: { duration: 0.6, delay: 0.9 },
+          y: { duration: 3.4, delay: 1.6, repeat: Infinity, ease: "easeInOut" },
+        }}
         className="glass absolute -bottom-5 -right-4 flex items-center gap-2 rounded-xl px-3 py-2 shadow-lg"
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary">
@@ -69,7 +77,11 @@ function ProductMockup() {
 export function Hero() {
   return (
     <section className="relative overflow-hidden pb-24 pt-20 md:pb-32 md:pt-28">
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-brand-gradient opacity-20 blur-[100px]" />
+      <motion.div
+        className="pointer-events-none absolute -top-32 left-1/2 h-[40rem] w-[40rem] -translate-x-1/2 rounded-full bg-brand-gradient blur-[100px]"
+        animate={{ opacity: [0.15, 0.25, 0.15] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      />
       <div className="container relative grid items-center gap-14 lg:grid-cols-2 lg:gap-10">
         <div className="text-center lg:text-left">
           <motion.div

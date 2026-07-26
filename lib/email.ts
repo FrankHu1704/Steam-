@@ -26,7 +26,7 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
   }
 }
 
-function siteUrl(): string {
+export function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL || "https://pagaja.vercel.app";
 }
 
@@ -88,22 +88,76 @@ function emailHighlight(text: string): string {
   `;
 }
 
+function emailButton(text: string, url: string): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+      <tr>
+        <td align="center">
+          <a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#2563EB 0%,#7C3AED 100%);color:#ffffff;font-weight:700;font-size:14px;text-decoration:none;padding:13px 28px;border-radius:10px;">
+            ${text}
+          </a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailInfoBox(rows: { label: string; value: string; emphasize?: boolean }[]): string {
+  const rowsHtml = rows
+    .map(
+      (r, i) => `
+        <tr>
+          <td style="padding:${i === 0 ? "0" : "12px"} 0 0;">
+            <p style="margin:0;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">${r.label}</p>
+            <p style="margin:2px 0 0;font-size:${r.emphasize ? "18" : "15"}px;font-weight:700;color:${r.emphasize ? "#059669" : "#111827"};">${r.value}</p>
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border-radius:10px;padding:16px 18px;margin:16px 0;">
+      ${rowsHtml}
+    </table>
+  `;
+}
+
 export async function sendSaleNotificationEmail(input: {
   producerEmail: string;
   productTitle: string;
   amount: number;
+  netAmount: number;
   currency: string;
 }) {
   await sendEmail({
     to: input.producerEmail,
     subject: "Nova venda na PagaJá! 🎉",
     html: emailShell(
-      "Você tem uma nova venda!",
-      emailParagraph(
-        `O produto <strong>${input.productTitle}</strong> acabou de ser vendido por <strong>${input.amount} ${input.currency}</strong>.`
-      ) +
-        emailParagraph("O valor já está disponível no seu saldo no painel da PagaJá.") +
+      "Parabéns, você tem uma nova venda!",
+      emailParagraph(`Acabou de vender <strong>${input.productTitle}</strong> na PagaJá.`) +
+        emailInfoBox([
+          { label: "Produto", value: input.productTitle },
+          { label: "Valor bruto", value: `${input.amount} ${input.currency}` },
+          { label: "Lucro líquido (após taxas)", value: `${input.netAmount} ${input.currency}`, emphasize: true },
+        ]) +
+        emailButton("Ver Detalhes da Venda", `${siteUrl()}/dashboard/orders`) +
         emailHighlight("Cada venda é uma prova de que o seu conteúdo está a gerar valor real.")
+    ),
+  });
+}
+
+export async function sendBuyerReceiptEmail(input: { buyerEmail: string; productTitle: string; accessUrl: string }) {
+  await sendEmail({
+    to: input.buyerEmail,
+    subject: `Pagamento confirmado — ${input.productTitle}`,
+    html: emailShell(
+      "Pagamento confirmado ✅",
+      emailParagraph("Olá! O seu pagamento foi confirmado com sucesso.") +
+        emailInfoBox([{ label: "Produto", value: input.productTitle }]) +
+        emailButton("Aceder ao Conteúdo", input.accessUrl) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Este email foi enviado automaticamente pela plataforma PagaJá. Caso tenha dúvidas, entre em contacto com o vendedor.</span>`
+        )
     ),
   });
 }

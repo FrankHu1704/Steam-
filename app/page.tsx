@@ -5,6 +5,7 @@ import {
   Features,
   HowItWorks,
   Benefits,
+  HumanTouch,
   PaymentMethods,
   Testimonials,
   Faq,
@@ -18,6 +19,7 @@ export default function Home() {
       <Features />
       <HowItWorks />
       <Benefits />
+      <HumanTouch />
       <PaymentMethods />
       <Testimonials />
       <Faq />

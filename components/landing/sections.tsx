@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useInView, animate } from "framer-motion";
 import Image from "next/image";
 import {
   Rocket,
@@ -15,7 +15,7 @@ import {
   Megaphone,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return (
@@ -43,6 +43,29 @@ function initials(name: string) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+}
+
+function Counter({ value, suffix = "" }: { value: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const controls = animate(0, value, {
+      duration: 1.2,
+      ease: "easeOut",
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [isInView, value]);
+
+  return (
+    <span ref={ref}>
+      {display}
+      {suffix}
+    </span>
+  );
 }
 
 const FEATURES = [
@@ -74,9 +97,9 @@ const BENEFITS = [
 ];
 
 const STATS = [
-  { value: "90%", label: "Você recebe por venda" },
-  { value: "24h", label: "Saques processados" },
-  { value: "100%", label: "Em Português" },
+  { value: 90, suffix: "%", label: "Você recebe por venda" },
+  { value: 24, suffix: "h", label: "Saques processados" },
+  { value: 100, suffix: "%", label: "Em Português" },
 ];
 
 const METHODS: { label: string; logo?: string }[] = [
@@ -170,7 +193,9 @@ export function Benefits() {
           <div className="mt-8 grid grid-cols-3 gap-3">
             {STATS.map((s) => (
               <div key={s.label} className="rounded-xl border border-border bg-card p-4 text-center">
-                <p className="text-gradient text-2xl font-bold">{s.value}</p>
+                <p className="text-gradient text-2xl font-bold">
+                  <Counter value={s.value} suffix={s.suffix} />
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
               </div>
             ))}
@@ -189,6 +214,30 @@ export function Benefits() {
           </ul>
         </Reveal>
       </div>
+    </section>
+  );
+}
+
+export function HumanTouch() {
+  return (
+    <section className="container py-16">
+      <Reveal>
+        <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 rounded-3xl border border-border bg-card p-8 text-center sm:p-10">
+          <motion.span
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-gradient text-2xl"
+            animate={{ rotate: [0, -8, 8, 0] }}
+            transition={{ duration: 4, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
+          >
+            🇲🇿
+          </motion.span>
+          <p className="text-lg font-medium leading-relaxed">
+            &ldquo;Construímos a PagaJá porque sabemos como é difícil vender um infoproduto em Moçambique —
+            taxas transparentes, sem burocracia, com o dinheiro a cair direto no seu M-Pesa. É a plataforma
+            que gostaríamos de ter tido quando começámos.&rdquo;
+          </p>
+          <p className="text-sm font-semibold text-muted-foreground">— Equipa PagaJá</p>
+        </div>
+      </Reveal>
     </section>
   );
 }
