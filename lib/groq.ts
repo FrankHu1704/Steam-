@@ -1,5 +1,5 @@
-// LunaAI's product-analysis backend — internally calls Groq's OpenAI-compatible
-// chat completions API, but this must never be exposed to producers: no error
+// LunaAI's backend — internally calls Groq's OpenAI-compatible chat
+// completions API, but this must never be exposed to producers: no error
 // message here should leak the word "Groq", the model name, or any raw
 // third-party response text. Real failures are logged server-side (the
 // `logs` table, action "ai_debug") for admin debugging instead.
@@ -11,16 +11,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GENERIC_ERROR = "A LunaAI não conseguiu responder agora. Tente novamente daqui a pouco.";
 
-export interface ProductAnalysisInput {
-  title: string;
-  description: string;
-  price: number;
-  promoPrice: number | null;
-  currency: string;
-  categoryName: string | null;
-  salesCount: number;
-  viewCount: number;
+export interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
 }
 
 async function logAiDebug(metadata: Record<string, unknown>): Promise<void> {
@@ -56,15 +51,79 @@ function shuffled<T>(arr: T[]): T[] {
   return copy;
 }
 
-export async function analyzeProductWithGroq(
-  input: ProductAnalysisInput
-): Promise<{ analysis?: string; error?: string }> {
+export async function chatCompletion(
+  messages: ChatMessage[],
+  options?: { maxTokens?: number; temperature?: number }
+): Promise<{ text?: string; error?: string }> {
   const keys = getApiKeys();
   if (keys.length === 0) {
     await logAiDebug({ skipped: true, reason: "no GROQ_API_KEY(S)" });
     return { error: "A LunaAI ainda não está disponível. Tente novamente mais tarde." };
   }
 
+  const attempts: { key: string; status?: number; error?: string }[] = [];
+
+  for (const apiKey of shuffled(keys)) {
+    try {
+      const res = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+          messages,
+          temperature: options?.temperature ?? 0.6,
+          max_tokens: options?.maxTokens ?? 600,
+        }),
+      });
+
+      const body = await res.json().catch(() => null);
+
+      // 401/403 (bad key) or 429 (rate limited) — try the next key instead
+      // of failing the whole request.
+      if (res.status === 401 || res.status === 403 || res.status === 429) {
+        attempts.push({ key: apiKey.slice(-6), status: res.status });
+        continue;
+      }
+
+      if (!res.ok) {
+        attempts.push({ key: apiKey.slice(-6), status: res.status });
+        await logAiDebug({ attempts: [...attempts, { status: res.status, body }] });
+        return { error: GENERIC_ERROR };
+      }
+
+      const text = body?.choices?.[0]?.message?.content?.trim();
+      if (!text) {
+        attempts.push({ key: apiKey.slice(-6), status: res.status });
+        await logAiDebug({ attempts, note: "empty response", body });
+        return { error: "A LunaAI não devolveu uma resposta. Tente novamente." };
+      }
+      return { text };
+    } catch (err) {
+      attempts.push({ key: apiKey.slice(-6), error: (err as Error).message });
+    }
+  }
+
+  await logAiDebug({ attempts, note: "all keys exhausted" });
+  return { error: GENERIC_ERROR };
+}
+
+export interface ProductAnalysisInput {
+  title: string;
+  description: string;
+  price: number;
+  promoPrice: number | null;
+  currency: string;
+  categoryName: string | null;
+  salesCount: number;
+  viewCount: number;
+}
+
+export async function analyzeProductWithGroq(
+  input: ProductAnalysisInput
+): Promise<{ analysis?: string; error?: string }> {
   const conversionNote =
     input.viewCount > 0
       ? `Taxa de conversão aproximada: ${((input.salesCount / input.viewCount) * 100).toFixed(1)}% (${input.salesCount} vendas em ${input.viewCount} visualizações).`
@@ -82,51 +141,7 @@ ${conversionNote}
 
 Responde em português, tom direto e prático, organizado em tópicos curtos com travessões (sem markdown como ** ou #). Cobre: (1) o que está bom, (2) o que falta no título/descrição, (3) se o preço parece adequado para o mercado moçambicano, (4) uma sugestão concreta para aumentar conversão. Máximo 200 palavras.`;
 
-  const attempts: { key: string; status?: number; error?: string }[] = [];
-
-  for (const apiKey of shuffled(keys)) {
-    try {
-      const res = await fetch(GROQ_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.6,
-          max_tokens: 600,
-        }),
-      });
-
-      const body = await res.json().catch(() => null);
-
-      // 401/403 (bad key) or 429 (rate limited) — try the next key instead
-      // of failing the whole request.
-      if (res.status === 401 || res.status === 403 || res.status === 429) {
-        attempts.push({ key: apiKey.slice(-6), status: res.status });
-        continue;
-      }
-
-      if (!res.ok) {
-        attempts.push({ key: apiKey.slice(-6), status: res.status });
-        await logAiDebug({ attempts: [...attempts, { status: res.status, body }] });
-        return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
-      }
-
-      const text = body?.choices?.[0]?.message?.content?.trim();
-      if (!text) {
-        attempts.push({ key: apiKey.slice(-6), status: res.status });
-        await logAiDebug({ attempts, note: "empty response", body });
-        return { error: "A LunaAI não devolveu uma resposta. Tente novamente." };
-      }
-      return { analysis: text };
-    } catch (err) {
-      attempts.push({ key: apiKey.slice(-6), error: (err as Error).message });
-    }
-  }
-
-  await logAiDebug({ attempts, note: "all keys exhausted" });
-  return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
+  const result = await chatCompletion([{ role: "user", content: prompt }]);
+  if (result.error) return { error: result.error };
+  return { analysis: result.text };
 }

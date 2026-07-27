@@ -10,6 +10,7 @@ import {
   Code2,
   Megaphone,
   Puzzle,
+  Sparkles,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ import { getMyNotifications } from "@/lib/data/notifications";
 
 const NAV: ShellNavItem[] = [
   { href: "/dashboard", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+  { href: "/dashboard/luna", label: "LunaAI", icon: <Sparkles className="h-4 w-4" /> },
   { href: "/dashboard/products", label: "Produtos", icon: <Package className="h-4 w-4" /> },
   { href: "/dashboard/orders", label: "Pedidos", icon: <ShoppingCart className="h-4 w-4" /> },
   { href: "/dashboard/coupons", label: "Cupões", icon: <Tag className="h-4 w-4" /> },
