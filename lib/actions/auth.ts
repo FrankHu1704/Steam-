@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeMozambiquePhone } from "@/lib/phone";
 
 export interface ActionResult {
   error?: string;
@@ -11,20 +12,26 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
 
-  if (!name || !email || !password) {
-    return { error: "Preencha nome, email e palavra-passe." };
+  if (!name || !email || !password || !phoneRaw) {
+    return { error: "Preencha nome, email, telefone e palavra-passe." };
   }
   if (password.length < 6) {
     return { error: "A palavra-passe deve ter pelo menos 6 caracteres." };
   }
+  const digits = phoneRaw.replace(/\D/g, "");
+  if (digits.length < 9) {
+    return { error: "Indique um número de telemóvel válido." };
+  }
+  const phone = normalizeMozambiquePhone(phoneRaw);
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name },
+      data: { name, phone },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
   });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { User, Mail, Lock, Phone, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +51,24 @@ export default function SignupPage() {
               className="border-0 focus-visible:ring-0"
             />
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">Telemóvel</Label>
+          <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <span className="flex items-center gap-1.5 bg-muted pl-3 pr-2 text-sm font-medium text-muted-foreground">
+              <Phone className="h-4 w-4" /> +258
+            </span>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              required
+              autoComplete="tel"
+              placeholder="841234567"
+              className="rounded-none border-0 focus-visible:ring-0"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Para receber notificações de vendas por SMS e WhatsApp.</p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
