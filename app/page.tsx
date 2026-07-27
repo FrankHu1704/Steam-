@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Hero } from "@/components/landing/hero";
 import {
   Features,
+  Differentiators,
   HowItWorks,
   Benefits,
   HumanTouch,
@@ -17,6 +18,7 @@ export default function Home() {
       <SiteNav />
       <Hero />
       <Features />
+      <Differentiators />
       <HowItWorks />
       <Benefits />
       <HumanTouch />

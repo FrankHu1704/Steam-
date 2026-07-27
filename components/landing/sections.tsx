@@ -13,8 +13,12 @@ import {
   ChevronDown,
   Code2,
   Megaphone,
+  Sparkles,
+  Zap,
+  CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -67,6 +71,33 @@ function Counter({ value, suffix = "" }: { value: number; suffix?: string }) {
     </span>
   );
 }
+
+const DIFFERENTIATORS = [
+  {
+    icon: Sparkles,
+    title: "LunaAI — a sua assistente de vendas",
+    text: "Somos a única plataforma moçambicana com uma inteligência artificial própria dedicada a quem vende infoprodutos. A LunaAI analisa os seus produtos e dá dicas concretas sobre título, descrição e preço, e tira dúvidas em tempo real — como escalar anúncios, que preço cobrar, ou como vender mais — tudo em português.",
+    bullets: ["Análise automática de cada produto", "Chat aberto para qualquer dúvida de marketing", "Feita pela FRANK AI SOLUTIONS, dona da PagaJá"],
+  },
+  {
+    icon: Zap,
+    title: "Pagamentos e saques verdadeiramente automáticos",
+    text: "Os seus clientes pagam via M-Pesa ou e-Mola e o valor entra no seu saldo assim que confirmado. Guarde as suas carteiras uma única vez e peça saques com um clique — sem escrever o número de telefone todas as vezes, e com levantamento instantâneo para quem desbloqueia o modo produção.",
+    bullets: ["Carteiras M-Pesa e e-Mola guardadas", "Saque instantâneo via B2C (sem esperar aprovação)", "Notificação a cada venda, por push, email e WhatsApp"],
+  },
+  {
+    icon: Code2,
+    title: "API aberta para programadores",
+    text: "Quer vender através do seu próprio site, app ou sistema? A nossa API pública permite criar um checkout 100% personalizado, com chaves de teste e produção separadas, webhooks para automatizar tudo, e exatamente a mesma taxa transparente do resto da plataforma.",
+    bullets: ["Modo teste gratuito, produção a partir de 300 MT", "Webhooks para automatizar a sua integração", "Documentação pensada para o mercado moçambicano"],
+  },
+  {
+    icon: Megaphone,
+    title: "Marketing integrado, sem ferramentas extra",
+    text: "Rastreie campanhas com UTMs, ligue pixels do Facebook, TikTok e Google Analytics diretamente em cada produto, e veja tudo organizado na sua aba de Campanhas — sem precisar de contratar nenhuma ferramenta paga à parte.",
+    bullets: ["UTMs e relatório de campanhas incluído", "Pixels Facebook, TikTok e Google Analytics", "Script personalizado para qualquer outra ferramenta"],
+  },
+] as const;
 
 const FEATURES = [
   { icon: Rocket, title: "Publicação Instantânea", text: "Crie o seu produto e comece a vender em minutos, sem burocracia." },
@@ -145,6 +176,52 @@ export function Features() {
             </Card>
           </Reveal>
         ))}
+      </div>
+    </section>
+  );
+}
+
+export function Differentiators() {
+  return (
+    <section id="diferenciais" className="bg-muted/40 py-24">
+      <div className="container">
+        <Reveal>
+          <div className="mx-auto max-w-xl text-center">
+            <h2 className="text-3xl font-bold md:text-4xl">O que nos torna únicos</h2>
+            <p className="mt-3 text-muted-foreground">
+              Não somos só mais um checkout — somos a plataforma completa para quem vive de infoprodutos em
+              Moçambique.
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="mt-16 space-y-16">
+          {DIFFERENTIATORS.map((d, i) => (
+            <Reveal key={d.title} delay={i * 0.05}>
+              <div className="flex flex-col items-center gap-8 md:flex-row md:gap-12">
+                <div className={cn("flex-1", i % 2 === 1 && "md:order-2")}>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gradient text-white">
+                    <d.icon className="h-6 w-6" />
+                  </span>
+                  <h3 className="mt-4 text-xl font-bold md:text-2xl">{d.title}</h3>
+                  <p className="mt-3 text-muted-foreground">{d.text}</p>
+                  <ul className="mt-4 space-y-2">
+                    {d.bullets.map((b) => (
+                      <li key={b} className="flex items-center gap-2 text-sm font-medium">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> {b}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={cn("flex flex-1 items-center justify-center", i % 2 === 1 && "md:order-1")}>
+                  <div className="flex aspect-square w-full max-w-[220px] items-center justify-center rounded-3xl bg-primary/10">
+                    <d.icon className="h-20 w-20 text-primary/30" />
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );

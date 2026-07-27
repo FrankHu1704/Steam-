@@ -57,7 +57,7 @@ export default async function WithdrawalsPage() {
       <div className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg sm:p-8">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
-          <Wallet className="h-4 w-4" /> Saldo disponível
+          <Wallet className="h-4 w-4" /> Olá {profile.name.split(" ")[0]}, o seu saldo disponível é de
         </div>
         <p className="relative mt-2 text-4xl font-bold sm:text-5xl">
           {formatCurrency(profile.balance_available, currency)}
