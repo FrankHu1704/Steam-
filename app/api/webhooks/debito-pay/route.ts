@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/debito-pay";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { creditOrder } from "@/lib/order-fulfillment";
+import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import { completeProductionUnlock } from "@/lib/production-unlock-fulfillment";
 
 interface WebhookBody {
@@ -101,6 +101,10 @@ export async function POST(request: Request) {
 
   if (body.event === "payment.completed" && !order.credited_at) {
     await creditOrder(order.id);
+  }
+
+  if (body.event === "payment.failed") {
+    await notifyProducerOfFailedPayment(order.id);
   }
 
   return NextResponse.json({ ok: true });

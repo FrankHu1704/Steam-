@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PaymentMethod } from "@/lib/debito-pay";
 import { getActivePaymentProvider, providerModule, methodsForProvider } from "@/lib/payments";
-import { creditOrder } from "@/lib/order-fulfillment";
+import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import type { Product } from "@/types/database";
 
 export interface CouponPreview {
@@ -192,6 +192,7 @@ export async function createOrder(input: CreateOrderInput) {
     });
   } catch (err) {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
+    await notifyProducerOfFailedPayment(order.id);
     return { error: (err as Error).message };
   }
 
@@ -258,6 +259,9 @@ export async function getOrderStatus(orderId: string) {
           if (mappedStatus === "paid" && !order.credited_at) {
             await supabase.from("orders").update({ paid_at: new Date().toISOString() }).eq("id", orderId);
             await creditOrder(orderId);
+          }
+          if (mappedStatus === "failed") {
+            await notifyProducerOfFailedPayment(orderId);
           }
           return { status: mappedStatus };
         }

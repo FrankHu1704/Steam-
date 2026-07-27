@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature, getAuthoritativeStatus } from "@/lib/zumbopay";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { creditOrder } from "@/lib/order-fulfillment";
+import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import { completeProductionUnlock } from "@/lib/production-unlock-fulfillment";
 
 interface WebhookBody {
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
 
   if (authoritative.status === "failed") {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
+    await notifyProducerOfFailedPayment(order.id);
     return NextResponse.json({ ok: true, status: "failed" });
   }
   if (authoritative.status !== "success") {

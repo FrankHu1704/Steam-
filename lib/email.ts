@@ -1,8 +1,12 @@
 import { Resend } from "resend";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Best-effort transactional email — a failure here must never break the
 // caller's flow (a webhook crediting a sale, an admin approving a product),
-// so every call site should treat this as fire-and-forget.
+// so every call site should treat this as fire-and-forget. Every attempt is
+// logged to the `logs` table (action: "email_debug") — since Resend swallows
+// nothing for us, this is the only way to confirm a send actually happened
+// without needing the Resend dashboard.
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface SendEmailInput {
@@ -12,17 +16,33 @@ interface SendEmailInput {
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<void> {
-  if (!resend) return;
+  const supabase = createAdminClient();
+
+  if (!resend) {
+    await supabase.from("logs").insert({
+      action: "email_debug",
+      metadata: { skipped: true, reason: "no RESEND_API_KEY", to, subject },
+    });
+    return;
+  }
+
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "PagaJá <onboarding@resend.dev>",
       to,
       subject,
       html,
       ...(process.env.RESEND_REPLY_TO_EMAIL ? { replyTo: process.env.RESEND_REPLY_TO_EMAIL } : {}),
     });
-  } catch {
-    // Non-fatal — the in-app notification already recorded the event.
+    await supabase.from("logs").insert({
+      action: "email_debug",
+      metadata: { to, subject, ok: !result.error, id: result.data?.id ?? null, error: result.error ?? null },
+    });
+  } catch (err) {
+    await supabase.from("logs").insert({
+      action: "email_debug",
+      metadata: { to, subject, error: (err as Error).message },
+    });
   }
 }
 
@@ -172,6 +192,37 @@ function emailInfoBox(rows: { label: string; value: string; emphasize?: boolean 
       ${rowsHtml}
     </table>
   `;
+}
+
+export async function sendPaymentFailedEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  buyerName: string;
+  productTitle: string;
+  amount: number;
+  currency: string;
+}) {
+  await sendEmail({
+    to: input.producerEmail,
+    subject: `Pagamento não concluído — ${input.productTitle}`,
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "⚠️",
+      title: "Pagamento não concluído",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! <strong>${input.buyerName}</strong> tentou comprar o seu produto <strong>${input.productTitle}</strong>, no valor de <strong>${input.amount} ${input.currency}</strong>, mas o pagamento deu erro e não foi concluído.`
+        ) +
+        emailInfoBox([
+          { label: "Cliente", value: input.buyerName },
+          { label: "Produto", value: input.productTitle },
+          { label: "Valor", value: `${input.amount} ${input.currency}` },
+        ]) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Isto pode acontecer por saldo insuficiente, cancelamento no telemóvel do cliente, ou uma falha temporária do processador de pagamento. O cliente pode tentar novamente a qualquer momento — não precisa de fazer nada.</span>`
+        ),
+    }),
+  });
 }
 
 export async function sendSaleNotificationEmail(input: {

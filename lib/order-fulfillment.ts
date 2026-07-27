@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendSaleNotificationEmail, sendBuyerReceiptEmail, siteUrl } from "@/lib/email";
+import { sendSaleNotificationEmail, sendBuyerReceiptEmail, sendPaymentFailedEmail, siteUrl } from "@/lib/email";
 import { sendSaleSms } from "@/lib/sms";
 import { sendBuyerWhatsappReceipt } from "@/lib/whatsapp";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
@@ -129,4 +129,30 @@ export async function creditOrder(orderId: string): Promise<void> {
     .from("orders")
     .update({ credited_at: new Date().toISOString(), platform_fee_amount: platformFeeAmount })
     .eq("id", order.id);
+}
+
+// Called wherever an order transitions to "failed" (instant charge-creation
+// error, or a provider webhook reporting a failed payment) — best-effort,
+// never throws, so it's always safe to call right after the status update.
+export async function notifyProducerOfFailedPayment(orderId: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
+  if (!order) return;
+
+  const [{ data: producer }, { data: product }] = await Promise.all([
+    supabase.from("profiles").select("email, name").eq("id", order.producer_id).single(),
+    supabase.from("products").select("title").eq("id", order.product_id).single(),
+  ]);
+
+  if (producer?.email) {
+    await sendPaymentFailedEmail({
+      producerEmail: producer.email,
+      producerName: producer.name,
+      buyerName: order.buyer_name,
+      productTitle: product?.title ?? "o seu produto",
+      amount: order.total_amount,
+      currency: order.currency,
+    });
+  }
 }
