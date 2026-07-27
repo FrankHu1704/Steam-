@@ -2,7 +2,8 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendBulkEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/push";
 import { creditOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
@@ -171,6 +172,31 @@ export async function adminDeleteProduct(productId: string) {
       producerName: product.profiles.name,
       productTitle: product.title,
     });
+  }
+
+  return { ok: true };
+}
+
+export async function sendPrivateMessage(userId: string, subject: string, message: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (!subject.trim() || !message.trim()) return { error: "Preencha o assunto e a mensagem." };
+
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase.from("profiles").select("email").eq("id", userId).single();
+  if (!profile) return { error: "Utilizador não encontrado." };
+
+  await supabase.from("notifications").insert({
+    user_id: userId,
+    type: "admin_message",
+    title: subject,
+    message,
+  });
+
+  await sendPushToUser(userId, { title: subject, body: message.slice(0, 120), url: "/dashboard" });
+
+  if (profile.email) {
+    await sendAdminMessageEmail({ to: profile.email, subject, message });
   }
 
   return { ok: true };

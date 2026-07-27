@@ -214,6 +214,23 @@ export async function sendBuyerReceiptEmail(input: { buyerEmail: string; product
   });
 }
 
+export async function sendAdminMessageEmail(input: { to: string; subject: string; message: string }) {
+  await sendEmail({
+    to: input.to,
+    subject: input.subject,
+    html: emailShell(
+      input.subject,
+      input.message
+        .split("\n\n")
+        .map((paragraph) => emailParagraph(paragraph.replace(/\n/g, "<br/>")))
+        .join("") +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Esta é uma mensagem privada enviada pela equipa PagaJá diretamente para a sua conta.</span>`
+        )
+    ),
+  });
+}
+
 const BATCH_SIZE = 100; // Resend batch API limit per call
 
 export async function sendBulkEmail(recipients: string[], subject: string, message: string): Promise<{ sent: number }> {
