@@ -269,6 +269,17 @@ export async function getOrderStatus(orderId: string) {
         // best-effort reconciliation; webhook remains the source of truth
       }
     }
+
+    // Safety net: STK push confirmations (M-Pesa/e-Mola) normally resolve in
+    // seconds. If an order is still "pending" after several minutes — e.g.
+    // the provider reported a status string we don't recognise as a
+    // failure — stop leaving the buyer stuck on "a processar" forever.
+    const PENDING_TIMEOUT_MS = 5 * 60 * 1000;
+    if (Date.now() - new Date(order.created_at).getTime() > PENDING_TIMEOUT_MS) {
+      await supabase.from("orders").update({ status: "failed" }).eq("id", orderId);
+      await notifyProducerOfFailedPayment(orderId);
+      return { status: "failed" };
+    }
   }
 
   return { status: order.status };

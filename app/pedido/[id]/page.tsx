@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Download, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDownloadLinks } from "@/lib/actions/downloads";
+import { getOrderStatus } from "@/lib/actions/checkout";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function OrderAccessPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,6 +17,11 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
 
   if (!order) notFound();
 
+  // Re-check with the payment provider on every visit (not just the live
+  // checkout poll) so a stale "pending" doesn't just sit there forever if
+  // the customer left and came back later.
+  const status = order.status === "pending" ? (await getOrderStatus(id)).status ?? order.status : order.status;
+
   const product = order.products as unknown as { title: string; cover_image_url: string | null } | null;
 
   return (
@@ -28,9 +34,9 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="p-6">
-          {order.status === "paid" ? (
+          {status === "paid" ? (
             <PaidState orderId={order.id} productTitle={product?.title ?? "o seu produto"} />
-          ) : order.status === "pending" ? (
+          ) : status === "pending" ? (
             <div className="text-center">
               <Clock className="mx-auto h-10 w-10 text-amber-500" />
               <p className="mt-3 font-semibold">Pagamento ainda pendente</p>

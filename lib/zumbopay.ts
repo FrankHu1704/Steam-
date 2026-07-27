@@ -73,7 +73,26 @@ interface ChargeResult {
 function mapStatus(raw: string): "success" | "pending" | "failed" {
   const s = raw.toLowerCase();
   if (["success", "completed", "paid"].includes(s)) return "success";
-  if (["failed", "cancelled", "expired"].includes(s)) return "failed";
+  if (
+    [
+      "failed",
+      "cancelled",
+      "canceled",
+      "expired",
+      "declined",
+      "decline",
+      "rejected",
+      "reversed",
+      "error",
+      "timeout",
+      "timed_out",
+      "insufficient_balance",
+      "insufficient_funds",
+      "insufficientbalance",
+      "insufficientfunds",
+    ].includes(s)
+  )
+    return "failed";
   return "pending";
 }
 

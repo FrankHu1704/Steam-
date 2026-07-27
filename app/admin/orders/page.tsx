@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { MarkPaidButton } from "@/components/admin/mark-paid-button";
+import { MarkFailedButton } from "@/components/admin/mark-failed-button";
 import { getAllOrders } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
 
@@ -45,7 +46,12 @@ export default async function AdminOrdersPage() {
                       {new Date(order.created_at).toLocaleDateString("pt-MZ")}
                     </td>
                     <td className="p-4">
-                      {order.status === "pending" && <MarkPaidButton orderId={order.id} />}
+                      {order.status === "pending" && (
+                        <div className="flex justify-end gap-2">
+                          <MarkPaidButton orderId={order.id} />
+                          <MarkFailedButton orderId={order.id} />
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
