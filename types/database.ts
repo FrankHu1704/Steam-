@@ -234,6 +234,16 @@ export interface Withdrawal {
   confirmed_at: string | null;
 }
 
+export interface PayoutWallet {
+  id: string;
+  producer_id: string;
+  method: "mpesa" | "emola";
+  holder_name: string;
+  phone: string;
+  is_default: boolean;
+  created_at: string;
+}
+
 export interface Review {
   id: string;
   product_id: string;

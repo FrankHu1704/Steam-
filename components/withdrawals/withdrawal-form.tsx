@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { requestWithdrawal } from "@/lib/actions/withdrawals";
-import type { PayoutMethod } from "@/types/database";
+import type { PayoutMethod, PayoutWallet } from "@/types/database";
 
 const METHOD_LABELS: Record<PayoutMethod, string> = {
   mpesa: "M-Pesa",
@@ -23,15 +23,21 @@ export function WithdrawalForm({
   currency,
   feePercent,
   minimumAmount,
+  wallets,
 }: {
   balanceAvailable: number;
   currency: string;
   feePercent: number;
   minimumAmount: number;
+  wallets: PayoutWallet[];
 }) {
   const router = useRouter();
+  const defaultWallet = wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
+
   const [amount, setAmount] = useState("");
-  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("mpesa");
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(defaultWallet?.id ?? null);
+  const [useOther, setUseOther] = useState(wallets.length === 0);
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("mkesh");
   const [destination, setDestination] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -43,15 +49,30 @@ export function WithdrawalForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    let method: PayoutMethod;
+    let dest: string;
+    if (useOther) {
+      method = payoutMethod;
+      dest = destination;
+    } else {
+      const wallet = wallets.find((w) => w.id === selectedWalletId);
+      if (!wallet) {
+        setError("Escolha uma carteira.");
+        return;
+      }
+      method = wallet.method;
+      dest = wallet.phone;
+    }
+
     setPending(true);
-    const result = await requestWithdrawal({ amount: numericAmount, payoutMethod, destination });
+    const result = await requestWithdrawal({ amount: numericAmount, payoutMethod: method, destination: dest });
     setPending(false);
     if (result.error) {
       setError(result.error);
       return;
     }
     setAmount("");
-    setDestination("");
     router.refresh();
   }
 
@@ -75,23 +96,77 @@ export function WithdrawalForm({
         </p>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="payout-method">Método de recebimento</Label>
-        <Select id="payout-method" value={payoutMethod} onChange={(e) => setPayoutMethod(e.target.value as PayoutMethod)}>
-          {Object.entries(METHOD_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      </div>
+      {wallets.length > 0 && !useOther && (
+        <div className="space-y-1.5">
+          <Label>Carteira de destino</Label>
+          <div className="grid gap-2">
+            {wallets.map((wallet) => {
+              const selected = selectedWalletId === wallet.id;
+              return (
+                <button
+                  key={wallet.id}
+                  type="button"
+                  onClick={() => setSelectedWalletId(wallet.id)}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-colors",
+                    selected ? "border-primary bg-primary/5" : "border-border"
+                  )}
+                >
+                  <div>
+                    <p className="text-sm font-semibold">{METHOD_LABELS[wallet.method]}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {wallet.holder_name} · +258 {wallet.phone}
+                    </p>
+                  </div>
+                  {selected && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => setUseOther(true)}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Usar outro método (mKesh / Transferência Bancária)
+          </button>
+        </div>
+      )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="destination">
-          {payoutMethod === "bank_transfer" ? "IBAN / Conta bancária" : "Número de telemóvel"}
-        </Label>
-        <Input id="destination" required value={destination} onChange={(e) => setDestination(e.target.value)} />
-      </div>
+      {(wallets.length === 0 || useOther) && (
+        <>
+          {wallets.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setUseOther(false)}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              ← Usar uma carteira guardada
+            </button>
+          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="payout-method">Método de recebimento</Label>
+            <Select
+              id="payout-method"
+              value={payoutMethod}
+              onChange={(e) => setPayoutMethod(e.target.value as PayoutMethod)}
+            >
+              {Object.entries(METHOD_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="destination">
+              {payoutMethod === "bank_transfer" ? "IBAN / Conta bancária" : "Número de telemóvel"}
+            </Label>
+            <Input id="destination" required value={destination} onChange={(e) => setDestination(e.target.value)} />
+          </div>
+        </>
+      )}
 
       {numericAmount > 0 && (
         <div className="space-y-1 rounded-lg bg-muted/60 p-3 text-sm">
