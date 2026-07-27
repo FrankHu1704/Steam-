@@ -104,6 +104,8 @@ export interface Product {
   reviewed_at: string | null;
   reviewed_by: string | null;
   tracking_script: string | null;
+  ai_analysis: string | null;
+  ai_analysis_at: string | null;
 }
 
 export interface ProductFile {

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductActions } from "@/components/products/product-actions";
 import { ShareLinkCard } from "@/components/products/share-link-card";
+import { AiAnalysisCard } from "@/components/products/ai-analysis-card";
 import { CourseBuilder } from "@/components/courses/course-builder";
 import { StatusBadge } from "@/components/ui/badge";
 import { getProducerCourseStructure } from "@/lib/data/courses";
@@ -58,6 +59,14 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           <CourseBuilder productId={id} modules={courseModules} />
         </div>
       )}
+
+      <div className="mt-6">
+        <AiAnalysisCard
+          productId={id}
+          initialAnalysis={product.ai_analysis}
+          initialAnalysisAt={product.ai_analysis_at}
+        />
+      </div>
 
       <div className="mt-8">
         <ProductForm
