@@ -1,6 +1,10 @@
-// Groq's OpenAI-compatible chat completions API — used to generate a quick
-// marketing/sales analysis for a producer's product, on demand (not
-// automatic), since it costs an API call each time.
+// LunaAI's product-analysis backend — internally calls Groq's OpenAI-compatible
+// chat completions API, but this must never be exposed to producers: no error
+// message here should leak the word "Groq", the model name, or any raw
+// third-party response text. Real failures are logged server-side (the
+// `logs` table, action "ai_debug") for admin debugging instead.
+
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -15,11 +19,23 @@ export interface ProductAnalysisInput {
   viewCount: number;
 }
 
+async function logAiDebug(metadata: Record<string, unknown>): Promise<void> {
+  try {
+    const supabase = createAdminClient();
+    await supabase.from("logs").insert({ action: "ai_debug", metadata });
+  } catch {
+    // Best-effort only.
+  }
+}
+
 export async function analyzeProductWithGroq(
   input: ProductAnalysisInput
 ): Promise<{ analysis?: string; error?: string }> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return { error: "Análise por IA não configurada (falta GROQ_API_KEY)." };
+  if (!apiKey) {
+    await logAiDebug({ skipped: true, reason: "no GROQ_API_KEY" });
+    return { error: "A LunaAI ainda não está disponível. Tente novamente mais tarde." };
+  }
 
   const conversionNote =
     input.viewCount > 0
@@ -55,13 +71,18 @@ Responde em português, tom direto e prático, organizado em tópicos curtos com
 
     const body = await res.json().catch(() => null);
     if (!res.ok) {
-      return { error: body?.error?.message || `Falha na análise (HTTP ${res.status}).` };
+      await logAiDebug({ status: res.status, body });
+      return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
     }
 
     const text = body?.choices?.[0]?.message?.content?.trim();
-    if (!text) return { error: "A IA não devolveu uma resposta." };
+    if (!text) {
+      await logAiDebug({ status: res.status, note: "empty response", body });
+      return { error: "A LunaAI não devolveu uma resposta. Tente novamente." };
+    }
     return { analysis: text };
   } catch (err) {
-    return { error: (err as Error).message };
+    await logAiDebug({ error: (err as Error).message });
+    return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
   }
 }

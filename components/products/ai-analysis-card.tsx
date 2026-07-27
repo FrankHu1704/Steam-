@@ -40,7 +40,7 @@ export function AiAnalysisCard({
             <Sparkles className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="font-semibold">Análise com IA</h2>
+            <h2 className="font-semibold">LunaAI</h2>
             <p className="text-xs text-muted-foreground">Dicas para melhorar este produto e vender mais.</p>
           </div>
         </div>
@@ -52,7 +52,7 @@ export function AiAnalysisCard({
           ) : (
             <Sparkles className="h-3.5 w-3.5" />
           )}
-          {analysis ? "Analisar de novo" : "Analisar com IA"}
+          {analysis ? "Analisar de novo" : "Analisar com a LunaAI"}
         </Button>
       </div>
 
@@ -71,9 +71,11 @@ export function AiAnalysisCard({
 
       {!analysis && !pending && !error && (
         <p className="mt-4 text-sm text-muted-foreground">
-          Clique em "Analisar com IA" para receber dicas sobre título, descrição, preço e conversão.
+          Clique em "Analisar com a LunaAI" para receber dicas sobre título, descrição, preço e conversão.
         </p>
       )}
+
+      <p className="mt-4 text-[11px] text-muted-foreground/70">LunaAI — criada pela FRANK AI SOLUTIONS.</p>
     </div>
   );
 }
