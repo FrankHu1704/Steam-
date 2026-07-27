@@ -25,24 +25,22 @@ export default async function DashboardOverviewPage({
 
   const tiles = [
     {
-      label: "Saldo disponível",
-      value: formatCurrency(profile.balance_available, currency),
-      icon: Wallet,
-    },
-    {
       label: "Vendas hoje",
       value: formatCurrency(stats.salesToday, currency),
       icon: CalendarDays,
+      style: "bg-amber-500/10 text-amber-600",
     },
     {
       label: "Vendas do mês",
       value: formatCurrency(stats.salesMonth, currency),
       icon: TrendingUp,
+      style: "bg-primary/10 text-primary",
     },
     {
       label: "Lucro do mês",
       value: formatCurrency(stats.profitMonth, currency),
       icon: ArrowUpRight,
+      style: "bg-emerald-500/10 text-emerald-600",
     },
   ];
 
@@ -72,20 +70,39 @@ export default async function DashboardOverviewPage({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {tiles.map((tile) => (
-          <Card key={tile.label} className="relative overflow-hidden">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">{tile.label}</p>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-white">
-                  <tile.icon className="h-4 w-4" />
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Link
+          href="/dashboard/withdrawals"
+          className="group relative overflow-hidden rounded-2xl bg-brand-gradient p-5 text-white shadow-lg transition-transform hover:-translate-y-0.5 lg:col-span-1"
+        >
+          <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <p className="text-sm font-medium text-white/80">Saldo disponível</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+              <Wallet className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="relative mt-3 text-3xl font-bold">{formatCurrency(profile.balance_available, currency)}</p>
+          <p className="relative mt-1 flex items-center gap-1 text-xs text-white/70">
+            Sacar agora <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+          </p>
+        </Link>
+
+        <div className="grid gap-4 sm:grid-cols-3 lg:col-span-2">
+          {tiles.map((tile) => (
+            <Card key={tile.label} className="relative overflow-hidden">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-muted-foreground">{tile.label}</p>
+                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", tile.style)}>
+                    <tile.icon className="h-4 w-4" />
+                  </div>
                 </div>
-              </div>
-              <p className="mt-3 text-2xl font-bold">{tile.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+                <p className="mt-3 text-2xl font-bold">{tile.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
