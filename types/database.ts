@@ -115,7 +115,8 @@ export interface ProductFile {
   id: string;
   product_id: string;
   name: string;
-  storage_path: string;
+  storage_path: string | null;
+  external_url: string | null;
   size_bytes: number;
   sort_order: number;
   created_at: string;

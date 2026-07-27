@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload, X, Facebook, Music2, ChartLine } from "lucide-react";
+import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,9 +48,17 @@ export function ProductForm({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(product?.cover_image_url ?? null);
   const [files, setFiles] = useState<UploadedFile[]>(
-    existingFiles?.map((f) => ({ name: f.name, storage_path: f.storage_path, size_bytes: f.size_bytes })) ?? []
+    existingFiles?.map((f) => ({
+      name: f.name,
+      storage_path: f.storage_path,
+      external_url: f.external_url,
+      size_bytes: f.size_bytes,
+    })) ?? []
   );
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [showLinkForm, setShowLinkForm] = useState(false);
+  const [linkName, setLinkName] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +78,26 @@ export function ProductForm({
       setUploadingFiles(false);
       e.target.value = "";
     }
+  }
+
+  function handleAddLink() {
+    const url = linkUrl.trim();
+    if (!url) return;
+    let normalizedUrl = url;
+    try {
+      normalizedUrl = new URL(url).toString();
+    } catch {
+      setError("Indique um link válido (com https://).");
+      return;
+    }
+    setFiles((prev) => [
+      ...prev,
+      { name: linkName.trim() || "Link de acesso", storage_path: null, external_url: normalizedUrl, size_bytes: 0 },
+    ]);
+    setLinkName("");
+    setLinkUrl("");
+    setShowLinkForm(false);
+    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -202,24 +230,70 @@ export function ProductForm({
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="font-semibold">Ficheiros do Produto</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Entregues automaticamente por download após o pagamento confirmado.
+            Entregues automaticamente após o pagamento confirmado — envie ficheiros (PDF, ZIP, etc.) ou adicione um
+            link (Google Drive, área de membros, grupo do WhatsApp/Telegram...).
           </p>
-          <label className="mt-4 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-8 text-center hover:border-primary">
-            <Upload className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold text-primary">
-              {uploadingFiles ? "A enviar…" : "Adicionar Ficheiros"}
-            </span>
-            <input type="file" multiple className="hidden" onChange={handleFilesChange} />
-          </label>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 text-center hover:border-primary">
+              <Upload className="h-5 w-5 text-primary" />
+              <span className="text-sm font-semibold text-primary">
+                {uploadingFiles ? "A enviar…" : "Adicionar Ficheiros"}
+              </span>
+              <input type="file" multiple className="hidden" onChange={handleFilesChange} />
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowLinkForm((v) => !v)}
+              className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 text-center hover:border-primary"
+            >
+              <Link2 className="h-5 w-5 text-primary" />
+              <span className="text-sm font-semibold text-primary">Adicionar Link</span>
+            </button>
+          </div>
+          {showLinkForm && (
+            <div className="mt-3 space-y-3 rounded-xl border border-border p-4">
+              <div>
+                <Label htmlFor="linkName">Nome (opcional)</Label>
+                <Input
+                  id="linkName"
+                  placeholder="Ex: Acesso ao curso"
+                  value={linkName}
+                  onChange={(e) => setLinkName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="linkUrl">Link</Label>
+                <Input
+                  id="linkUrl"
+                  placeholder="https://drive.google.com/..."
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                />
+              </div>
+              <Button type="button" variant="secondary" onClick={handleAddLink}>
+                Adicionar
+              </Button>
+            </div>
+          )}
           {files.length > 0 && (
             <ul className="mt-4 space-y-2">
               {files.map((f, i) => (
-                <li key={f.storage_path} className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
-                  <span className="truncate">{f.name}</span>
+                <li
+                  key={`${f.storage_path ?? f.external_url}-${i}`}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    {f.external_url ? (
+                      <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="truncate">{f.name}</span>
+                  </span>
                   <button
                     type="button"
                     onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
                   >
                     <X className="h-4 w-4" />
                   </button>

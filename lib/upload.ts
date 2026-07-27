@@ -21,7 +21,8 @@ export async function uploadCoverImage(userId: string, file: File): Promise<stri
 
 export interface UploadedFile {
   name: string;
-  storage_path: string;
+  storage_path: string | null;
+  external_url: string | null;
   size_bytes: number;
 }
 
@@ -37,5 +38,5 @@ export async function uploadProductFile(userId: string, productSlug: string, fil
     contentType: file.type,
   });
   if (error) throw error;
-  return { name: file.name, storage_path: path, size_bytes: file.size };
+  return { name: file.name, storage_path: path, external_url: null, size_bytes: file.size };
 }

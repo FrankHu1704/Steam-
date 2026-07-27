@@ -24,7 +24,7 @@ interface UpsertProductInput {
   facebookPixelId: string | null;
   tiktokPixelId: string | null;
   googleAnalyticsId: string | null;
-  files: { name: string; storage_path: string; size_bytes: number }[];
+  files: { name: string; storage_path: string | null; external_url: string | null; size_bytes: number }[];
 }
 
 export async function upsertProduct(input: UpsertProductInput): Promise<ActionResult & { id?: string }> {
@@ -93,6 +93,7 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
         product_id: productId,
         name: f.name,
         storage_path: f.storage_path,
+        external_url: f.external_url,
         size_bytes: f.size_bytes,
         sort_order: i,
       }))

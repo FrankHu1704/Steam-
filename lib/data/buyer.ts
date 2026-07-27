@@ -29,7 +29,7 @@ export interface BuyerDownload {
   productTitle: string;
   productSlug: string;
   fileName: string;
-  storagePath: string;
+  storagePath: string | null;
 }
 
 export async function getMyPaidFiles(): Promise<BuyerDownload[]> {
@@ -42,7 +42,7 @@ export async function getMyPaidFiles(): Promise<BuyerDownload[]> {
 
   type Row = {
     order_id: string;
-    product_files: { name: string; storage_path: string; products: { title: string; slug: string } | null } | null;
+    product_files: { name: string; storage_path: string | null; products: { title: string; slug: string } | null } | null;
   };
 
   return ((data ?? []) as unknown as Row[])

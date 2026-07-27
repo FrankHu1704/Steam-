@@ -20,7 +20,9 @@ export async function getDownloadLinks(orderId: string) {
 
   const files = await Promise.all(
     downloads.map(async (d) => {
-      const file = d.product_files as unknown as { name: string; storage_path: string };
+      const file = d.product_files as unknown as { name: string; storage_path: string | null; external_url: string | null };
+      if (file.external_url) return { name: file.name, url: file.external_url };
+      if (!file.storage_path) return { name: file.name, url: null };
       const { data } = await supabase.storage
         .from("product-files")
         .createSignedUrl(file.storage_path, SIGNED_URL_TTL_SECONDS);
