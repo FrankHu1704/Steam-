@@ -6,6 +6,7 @@ export default async function AdminSettingsPage() {
   const settings = await getAllSettings();
   const withdrawalFeePercent = Number(settings.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
   const platformFeePercent = Number(settings.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
+  const platformFixedFeeAmount = Number(settings.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
   const withdrawalMinimumAmount = Number(settings.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
   const paymentProvider =
     (settings.find((s) => s.key === "payment_provider")?.value as "debito_pay" | "zumbopay" | undefined) ??
@@ -23,6 +24,7 @@ export default async function AdminSettingsPage() {
           <SettingsForm
             withdrawalFeePercent={withdrawalFeePercent}
             platformFeePercent={platformFeePercent}
+            platformFixedFeeAmount={platformFixedFeeAmount}
             withdrawalMinimumAmount={withdrawalMinimumAmount}
             paymentProvider={paymentProvider}
           />

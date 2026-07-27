@@ -1,17 +1,63 @@
+import { Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalReviewActions } from "@/components/admin/withdrawal-review-actions";
+import { ManualB2CForm } from "@/components/admin/manual-b2c-form";
 import { getAllWithdrawals } from "@/lib/data/admin";
+import { getWalletBalances } from "@/lib/zumbopay";
 import { formatCurrency } from "@/lib/utils";
 
+const METHOD_LABEL: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola" };
+
 export default async function AdminWithdrawalsPage() {
-  const withdrawals = await getAllWithdrawals();
+  const [withdrawals, wallets] = await Promise.all([
+    getAllWithdrawals(),
+    getWalletBalances().catch(() => []),
+  ]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Saques</h1>
+        <h1 className="text-2xl font-bold">Saques & B2C</h1>
         <p className="text-sm text-muted-foreground">Aprove, pague ou rejeite pedidos de levantamento.</p>
+      </div>
+
+      <div>
+        <h2 className="mb-3 font-semibold">Saldo no ZumboPay</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {wallets.length === 0 ? (
+            <Card className="sm:col-span-2">
+              <CardContent className="p-6 text-sm text-muted-foreground">
+                Não foi possível obter o saldo do ZumboPay agora — verifique se ZUMBOPAY_API_KEY está configurada.
+              </CardContent>
+            </Card>
+          ) : (
+            wallets.map((w) => (
+              <Card key={w.walletId}>
+                <CardContent className="flex items-center gap-4 p-6">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white">
+                    <Wallet className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{METHOD_LABEL[w.method] ?? w.method}</p>
+                    <p className="text-xl font-bold">
+                      {w.balance != null ? formatCurrency(w.balance, (w.currency as "MZN" | "ZAR") ?? "MZN") : "Indisponível"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="mb-3 font-semibold">Enviar B2C manual</h2>
+        <Card>
+          <CardContent className="p-6">
+            <ManualB2CForm />
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

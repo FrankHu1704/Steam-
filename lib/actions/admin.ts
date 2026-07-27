@@ -6,6 +6,7 @@ import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedE
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
+import { createPayout } from "@/lib/zumbopay";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -93,6 +94,44 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
 
   await supabase.from("withdrawals").update(updates).eq("id", withdrawalId);
   return { ok: true };
+}
+
+export async function sendManualB2CPayout(input: {
+  method: "mpesa" | "emola";
+  destination: string;
+  amount: number;
+  note?: string;
+}) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (!input.destination.trim() || !(input.amount > 0)) {
+    return { error: "Destino e valor válido são obrigatórios." };
+  }
+  // ZumboPay só suporta B2C instantâneo (auto_dispatch) para M-Pesa — o mesmo
+  // limite já aplicado ao pagamento de levantamentos.
+  if (input.method !== "mpesa") {
+    return { error: "Pagamento instantâneo via B2C só suporta M-Pesa por agora." };
+  }
+
+  const result = await createPayout({
+    method: input.method,
+    amount: input.amount,
+    destination: input.destination,
+    notes: input.note || `Pagamento manual PagaJá (admin)`,
+    autoDispatch: true,
+  });
+
+  const supabase = createAdminClient();
+  await supabase.from("logs").insert({
+    action: "admin_manual_b2c",
+    metadata: { admin_id: admin.user.id, ...input, result },
+  });
+
+  if (!result.success || result.status !== "success") {
+    return { error: result.error ?? "Pagamento não confirmado pelo processador." };
+  }
+
+  return { ok: true, reference: result.providerReference ?? result.reference };
 }
 
 export async function payWithdrawalViaZumboPay(withdrawalId: string) {

@@ -12,17 +12,20 @@ import { updateSetting } from "@/lib/actions/admin";
 export function SettingsForm({
   withdrawalFeePercent,
   platformFeePercent,
+  platformFixedFeeAmount,
   withdrawalMinimumAmount,
   paymentProvider,
 }: {
   withdrawalFeePercent: number;
   platformFeePercent: number;
+  platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
   paymentProvider: "debito_pay" | "zumbopay";
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
   const [platformFee, setPlatformFee] = useState(String(platformFeePercent));
+  const [fixedFee, setFixedFee] = useState(String(platformFixedFeeAmount));
   const [minimumAmount, setMinimumAmount] = useState(String(withdrawalMinimumAmount));
   const [provider, setProvider] = useState(paymentProvider);
   const [pending, setPending] = useState(false);
@@ -35,6 +38,7 @@ export function SettingsForm({
     await Promise.all([
       updateSetting("withdrawal_fee_percent", Number(withdrawalFee)),
       updateSetting("platform_fee_percent", Number(platformFee)),
+      updateSetting("platform_fixed_fee_amount", Number(fixedFee)),
       updateSetting("withdrawal_minimum_amount", Number(minimumAmount)),
       updateSetting("payment_provider", provider),
     ]);
@@ -68,6 +72,21 @@ export function SettingsForm({
           value={platformFee}
           onChange={(e) => setPlatformFee(e.target.value)}
         />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="fixed-fee">Taxa fixa por venda (MT)</Label>
+        <Input
+          id="fixed-fee"
+          type="number"
+          min={0}
+          step="0.1"
+          value={fixedFee}
+          onChange={(e) => setFixedFee(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          Soma-se à taxa percentual acima. Útil para cobrir custos fixos por transação do processador de pagamento
+          (ex.: Imposto de Selo). Deixe em 0 para não cobrar.
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="payment-provider">Processador de pagamento activo</Label>

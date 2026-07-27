@@ -14,16 +14,17 @@ export async function creditOrder(orderId: string): Promise<void> {
   const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
   if (!order || order.credited_at) return;
 
-  const { data: platformFeeSetting } = await supabase
+  const { data: feeSettings } = await supabase
     .from("settings")
-    .select("value")
-    .eq("key", "platform_fee_percent")
-    .single();
-  const platformFeePercent = Number(platformFeeSetting?.value ?? 10);
+    .select("key, value")
+    .in("key", ["platform_fee_percent", "platform_fixed_fee_amount"]);
+  const platformFeePercent = Number(feeSettings?.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
+  const platformFixedFeeAmount = Number(feeSettings?.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
 
   const commission = order.affiliate_commission_amount ?? 0;
-  const platformFeeAmount = Math.round((order.total_amount - commission) * (platformFeePercent / 100) * 100) / 100;
-  const ownerNet = order.total_amount - commission - platformFeeAmount;
+  const percentFee = (order.total_amount - commission) * (platformFeePercent / 100);
+  const platformFeeAmount = Math.round((percentFee + platformFixedFeeAmount) * 100) / 100;
+  const ownerNet = Math.max(0, order.total_amount - commission - platformFeeAmount);
 
   const { data: producer } = await supabase
     .from("profiles")

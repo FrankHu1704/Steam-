@@ -216,6 +216,42 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
   };
 }
 
+export interface WalletBalance {
+  method: "mpesa" | "emola";
+  walletId: string;
+  balance: number | null;
+  currency: string | null;
+}
+
+/** Best-effort read of the merchant's own ZumboPay wallet balances (GET
+ * /wallets), matched against the wallet IDs configured in env. The exact
+ * field name for the balance isn't confirmed against ZumboPay's real API
+ * response yet, so this tries a few common shapes and falls back to
+ * `balance: null` (shown as "indisponível" in the admin UI) rather than
+ * guessing wrong. */
+export async function getWalletBalances(): Promise<WalletBalance[]> {
+  const wallets: { method: "mpesa" | "emola"; walletId: string | undefined }[] = [
+    { method: "mpesa", walletId: process.env.ZUMBOPAY_WALLET_MPESA },
+    { method: "emola", walletId: process.env.ZUMBOPAY_WALLET_EMOLA },
+  ];
+
+  const { body } = await request("GET", "/wallets");
+  const rows = (body?.data ?? body?.wallets ?? []) as Record<string, unknown>[];
+
+  return wallets
+    .filter((w) => w.walletId)
+    .map((w) => {
+      const row = rows.find((r) => r.id === w.walletId || r.wallet_id === w.walletId);
+      const rawBalance = row?.balance ?? row?.available_balance ?? row?.balance_amount;
+      return {
+        method: w.method,
+        walletId: w.walletId!,
+        balance: typeof rawBalance === "number" ? rawBalance : null,
+        currency: typeof row?.currency === "string" ? row.currency : null,
+      };
+    });
+}
+
 export function verifyWebhookSignature(rawBody: string, signature: string | undefined | null, timestamp: string | undefined | null): boolean {
   if (!signature || !timestamp) return false;
   const secret = process.env.ZUMBOPAY_WEBHOOK_SECRET?.trim();

@@ -15,9 +15,10 @@ export default async function TaxasPage() {
   const { data: settings } = await supabase
     .from("settings")
     .select("key, value")
-    .in("key", ["platform_fee_percent", "withdrawal_fee_percent", "withdrawal_minimum_amount"]);
+    .in("key", ["platform_fee_percent", "platform_fixed_fee_amount", "withdrawal_fee_percent", "withdrawal_minimum_amount"]);
 
   const platformFee = Number(settings?.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
+  const platformFixedFee = Number(settings?.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
   const withdrawalFee = Number(settings?.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
   const minimumWithdrawal = Number(settings?.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
 
@@ -25,8 +26,8 @@ export default async function TaxasPage() {
     {
       icon: Percent,
       title: "Sobre Vendas Realizadas",
-      value: `${platformFee}%`,
-      youReceive: 100 - platformFee,
+      value: platformFixedFee > 0 ? `${platformFee}% + ${formatCurrency(platformFixedFee, "MZN")}` : `${platformFee}%`,
+      youReceive: platformFixedFee > 0 ? null : 100 - platformFee,
       description:
         "Cobrada apenas quando um produto é vendido com sucesso. Descontada automaticamente do valor da venda antes de entrar no seu saldo disponível.",
     },
@@ -83,10 +84,19 @@ export default async function TaxasPage() {
         <div className="mt-10 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
           <p className="font-medium text-foreground">Exemplo prático</p>
           <p className="mt-2">
-            Vendeu um produto por 1.000 MT? A taxa de {platformFee}% ({formatCurrency((1000 * platformFee) / 100, "MZN")})
-            é descontada automaticamente, e {formatCurrency(1000 - (1000 * platformFee) / 100, "MZN")} ficam no seu saldo
-            disponível. Ao pedir um saque de {formatCurrency(1000 - (1000 * platformFee) / 100, "MZN")}, a taxa de{" "}
-            {withdrawalFee}% é descontada e você recebe o restante na sua conta.
+            {(() => {
+              const saleFee = Math.round(((1000 * platformFee) / 100 + platformFixedFee) * 100) / 100;
+              const netSale = Math.round((1000 - saleFee) * 100) / 100;
+              return (
+                <>
+                  Vendeu um produto por 1.000 MT? A taxa de {platformFee}%
+                  {platformFixedFee > 0 ? ` + ${formatCurrency(platformFixedFee, "MZN")}` : ""} (
+                  {formatCurrency(saleFee, "MZN")}) é descontada automaticamente, e {formatCurrency(netSale, "MZN")}{" "}
+                  ficam no seu saldo disponível. Ao pedir um saque de {formatCurrency(netSale, "MZN")}, a taxa de{" "}
+                  {withdrawalFee}% é descontada e você recebe o restante na sua conta.
+                </>
+              );
+            })()}
           </p>
         </div>
 
