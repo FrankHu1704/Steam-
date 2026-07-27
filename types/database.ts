@@ -104,6 +104,9 @@ export interface Product {
   reviewed_at: string | null;
   reviewed_by: string | null;
   tracking_script: string | null;
+  facebook_pixel_id: string | null;
+  tiktok_pixel_id: string | null;
+  google_analytics_id: string | null;
   ai_analysis: string | null;
   ai_analysis_at: string | null;
 }

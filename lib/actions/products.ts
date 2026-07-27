@@ -21,6 +21,9 @@ interface UpsertProductInput {
   seoTitle: string | null;
   seoDescription: string | null;
   trackingScript: string | null;
+  facebookPixelId: string | null;
+  tiktokPixelId: string | null;
+  googleAnalyticsId: string | null;
   files: { name: string; storage_path: string; size_bytes: number }[];
 }
 
@@ -59,6 +62,9 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     seo_title: input.seoTitle,
     seo_description: input.seoDescription,
     tracking_script: input.trackingScript,
+    facebook_pixel_id: input.facebookPixelId,
+    tiktok_pixel_id: input.tiktokPixelId,
+    google_analytics_id: input.googleAnalyticsId,
   };
 
   let productId = input.id;

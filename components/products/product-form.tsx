@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Facebook, Music2, ChartLine } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +41,9 @@ export function ProductForm({
   const [seoTitle, setSeoTitle] = useState(product?.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(product?.seo_description ?? "");
   const [trackingScript, setTrackingScript] = useState(product?.tracking_script ?? "");
+  const [facebookPixelId, setFacebookPixelId] = useState(product?.facebook_pixel_id ?? "");
+  const [tiktokPixelId, setTiktokPixelId] = useState(product?.tiktok_pixel_id ?? "");
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState(product?.google_analytics_id ?? "");
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(product?.cover_image_url ?? null);
@@ -99,6 +102,9 @@ export function ProductForm({
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         trackingScript: trackingScript || null,
+        facebookPixelId: facebookPixelId || null,
+        tiktokPixelId: tiktokPixelId || null,
+        googleAnalyticsId: googleAnalyticsId || null,
         files,
       });
 
@@ -238,15 +244,60 @@ export function ProductForm({
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-semibold">Rastreamento (Pixels)</h2>
+          <h2 className="font-semibold">Rastreamento & Conversão (Pixels)</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cole aqui o script de rastreamento do Meta Pixel, Google Ads, TikTok Pixel, UTMify ou outro — será
-            inserido na página deste produto.
+            Opcional — nenhum campo aqui é obrigatório. Preencha só os que usar para medir as suas campanhas.
           </p>
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1877F2]/10 text-[#1877F2]">
+                <Facebook className="h-4 w-4" />
+              </span>
+              <div className="flex-1">
+                <Label htmlFor="fbPixel">Facebook Pixel</Label>
+                <Input
+                  id="fbPixel"
+                  placeholder="Ex: 123456789012345"
+                  value={facebookPixelId}
+                  onChange={(e) => setFacebookPixelId(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/10 text-foreground">
+                <Music2 className="h-4 w-4" />
+              </span>
+              <div className="flex-1">
+                <Label htmlFor="tiktokPixel">TikTok Pixel</Label>
+                <Input
+                  id="tiktokPixel"
+                  placeholder="Ex: ABCDEF123"
+                  value={tiktokPixelId}
+                  onChange={(e) => setTiktokPixelId(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                <ChartLine className="h-4 w-4" />
+              </span>
+              <div className="flex-1">
+                <Label htmlFor="gaId">Google Analytics</Label>
+                <Input
+                  id="gaId"
+                  placeholder="Ex: G-XXXXXXXXXX"
+                  value={googleAnalyticsId}
+                  onChange={(e) => setGoogleAnalyticsId(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
           <div className="mt-4">
+            <Label htmlFor="trackingScript">Script personalizado (avançado, opcional)</Label>
+            <p className="mb-2 text-xs text-muted-foreground">Para UTMify ou outra ferramenta não listada acima.</p>
             <Textarea
               id="trackingScript"
-              rows={5}
+              rows={4}
               placeholder="<script>...</script>"
               className="font-mono text-xs"
               value={trackingScript}

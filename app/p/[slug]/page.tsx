@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { StarRating } from "@/components/reviews/star-rating";
 import { TrackingScriptInjector } from "@/components/products/tracking-script-injector";
+import { buildPixelScripts } from "@/lib/pixels";
 import { getActivePaymentProvider, methodsForProvider } from "@/lib/payments";
 import { getProductReviews, getProductRatingSummary } from "@/lib/data/reviews";
 import { formatCurrency } from "@/lib/utils";
@@ -59,9 +60,16 @@ export default async function ProductSalePage({
 
   const hasPromo = product.promo_price != null;
 
+  const pixelScripts = buildPixelScripts({
+    facebookPixelId: product.facebook_pixel_id,
+    tiktokPixelId: product.tiktok_pixel_id,
+    googleAnalyticsId: product.google_analytics_id,
+    customScript: product.tracking_script,
+  });
+
   return (
     <div className="min-h-screen bg-muted/30 py-12">
-      {product.tracking_script && <TrackingScriptInjector html={product.tracking_script} />}
+      {pixelScripts && <TrackingScriptInjector html={pixelScripts} />}
       <div className="container grid max-w-5xl gap-10 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
