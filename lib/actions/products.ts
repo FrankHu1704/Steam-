@@ -31,11 +31,14 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
 
-  if (!input.title || input.price <= 0) {
-    return { error: "Título e preço (maior que zero) são obrigatórios." };
+  if (!input.title || input.price < 50) {
+    return { error: "Título é obrigatório e o preço deve ser de pelo menos 50 MT." };
   }
   if (input.promoPrice != null && input.promoPrice >= input.price) {
     return { error: "O preço promocional deve ser menor que o preço normal." };
+  }
+  if (input.promoPrice != null && input.promoPrice < 50) {
+    return { error: "O preço promocional também deve ser de pelo menos 50 MT." };
   }
 
   const baseSlug = slugify(input.title);

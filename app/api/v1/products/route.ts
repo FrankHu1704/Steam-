@@ -42,9 +42,9 @@ export async function POST(req: Request) {
   const priceMzn = Number(body.price_mzn);
   const description = typeof body.description === "string" ? body.description : "";
 
-  if (!title || !Number.isFinite(priceMzn) || priceMzn <= 0) {
+  if (!title || !Number.isFinite(priceMzn) || priceMzn < 50) {
     await logApiCall(auth.producerId, "/api/v1/products", "POST", 400);
-    return apiError("title e price_mzn (maior que zero) são obrigatórios.", 400);
+    return apiError("title é obrigatório e price_mzn deve ser de pelo menos 50.", 400);
   }
 
   const supabase = createAdminClient();

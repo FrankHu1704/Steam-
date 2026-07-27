@@ -161,11 +161,11 @@ export function ProductForm({
           <h2 className="font-semibold">Preço</h2>
           <div className="mt-4 grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="price">Preço</Label>
+              <Label htmlFor="price">Preço (mínimo 50 MT)</Label>
               <Input
                 id="price"
                 type="number"
-                min="1"
+                min="50"
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -173,11 +173,11 @@ export function ProductForm({
               />
             </div>
             <div>
-              <Label htmlFor="promo">Preço Promocional</Label>
+              <Label htmlFor="promo">Preço Promocional (mín. 50 MT)</Label>
               <Input
                 id="promo"
                 type="number"
-                min="0"
+                min="50"
                 step="0.01"
                 value={promoPrice}
                 onChange={(e) => setPromoPrice(e.target.value)}
