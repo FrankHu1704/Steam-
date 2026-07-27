@@ -3,6 +3,10 @@
 // message here should leak the word "Groq", the model name, or any raw
 // third-party response text. Real failures are logged server-side (the
 // `logs` table, action "ai_debug") for admin debugging instead.
+//
+// Supports multiple API keys (GROQ_API_KEYS, comma-separated) so a rate
+// limit on one key fails over to the next rather than failing the request —
+// falls back to the single GROQ_API_KEY if only one is configured.
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -28,12 +32,36 @@ async function logAiDebug(metadata: Record<string, unknown>): Promise<void> {
   }
 }
 
+function getApiKeys(): string[] {
+  const multi = process.env.GROQ_API_KEYS;
+  if (multi) {
+    const keys = multi
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    if (keys.length > 0) return keys;
+  }
+  const single = process.env.GROQ_API_KEY?.trim();
+  return single ? [single] : [];
+}
+
+// Fisher-Yates — spreads load across keys roughly evenly instead of always
+// hammering the first one.
+function shuffled<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export async function analyzeProductWithGroq(
   input: ProductAnalysisInput
 ): Promise<{ analysis?: string; error?: string }> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    await logAiDebug({ skipped: true, reason: "no GROQ_API_KEY" });
+  const keys = getApiKeys();
+  if (keys.length === 0) {
+    await logAiDebug({ skipped: true, reason: "no GROQ_API_KEY(S)" });
     return { error: "A LunaAI ainda não está disponível. Tente novamente mais tarde." };
   }
 
@@ -54,35 +82,51 @@ ${conversionNote}
 
 Responde em português, tom direto e prático, organizado em tópicos curtos com travessões (sem markdown como ** ou #). Cobre: (1) o que está bom, (2) o que falta no título/descrição, (3) se o preço parece adequado para o mercado moçambicano, (4) uma sugestão concreta para aumentar conversão. Máximo 200 palavras.`;
 
-  try {
-    const res = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.6,
-        max_tokens: 600,
-      }),
-    });
+  const attempts: { key: string; status?: number; error?: string }[] = [];
 
-    const body = await res.json().catch(() => null);
-    if (!res.ok) {
-      await logAiDebug({ status: res.status, body });
-      return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
-    }
+  for (const apiKey of shuffled(keys)) {
+    try {
+      const res = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.6,
+          max_tokens: 600,
+        }),
+      });
 
-    const text = body?.choices?.[0]?.message?.content?.trim();
-    if (!text) {
-      await logAiDebug({ status: res.status, note: "empty response", body });
-      return { error: "A LunaAI não devolveu uma resposta. Tente novamente." };
+      const body = await res.json().catch(() => null);
+
+      // 401/403 (bad key) or 429 (rate limited) — try the next key instead
+      // of failing the whole request.
+      if (res.status === 401 || res.status === 403 || res.status === 429) {
+        attempts.push({ key: apiKey.slice(-6), status: res.status });
+        continue;
+      }
+
+      if (!res.ok) {
+        attempts.push({ key: apiKey.slice(-6), status: res.status });
+        await logAiDebug({ attempts: [...attempts, { status: res.status, body }] });
+        return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
+      }
+
+      const text = body?.choices?.[0]?.message?.content?.trim();
+      if (!text) {
+        attempts.push({ key: apiKey.slice(-6), status: res.status });
+        await logAiDebug({ attempts, note: "empty response", body });
+        return { error: "A LunaAI não devolveu uma resposta. Tente novamente." };
+      }
+      return { analysis: text };
+    } catch (err) {
+      attempts.push({ key: apiKey.slice(-6), error: (err as Error).message });
     }
-    return { analysis: text };
-  } catch (err) {
-    await logAiDebug({ error: (err as Error).message });
-    return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
   }
+
+  await logAiDebug({ attempts, note: "all keys exhausted" });
+  return { error: "A LunaAI não conseguiu analisar este produto agora. Tente novamente daqui a pouco." };
 }
