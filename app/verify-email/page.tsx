@@ -1,7 +1,14 @@
 import { MailCheck } from "lucide-react";
 import { AuthCard } from "@/components/auth/auth-card";
+import { ResendVerificationForm } from "@/components/auth/resend-verification-form";
 
-export default function VerifyEmailPage() {
+export default async function VerifyEmailPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string }>;
+}) {
+  const { email } = await searchParams;
+
   return (
     <AuthCard title="Confirme o seu email">
       <div className="flex flex-col items-center gap-4 text-center">
@@ -13,6 +20,7 @@ export default function VerifyEmailPage() {
           entrar no dashboard.
         </p>
       </div>
+      <ResendVerificationForm initialEmail={email} />
     </AuthCard>
   );
 }

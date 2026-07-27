@@ -30,7 +30,21 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   });
 
   if (error) return { error: error.message };
-  redirect("/verify-email");
+  redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+}
+
+export async function resendVerificationEmail(email: string): Promise<ActionResult & { ok?: boolean }> {
+  if (!email.trim()) return { error: "Indique o seu email." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: email.trim(),
+    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
+  });
+
+  if (error) return { error: error.message };
+  return { ok: true };
 }
 
 export async function signIn(formData: FormData): Promise<ActionResult> {
