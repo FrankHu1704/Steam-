@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,11 @@ const METHOD_LABELS: Record<PayoutMethod, string> = {
   emola: "e-Mola",
   mkesh: "mKesh",
   bank_transfer: "Transferência Bancária",
+};
+
+const WALLET_LOGO: Record<"mpesa" | "emola", string> = {
+  mpesa: "/payment-logos/mpesa.png",
+  emola: "/payment-logos/emola.png",
 };
 
 export function WithdrawalForm({
@@ -112,8 +118,14 @@ export function WithdrawalForm({
                     selected ? "border-primary bg-primary/5" : "border-border"
                   )}
                 >
-                  <div>
-                    <p className="text-sm font-semibold">{METHOD_LABELS[wallet.method]}</p>
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={WALLET_LOGO[wallet.method]}
+                      alt={METHOD_LABELS[wallet.method]}
+                      width={56}
+                      height={24}
+                      className="h-6 w-auto object-contain"
+                    />
                     <p className="text-xs text-muted-foreground">
                       {wallet.holder_name} · +258 {wallet.phone}
                     </p>

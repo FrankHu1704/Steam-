@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, Wallet, CheckCircle2, Clock, CreditCard } from "lucide-react";
+import { Zap, Wallet, TrendingUp, Clock, CreditCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
@@ -54,50 +54,39 @@ export default async function WithdrawalsPage() {
     <div className="space-y-6">
       {b2cBanner}
 
-      <div className="overflow-hidden rounded-2xl bg-brand-gradient p-6 text-white shadow-lg">
-        <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Saldo Disponível</p>
-        <p className="mt-2 text-4xl font-bold">
+      <div className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg sm:p-8">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
+          <Wallet className="h-4 w-4" /> Saldo disponível
+        </div>
+        <p className="relative mt-2 text-4xl font-bold sm:text-5xl">
           {formatCurrency(profile.balance_available, currency)}
         </p>
-        <p className="mt-1 text-sm text-white/80">Disponível para transferência imediata (M-Pesa / e-Mola).</p>
-      </div>
+        <p className="relative mt-1 text-sm text-white/70">Pronto para transferência imediata via M-Pesa ou e-Mola.</p>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="flex items-center gap-3 p-5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-              <CheckCircle2 className="h-5 w-5" />
-            </span>
+        <div className="relative mt-6 grid grid-cols-3 divide-x divide-white/15 border-t border-white/15 pt-4">
+          <div className="flex items-center gap-2 pr-3">
+            <TrendingUp className="h-4 w-4 shrink-0 text-white/70" />
             <div>
-              <p className="text-xs text-muted-foreground">Saque Mínimo</p>
-              <p className="font-semibold">{formatCurrency(minimumAmount, currency)}</p>
+              <p className="text-[11px] text-white/60">Mínimo</p>
+              <p className="text-sm font-semibold">{formatCurrency(minimumAmount, currency)}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-              <Clock className="h-5 w-5" />
-            </span>
+          </div>
+          <div className="flex items-center gap-2 px-3">
+            <Clock className="h-4 w-4 shrink-0 text-white/70" />
             <div>
-              <p className="text-xs text-muted-foreground">Prazo de Processamento</p>
-              <p className="font-semibold">{canUseB2C ? "Instantâneo (M-Pesa)" : "Até 24h úteis"}</p>
+              <p className="text-[11px] text-white/60">Prazo</p>
+              <p className="text-sm font-semibold">{canUseB2C ? "Instantâneo" : "Até 24h"}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <CreditCard className="h-5 w-5" />
-            </span>
+          </div>
+          <div className="flex items-center gap-2 pl-3">
+            <CreditCard className="h-4 w-4 shrink-0 text-white/70" />
             <div>
-              <p className="text-xs text-muted-foreground">Carteira Padrão</p>
-              <p className="font-semibold">
-                {defaultWallet ? METHOD_LABEL[defaultWallet.method] : "Nenhuma"}
-              </p>
+              <p className="text-[11px] text-white/60">Padrão</p>
+              <p className="text-sm font-semibold">{defaultWallet ? METHOD_LABEL[defaultWallet.method] : "Nenhuma"}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <Card>

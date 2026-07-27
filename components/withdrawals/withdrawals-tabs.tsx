@@ -25,19 +25,22 @@ export function WithdrawalsTabs({
 
   return (
     <div>
-      <div className="inline-flex flex-wrap gap-1 rounded-xl bg-muted p-1">
+      <div className="flex gap-6 border-b border-border">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
-              tab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "relative flex items-center gap-1.5 pb-3 text-sm font-medium transition-colors",
+              tab === t.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <t.icon className="h-4 w-4" />
             {t.label}
+            {tab === t.id && (
+              <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-brand-gradient" />
+            )}
           </button>
         ))}
       </div>
