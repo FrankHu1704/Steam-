@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getOrderStatus } from "@/lib/actions/checkout";
 import type {
   ApiCallLog,
   ApiKey,
@@ -86,7 +87,21 @@ export async function getAllOrders(limit = 100): Promise<AdminOrder[]> {
     .select("*, products(title)")
     .order("created_at", { ascending: false })
     .limit(limit);
-  return ((data ?? []) as (Order & { products: { title: string } | null })[]).map((o) => ({
+  const orders = (data ?? []) as (Order & { products: { title: string } | null })[];
+
+  // Reconcile any stale "pending" orders with the payment provider every
+  // time this list is loaded, so stuck payments resolve themselves without
+  // anyone having to click "Marcar como Falhado" manually.
+  await Promise.all(
+    orders
+      .filter((o) => o.status === "pending")
+      .map(async (o) => {
+        const result = await getOrderStatus(o.id);
+        if (result.status) o.status = result.status as Order["status"];
+      })
+  );
+
+  return orders.map((o) => ({
     ...o,
     product_title: o.products?.title ?? "—",
   }));
