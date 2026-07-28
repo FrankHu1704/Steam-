@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
+import { sendWithdrawalRequestedEmail } from "@/lib/email";
 import type { PayoutMethod } from "@/types/database";
 
 export async function requestWithdrawal(input: { amount: number; payoutMethod: PayoutMethod; destination: string }) {
@@ -19,7 +20,7 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("balance_available, currency")
+    .select("name, email, balance_available, currency")
     .eq("id", user.id)
     .single();
   if (!profile) return { error: "Perfil não encontrado." };
@@ -71,6 +72,17 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
   // stays "pending" for admin to pay manually, exactly as before.
   const instant = await payWithdrawalB2C(withdrawal.id);
 
+  await sendWithdrawalRequestedEmail({
+    producerEmail: profile.email,
+    producerName: profile.name,
+    amount: input.amount,
+    netAmount,
+    currency: profile.currency,
+    payoutMethod: input.payoutMethod,
+    destination: input.destination,
+    instant: instant.ok,
+  });
+
   return { withdrawalId: withdrawal.id as string, instant: instant.ok };
 }
 
@@ -85,11 +97,30 @@ export async function requestSelfServiceB2CPayout(withdrawalId: string) {
   if (!user) return { error: "Precisa de iniciar sessão." };
 
   const supabase = createAdminClient();
-  const { data: withdrawal } = await supabase.from("withdrawals").select("producer_id").eq("id", withdrawalId).single();
+  const { data: withdrawal } = await supabase
+    .from("withdrawals")
+    .select("producer_id, amount, net_amount, currency, payout_method, destination")
+    .eq("id", withdrawalId)
+    .single();
   if (!withdrawal || withdrawal.producer_id !== user.id) return { error: "Levantamento não encontrado." };
 
   const result = await payWithdrawalB2C(withdrawalId);
   if (!result.ok) return { error: result.error };
+
+  const { data: profile } = await supabase.from("profiles").select("name, email").eq("id", user.id).single();
+  if (profile) {
+    await sendWithdrawalRequestedEmail({
+      producerEmail: profile.email,
+      producerName: profile.name,
+      amount: withdrawal.amount,
+      netAmount: withdrawal.net_amount,
+      currency: withdrawal.currency,
+      payoutMethod: withdrawal.payout_method,
+      destination: withdrawal.destination,
+      instant: true,
+    });
+  }
+
   return { ok: true, reference: result.reference };
 }
 

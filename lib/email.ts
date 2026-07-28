@@ -318,6 +318,48 @@ export async function sendSaleNotificationEmail(input: {
   });
 }
 
+export async function sendWithdrawalRequestedEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  amount: number;
+  netAmount: number;
+  currency: string;
+  payoutMethod: string;
+  destination: string;
+  instant: boolean;
+}) {
+  const methodLabel: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola", mkesh: "mKesh", bank_transfer: "Transferência bancária" };
+  await sendEmail({
+    to: input.producerEmail,
+    subject: input.instant ? "Levantamento pago instantaneamente! ⚡" : "Levantamento pedido — a aguardar processamento",
+    html: emailBannerCard({
+      bannerColor: input.instant ? "#059669" : "#2563EB",
+      icon: input.instant ? "⚡" : "🕒",
+      title: input.instant ? "Levantamento pago!" : "Levantamento pedido",
+      bodyHtml:
+        emailParagraph(
+          input.instant
+            ? `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu levantamento foi processado e pago instantaneamente.`
+            : `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! Recebemos o seu pedido de levantamento — está a aguardar processamento.`
+        ) +
+        emailInfoBox([
+          { label: "Valor bruto", value: `${input.amount} ${input.currency}` },
+          { label: "Valor líquido", value: `${input.netAmount} ${input.currency}`, emphasize: true },
+          { label: "Método", value: methodLabel[input.payoutMethod] ?? input.payoutMethod },
+          { label: "Destino", value: input.destination },
+        ]) +
+        emailButton("Ver Levantamentos", `${siteUrl()}/dashboard/withdrawals`) +
+        (input.instant
+          ? emailParagraph(
+              `<span style="color:#9ca3af;font-size:12px;">O dinheiro já deve estar disponível na sua conta de ${methodLabel[input.payoutMethod] ?? input.payoutMethod}.</span>`
+            )
+          : emailParagraph(
+              `<span style="color:#9ca3af;font-size:12px;">Vamos avisá-lo assim que o pagamento for concluído.</span>`
+            )),
+    }),
+  });
+}
+
 export async function sendBuyerReceiptEmail(input: { buyerEmail: string; productTitle: string; accessUrl: string }) {
   await sendEmail({
     to: input.buyerEmail,
