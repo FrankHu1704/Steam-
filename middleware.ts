@@ -3,7 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
-const PROTECTED_PREFIXES = ["/dashboard", "/account", "/admin"];
+const PROTECTED_PREFIXES: { prefix: string; loginPath: string }[] = [
+  { prefix: "/dashboard", loginPath: "/login" },
+  { prefix: "/account", loginPath: "/login" },
+  { prefix: "/admin", loginPath: "/login" },
+  { prefix: "/colaborador", loginPath: "/colaborador/login" },
+];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -31,12 +36,15 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => request.nextUrl.pathname.startsWith(p));
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+  const pathname = request.nextUrl.pathname;
+  if (pathname !== "/colaborador/login") {
+    const match = PROTECTED_PREFIXES.find((p) => pathname.startsWith(p.prefix));
+    if (match && !user) {
+      const url = request.nextUrl.clone();
+      url.pathname = match.loginPath;
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;

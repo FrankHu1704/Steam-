@@ -12,14 +12,28 @@ interface ChatItem {
   content: string;
 }
 
-const QUICK_PROMPTS = [
+const DEFAULT_QUICK_PROMPTS = [
   "Como aumentar as minhas vendas este mês?",
   "Como escalar anúncios no Facebook e Instagram?",
   "Dicas para o meu produto mais vendido",
   "Que preço devo cobrar pelos meus produtos?",
 ];
 
-export function LunaChat({ initialMessages }: { initialMessages: ChatItem[] }) {
+export function LunaChat({
+  initialMessages,
+  onSend = askLuna,
+  onClear = clearLunaHistory,
+  quickPrompts = DEFAULT_QUICK_PROMPTS,
+  subtitle = "Dicas de vendas, marketing e como escalar anúncios.",
+  emptyStateText = "Pergunte à LunaAI sobre como vender mais, escalar anúncios, ou definir preços.",
+}: {
+  initialMessages: ChatItem[];
+  onSend?: (message: string) => Promise<{ reply?: string; error?: string }>;
+  onClear?: () => Promise<{ ok?: boolean; error?: string }>;
+  quickPrompts?: string[];
+  subtitle?: string;
+  emptyStateText?: string;
+}) {
   const [messages, setMessages] = useState<ChatItem[]>(initialMessages);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -35,7 +49,7 @@ export function LunaChat({ initialMessages }: { initialMessages: ChatItem[] }) {
     setMessages((m) => [...m, { role: "user", content: trimmed }]);
     setInput("");
     setPending(true);
-    const res = await askLuna(trimmed);
+    const res = await onSend(trimmed);
     setPending(false);
     if (res.error) {
       toast.error(res.error);
@@ -46,7 +60,7 @@ export function LunaChat({ initialMessages }: { initialMessages: ChatItem[] }) {
 
   async function handleClear() {
     if (!confirm("Apagar todo o histórico de conversa com a LunaAI?")) return;
-    await clearLunaHistory();
+    await onClear();
     setMessages([]);
   }
 
@@ -59,7 +73,7 @@ export function LunaChat({ initialMessages }: { initialMessages: ChatItem[] }) {
           </span>
           <div>
             <p className="font-semibold">LunaAI</p>
-            <p className="text-xs text-muted-foreground">Dicas de vendas, marketing e como escalar anúncios.</p>
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         {messages.length > 0 && (
@@ -75,11 +89,9 @@ export function LunaChat({ initialMessages }: { initialMessages: ChatItem[] }) {
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-gradient text-white">
               <Sparkles className="h-5 w-5" />
             </span>
-            <p className="max-w-xs text-sm text-muted-foreground">
-              Pergunte à LunaAI sobre como vender mais, escalar anúncios, ou definir preços.
-            </p>
+            <p className="max-w-xs text-sm text-muted-foreground">{emptyStateText}</p>
             <div className="flex flex-wrap justify-center gap-2">
-              {QUICK_PROMPTS.map((p) => (
+              {quickPrompts.map((p) => (
                 <button
                   key={p}
                   type="button"

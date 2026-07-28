@@ -12,6 +12,7 @@ import {
   Code2,
   BarChart3,
   MessageSquareText,
+  Briefcase,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { requireAdminUser } from "@/lib/data/admin";
@@ -25,6 +26,7 @@ const NAV: ShellNavItem[] = [
   { href: "/admin/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
   { href: "/admin/revenue", label: "Receita", icon: <BarChart3 className="h-4 w-4" /> },
   { href: "/admin/users", label: "Utilizadores", icon: <Users2 className="h-4 w-4" /> },
+  { href: "/admin/colaboradores", label: "Colaboradores", icon: <Briefcase className="h-4 w-4" /> },
   { href: "/admin/categories", label: "Categorias", icon: <Tag className="h-4 w-4" /> },
   { href: "/admin/broadcast", label: "Comunicados", icon: <Megaphone className="h-4 w-4" /> },
   { href: "/admin/production-unlocks", label: "Produção API", icon: <Code2 className="h-4 w-4" /> },

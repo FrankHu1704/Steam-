@@ -1,18 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { User, Mail, Lock, Phone, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { signUp } from "@/lib/actions/auth";
+import { trackEmployeeClick } from "@/lib/actions/employee-tracking";
 
 export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupPageInner />
+    </Suspense>
+  );
+}
+
+function SignupPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const ref = searchParams.get("ref") ?? "";
+
+  useEffect(() => {
+    if (ref) void trackEmployeeClick(ref);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref]);
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
@@ -36,6 +53,7 @@ export default function SignupPage() {
       }
     >
       <form action={handleSubmit} className="space-y-4">
+        {ref && <input type="hidden" name="ref" value={ref} />}
         <div className="space-y-1.5">
           <Label htmlFor="name">Nome</Label>
           <div className="flex items-center overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">

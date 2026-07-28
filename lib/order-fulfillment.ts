@@ -34,13 +34,45 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("balance_available, email, phone")
+    .select("balance_available, email, phone, recruited_by_employee_id, created_at")
     .eq("id", order.producer_id)
     .single();
   await supabase
     .from("profiles")
     .update({ balance_available: (producer?.balance_available ?? 0) + ownerNet })
     .eq("id", order.producer_id);
+
+  // Employee/collaborator recruiter commission — 5% of the sale for the
+  // first 3 months after the producer signed up via their link, capped at
+  // what PagaJá actually earned as its own platform fee on this order so
+  // this can never push the platform's own take on the sale negative.
+  if (producer?.recruited_by_employee_id) {
+    const recruitedUntil = new Date(producer.created_at);
+    recruitedUntil.setMonth(recruitedUntil.getMonth() + 3);
+    if (new Date() <= recruitedUntil) {
+      const { data: employee } = await supabase
+        .from("employees")
+        .select("id, commission_percent, balance_available, active")
+        .eq("id", producer.recruited_by_employee_id)
+        .single();
+      if (employee?.active) {
+        const rawCommission = Math.round(order.total_amount * (employee.commission_percent / 100) * 100) / 100;
+        const employeeCommission = Math.min(rawCommission, platformFeeAmount);
+        if (employeeCommission > 0) {
+          await supabase
+            .from("employees")
+            .update({ balance_available: employee.balance_available + employeeCommission })
+            .eq("id", employee.id);
+          await supabase.from("employee_commissions").insert({
+            employee_id: employee.id,
+            order_id: order.id,
+            producer_id: order.producer_id,
+            amount: employeeCommission,
+          });
+        }
+      }
+    }
+  }
 
   const { data: product } = await supabase.from("products").select("title").eq("id", order.product_id).single();
 

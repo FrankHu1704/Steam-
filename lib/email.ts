@@ -258,6 +258,39 @@ export async function sendRefundNotificationEmail(input: {
   });
 }
 
+export async function sendEmployeeWelcomeEmail(input: {
+  email: string;
+  name: string;
+  tempPassword: string;
+  referralLink: string;
+}) {
+  const loginUrl = `${siteUrl()}/colaborador/login`;
+  await sendEmail({
+    to: input.email,
+    subject: "Bem-vindo à equipa PagaJá — a sua conta de colaborador",
+    html: emailBannerCard({
+      bannerColor: "#2563EB",
+      icon: "🤝",
+      title: "Bem-vindo à equipa PagaJá",
+      bodyHtml:
+        emailParagraph(
+          `Olá, <strong>${input.name}</strong>! Foi criada uma conta de colaborador para si na PagaJá. Vai ganhar comissão sobre as vendas dos produtores que recrutar através do seu link único.`
+        ) +
+        emailInfoBox([
+          { label: "Email", value: input.email },
+          { label: "Palavra-passe temporária", value: input.tempPassword, emphasize: true },
+        ]) +
+        emailParagraph(
+          `O seu link único de recrutamento (partilhe com futuros produtores):<br/><a href="${input.referralLink}">${input.referralLink}</a>`
+        ) +
+        emailButton("Entrar na Área de Colaboradores", loginUrl) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Recomendamos que troque a palavra-passe assim que entrar pela primeira vez.</span>`
+        ),
+    }),
+  });
+}
+
 export async function sendSaleNotificationEmail(input: {
   producerEmail: string;
   productTitle: string;

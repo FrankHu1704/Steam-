@@ -69,7 +69,55 @@ export interface Profile {
   balance_pending: number;
   currency: string;
   production_unlocked_at: string | null;
+  recruited_by_employee_id: string | null;
   created_at: string;
+}
+
+export interface Employee {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  bi_number: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  mpesa_number: string | null;
+  emola_number: string | null;
+  referral_code: string;
+  commission_percent: number;
+  active: boolean;
+  balance_available: number;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface EmployeeLinkClick {
+  id: string;
+  employee_id: string;
+  created_at: string;
+}
+
+export interface EmployeeCommission {
+  id: string;
+  employee_id: string;
+  order_id: string;
+  producer_id: string;
+  amount: number;
+  created_at: string;
+}
+
+export interface EmployeePayout {
+  id: string;
+  employee_id: string;
+  amount: number;
+  status: "pending" | "paid" | "failed";
+  payout_reference: string | null;
+  failure_reason: string | null;
+  period_month: string;
+  created_at: string;
+  paid_at: string | null;
 }
 
 export interface Category {
@@ -373,6 +421,10 @@ export interface Database {
       production_unlocks: Row<ProductionUnlock>;
       api_call_logs: Row<ApiCallLog>;
       push_subscriptions: Row<PushSubscriptionRow>;
+      employees: Row<Employee>;
+      employee_link_clicks: Row<EmployeeLinkClick>;
+      employee_commissions: Row<EmployeeCommission>;
+      employee_payouts: Row<EmployeePayout>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

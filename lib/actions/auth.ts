@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizeMozambiquePhone } from "@/lib/phone";
 
 export interface ActionResult {
@@ -25,9 +26,10 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
     return { error: "Indique um número de telemóvel válido." };
   }
   const phone = normalizeMozambiquePhone(phoneRaw);
+  const referralCode = String(formData.get("ref") ?? "").trim();
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -37,6 +39,20 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   });
 
   if (error) return { error: error.message };
+
+  if (referralCode && data.user) {
+    const admin = createAdminClient();
+    const { data: employee } = await admin
+      .from("employees")
+      .select("id")
+      .eq("referral_code", referralCode)
+      .eq("active", true)
+      .maybeSingle();
+    if (employee) {
+      await admin.from("profiles").update({ recruited_by_employee_id: employee.id }).eq("id", data.user.id);
+    }
+  }
+
   redirect(`/verify-email?email=${encodeURIComponent(email)}`);
 }
 
@@ -66,10 +82,11 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
   redirect(next);
 }
 
-export async function signOut() {
+export async function signOut(formData?: FormData) {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  const next = formData ? String(formData.get("next") ?? "/login") : "/login";
+  redirect(next);
 }
 
 export async function requestPasswordReset(formData: FormData): Promise<ActionResult> {

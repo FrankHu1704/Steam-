@@ -44,11 +44,13 @@ export function Shell({
   navItems,
   badge,
   notifications = [],
+  signOutRedirect,
   children,
 }: {
   navItems: ShellNavItem[];
   badge?: string;
   notifications?: Notification[];
+  signOutRedirect?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -73,6 +75,7 @@ export function Shell({
           <NavLinks navItems={navItems} pathname={pathname} />
         </nav>
         <form action={signOut} className="border-t border-border p-3">
+          {signOutRedirect && <input type="hidden" name="next" value={signOutRedirect} />}
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted">
             <LogOut className="h-4 w-4" />
             Terminar Sessão

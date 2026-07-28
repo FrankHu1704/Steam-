@@ -16,6 +16,7 @@ import { Shell, type ShellNavItem } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
+import { getEmployeeByUserId } from "@/lib/data/employees";
 
 const NAV: ShellNavItem[] = [
   { href: "/dashboard", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
@@ -34,6 +35,9 @@ const NAV: ShellNavItem[] = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user) redirect("/login?next=/dashboard");
+
+  const employee = await getEmployeeByUserId(user.id);
+  if (employee) redirect("/colaborador");
 
   if (profile && profile.role === "buyer") {
     const supabase = await createClient();
