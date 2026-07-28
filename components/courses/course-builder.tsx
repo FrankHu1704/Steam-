@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Loader2, GraduationCap, PlayCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Loader2, GraduationCap, PlayCircle, Link2, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ function LessonForm({ moduleId }: { moduleId: string }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [contentType, setContentType] = useState<"embed" | "link">("embed");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +24,13 @@ function LessonForm({ moduleId }: { moduleId: string }) {
     e.preventDefault();
     setPending(true);
     setError(null);
-    const result = await createLesson({ moduleId, title, description, videoUrl });
+    const result = await createLesson({
+      moduleId,
+      title,
+      description,
+      videoUrl,
+      isExternalLink: contentType === "link",
+    });
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -32,6 +39,7 @@ function LessonForm({ moduleId }: { moduleId: string }) {
     setTitle("");
     setDescription("");
     setVideoUrl("");
+    setContentType("embed");
     setOpen(false);
     router.refresh();
   }
@@ -47,11 +55,39 @@ function LessonForm({ moduleId }: { moduleId: string }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-dashed border-border p-3">
       <Input placeholder="Título da aula" value={title} onChange={(e) => setTitle(e.target.value)} required />
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setContentType("embed")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium ${
+            contentType === "embed" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+          }`}
+        >
+          <PlayCircle className="h-3.5 w-3.5" /> Vídeo incorporado
+        </button>
+        <button
+          type="button"
+          onClick={() => setContentType("link")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium ${
+            contentType === "link" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+          }`}
+        >
+          <Link2 className="h-3.5 w-3.5" /> Link externo
+        </button>
+      </div>
+
       <Input
-        placeholder="Link do vídeo (YouTube, Vimeo, embed…)"
+        placeholder={contentType === "link" ? "Link da aula (Google Drive, etc.)" : "Link do vídeo (YouTube, Vimeo, embed…)"}
         value={videoUrl}
         onChange={(e) => setVideoUrl(e.target.value)}
       />
+      <p className="text-[11px] text-muted-foreground">
+        {contentType === "link"
+          ? "O comprador vai ser redirecionado para este link ao abrir a aula."
+          : "Use um link de incorporação (embed) — ex: youtube.com/embed/..."}
+      </p>
+
       <Textarea
         placeholder="Descrição (opcional)"
         rows={2}

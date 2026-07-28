@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyWithdrawals, getWithdrawalFeePercent, getWithdrawalMinimumAmount } from "@/lib/data/withdrawals";
 import { getPayoutWallets } from "@/lib/data/payout-wallets";
+import { getActivePaymentProvider, b2cMethodsForProvider } from "@/lib/payments";
 import { formatCurrency } from "@/lib/utils";
 
 const METHOD_LABEL: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola" };
@@ -18,35 +18,25 @@ export default async function WithdrawalsPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const [withdrawals, feePercent, minimumAmount, wallets] = await Promise.all([
+  const [withdrawals, feePercent, minimumAmount, wallets, providerName] = await Promise.all([
     getMyWithdrawals(user.id),
     getWithdrawalFeePercent(),
     getWithdrawalMinimumAmount(),
     getPayoutWallets(user.id),
+    getActivePaymentProvider(),
   ]);
   const currency = profile.currency as "MZN" | "ZAR";
-  const canUseB2C = !!profile.production_unlocked_at;
+  const instantMethods = b2cMethodsForProvider(providerName);
+  const canUseB2C = instantMethods.length > 0;
   const defaultWallet = wallets.find((w) => w.is_default) ?? null;
 
-  const b2cBanner = canUseB2C ? (
+  const b2cBanner = (
     <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950">
       <Zap className="h-5 w-5 shrink-0 text-emerald-600" />
       <p className="text-emerald-900 dark:text-emerald-200">
-        Tem levantamento instantâneo via B2C ativo para M-Pesa — clique em &quot;Levantar agora (B2C)&quot; em
-        qualquer pedido pendente.
+        Os seus levantamentos são pagos automaticamente por B2C assim que os pedir (
+        {instantMethods.map((m) => METHOD_LABEL[m] ?? m).join(" e ")}) — sem esperar aprovação.
       </p>
-    </div>
-  ) : (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4 text-sm">
-      <div className="flex items-center gap-3">
-        <Zap className="h-5 w-5 shrink-0 text-primary" />
-        <p className="text-muted-foreground">
-          Desbloqueie o modo produção da API para levantar via M-Pesa instantaneamente (B2C), sem esperar aprovação.
-        </p>
-      </div>
-      <Link href="/dashboard/developer" className="shrink-0 text-sm font-medium text-primary hover:underline">
-        Saber mais
-      </Link>
     </div>
   );
 
@@ -151,7 +141,7 @@ export default async function WithdrawalsPage() {
                     </td>
                     <td className="p-4">
                       {w.status === "paid" && <ConfirmReceiptButton withdrawalId={w.id} />}
-                      {w.status === "pending" && canUseB2C && w.payout_method === "mpesa" && (
+                      {w.status === "pending" && (instantMethods as readonly string[]).includes(w.payout_method) && (
                         <B2CPayoutButton withdrawalId={w.id} />
                       )}
                     </td>

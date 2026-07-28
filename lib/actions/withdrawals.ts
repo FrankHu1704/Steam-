@@ -65,13 +65,18 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
     })
     .eq("id", user.id);
 
-  return { withdrawalId: withdrawal.id as string };
+  // Every withdrawal now tries instant B2C automatically for every
+  // producer — no paywall gate. If the active processor/method combo
+  // can't auto-dispatch (or the attempt fails for any reason), it just
+  // stays "pending" for admin to pay manually, exactly as before.
+  const instant = await payWithdrawalB2C(withdrawal.id);
+
+  return { withdrawalId: withdrawal.id as string, instant: instant.ok };
 }
 
-// Self-service instant B2C payout — a perk for producers who unlocked the
-// developer API's production mode (paid the one-time 300 MZN fee): they
-// can cash out their own M-Pesa withdrawal instantly instead of waiting
-// for admin to process it manually.
+// Manual retry of instant B2C — available to any producer, e.g. if the
+// automatic attempt above failed (transient provider error) and they want
+// to try again instead of waiting for admin.
 export async function requestSelfServiceB2CPayout(withdrawalId: string) {
   const authClient = await createClient();
   const {
@@ -82,15 +87,6 @@ export async function requestSelfServiceB2CPayout(withdrawalId: string) {
   const supabase = createAdminClient();
   const { data: withdrawal } = await supabase.from("withdrawals").select("producer_id").eq("id", withdrawalId).single();
   if (!withdrawal || withdrawal.producer_id !== user.id) return { error: "Levantamento não encontrado." };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("production_unlocked_at")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.production_unlocked_at) {
-    return { error: "Levantamento instantâneo via B2C é exclusivo para quem desbloqueou o modo produção da API." };
-  }
 
   const result = await payWithdrawalB2C(withdrawalId);
   if (!result.ok) return { error: result.error };

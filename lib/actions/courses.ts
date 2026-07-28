@@ -30,6 +30,7 @@ export async function createLesson(input: {
   title: string;
   description: string;
   videoUrl: string;
+  isExternalLink: boolean;
 }) {
   const supabase = await createClient();
   if (!input.title.trim()) return { error: "Indique um título para a aula." };
@@ -44,6 +45,7 @@ export async function createLesson(input: {
     title: input.title,
     description: input.description,
     video_url: input.videoUrl || null,
+    is_external_link: input.isExternalLink,
     sort_order: count ?? 0,
   });
   if (error) return { error: error.message };

@@ -371,6 +371,7 @@ export interface CourseLesson {
   title: string;
   description: string;
   video_url: string | null;
+  is_external_link: boolean;
   sort_order: number;
   created_at: string;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Circle, PlayCircle, Send, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle, Send, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toggleLessonComplete, postLessonComment, fetchLessonComments } from "@/lib/actions/course-progress";
@@ -118,17 +118,31 @@ export function CoursePlayer({
       <div className="order-1 lg:order-2 lg:col-span-2">
         {activeLesson ? (
           <div className="space-y-4">
-            <div className="overflow-hidden rounded-2xl border border-border bg-black">
-              {activeLesson.video_url ? (
-                <div className="aspect-video w-full">
-                  <iframe src={activeLesson.video_url} className="h-full w-full" allowFullScreen />
-                </div>
-              ) : (
-                <div className="flex aspect-video w-full items-center justify-center text-white/60">
-                  <PlayCircle className="h-12 w-12" />
-                </div>
-              )}
-            </div>
+            {activeLesson.video_url && activeLesson.is_external_link ? (
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-muted/40 text-center">
+                <ExternalLink className="h-10 w-10 text-primary" />
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  Esta aula está num link externo. Clique para abrir.
+                </p>
+                <Button asChild size="sm">
+                  <a href={activeLesson.video_url} target="_blank" rel="noreferrer">
+                    Abrir aula
+                  </a>
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-border bg-black">
+                {activeLesson.video_url ? (
+                  <div className="aspect-video w-full">
+                    <iframe src={activeLesson.video_url} className="h-full w-full" allowFullScreen />
+                  </div>
+                ) : (
+                  <div className="flex aspect-video w-full items-center justify-center text-white/60">
+                    <PlayCircle className="h-12 w-12" />
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-card p-5">
               <div>

@@ -82,7 +82,7 @@ const DIFFERENTIATORS = [
   {
     icon: Zap,
     title: "Pagamentos e saques verdadeiramente automáticos",
-    text: "Os seus clientes pagam via M-Pesa ou e-Mola e o valor entra no seu saldo assim que confirmado. Guarde as suas carteiras uma única vez e peça saques com um clique — sem escrever o número de telefone todas as vezes, e com levantamento instantâneo para quem desbloqueia o modo produção.",
+    text: "Os seus clientes pagam via M-Pesa ou e-Mola e o valor entra no seu saldo assim que confirmado. Guarde as suas carteiras uma única vez e peça saques com um clique — sem escrever o número de telefone todas as vezes, com levantamento instantâneo via B2C para todos.",
     bullets: ["Carteiras M-Pesa e e-Mola guardadas", "Saque instantâneo via B2C (sem esperar aprovação)", "Notificação a cada venda, por push, email e WhatsApp"],
   },
   {
