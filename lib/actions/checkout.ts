@@ -265,8 +265,16 @@ export async function getOrderStatus(orderId: string) {
           }
           return { status: mappedStatus };
         }
-      } catch {
-        // best-effort reconciliation; webhook remains the source of truth
+      } catch (err) {
+        // best-effort reconciliation; webhook remains the source of truth —
+        // but log it so a persistent provider-side issue is still visible
+        // in Admin → Logs instead of failing completely silently.
+        await supabase.from("logs").insert({
+          action: "order_status_check_error",
+          target_table: "orders",
+          target_id: orderId,
+          metadata: { error: (err as Error).message },
+        });
       }
     }
 

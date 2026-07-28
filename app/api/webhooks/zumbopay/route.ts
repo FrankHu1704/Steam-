@@ -68,7 +68,18 @@ export async function POST(request: Request) {
   if (order.status === "paid") return NextResponse.json({ ok: true, already_paid: true });
 
   // Server-to-server re-verification — never trust the webhook body alone.
-  const authoritative = await getAuthoritativeStatus(reference);
+  let authoritative;
+  try {
+    authoritative = await getAuthoritativeStatus(reference);
+  } catch (err) {
+    await supabase.from("logs").insert({
+      action: "zumbopay_status_check_error",
+      target_table: "orders",
+      target_id: order.id,
+      metadata: { error: (err as Error).message, reference },
+    });
+    return NextResponse.json({ ok: false, error: "status_check_failed" }, { status: 502 });
+  }
 
   if (authoritative.status === "failed") {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
