@@ -1,10 +1,11 @@
 import { MessageSquareText, Mail, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getTsembaBalance } from "@/lib/tsemba";
+import { getTsembaBalance, getTsembaRawBalance } from "@/lib/tsemba";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminNotificationsPage() {
   const balance = await getTsembaBalance();
+  const raw = await getTsembaRawBalance();
 
   const unitTiles = balance
     ? [
@@ -74,6 +75,18 @@ export default async function AdminNotificationsPage() {
 
           <p className="text-xs text-muted-foreground">Total de unidades disponíveis: {balance.totalUnits}</p>
         </>
+      )}
+
+      {raw && (
+        <Card className="border-amber-500/40">
+          <CardContent className="p-5">
+            <p className="mb-2 text-sm font-semibold">Resposta bruta da API (temporário, para diagnóstico)</p>
+            <p className="mb-2 text-xs text-muted-foreground">HTTP {raw.status}</p>
+            <pre className="overflow-x-auto rounded-lg bg-muted/40 p-3 text-xs">
+              {JSON.stringify(raw.body, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

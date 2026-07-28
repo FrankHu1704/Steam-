@@ -33,3 +33,22 @@ export async function getTsembaBalance(): Promise<TsembaBalance | null> {
     return null;
   }
 }
+
+/** Temporary — returns the exact JSON the /balance endpoint sends back, so
+ * the real field names/shape can be inspected directly from the admin UI
+ * instead of via terminal curl. Remove once the sms field name is confirmed
+ * and lib/tsemba.ts::getTsembaBalance is fixed to read the right key. */
+export async function getTsembaRawBalance(): Promise<{ status: number; body: unknown } | null> {
+  const apiKey = process.env.TSEMBA_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(`${TSEMBA_BASE_URL}/balance`, {
+      headers: { "x-api-key": apiKey },
+    });
+    const body = await res.json().catch(() => null);
+    return { status: res.status, body };
+  } catch (err) {
+    return { status: 0, body: { error: (err as Error).message } };
+  }
+}
