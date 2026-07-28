@@ -28,9 +28,10 @@ export async function sendWhatsapp(to: string, message: string): Promise<void> {
       method: "POST",
       headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "send",
+        instance_name: process.env.TSEMBA_WHATSAPP_INSTANCE || "TSEMBA",
         to: normalizedTo,
         message,
-        ...(process.env.TSEMBA_SENDER_ID ? { sender_id: process.env.TSEMBA_SENDER_ID } : {}),
       }),
     });
     const responseBody = await res.text();
