@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, MessageCircle } from "lucide-react";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,10 +84,29 @@ function LoginForm() {
 
 export default function EmployeeLoginPage() {
   return (
-    <AuthCard title="Área de Colaboradores" subtitle="Acesso exclusivo para colaboradores PagaJá">
+    <AuthCard
+      title="Área de Colaboradores"
+      subtitle="Acesso exclusivo para colaboradores PagaJá"
+      footer={
+        <>
+          Ainda não é colaborador?{" "}
+          <Link href="/colaborador/candidatura" className="font-semibold text-primary">
+            Candidatar-se
+          </Link>
+        </>
+      }
+    >
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>
+      <a
+        href="https://wa.me/258849311757"
+        target="_blank"
+        rel="noreferrer"
+        className="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <MessageCircle className="h-3.5 w-3.5" /> Suporte via WhatsApp
+      </a>
     </AuthCard>
   );
 }

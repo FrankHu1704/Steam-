@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Employee } from "@/types/database";
+import type { Employee, EmployeeApplication } from "@/types/database";
 
 export async function getEmployeeByUserId(userId: string): Promise<Employee | null> {
   const supabase = createAdminClient();
@@ -97,4 +97,14 @@ export async function getAllEmployees(): Promise<AdminEmployeeRow[]> {
   }
 
   return (employees as Employee[]).map((e) => ({ ...e, registeredCount: countByEmployee.get(e.id) ?? 0 }));
+}
+
+export async function getPendingEmployeeApplications(): Promise<EmployeeApplication[]> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("employee_applications")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  return (data as EmployeeApplication[]) ?? [];
 }

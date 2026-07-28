@@ -2,11 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CreateEmployeeForm } from "@/components/admin/create-employee-form";
 import { EmployeeActiveToggle } from "@/components/admin/employee-active-toggle";
-import { getAllEmployees } from "@/lib/data/employees";
+import { EmployeeApplicationReview } from "@/components/admin/employee-application-review";
+import { CopyLinkField } from "@/components/admin/copy-link-field";
+import { getAllEmployees, getPendingEmployeeApplications } from "@/lib/data/employees";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminEmployeesPage() {
-  const employees = await getAllEmployees();
+  const [employees, applications] = await Promise.all([getAllEmployees(), getPendingEmployeeApplications()]);
+  const applicationLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://pagaja.site"}/colaborador/candidatura`;
 
   return (
     <div className="space-y-6">
@@ -19,7 +22,34 @@ export default async function AdminEmployeesPage() {
 
       <Card>
         <CardContent className="p-6">
-          <h2 className="mb-4 font-semibold">Criar Colaborador</h2>
+          <h2 className="mb-1 font-semibold">Link de candidatura</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Partilhe este link — quem se candidatar preenche os próprios dados; só precisa de aprovar aqui.
+          </p>
+          <CopyLinkField link={applicationLink} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="mb-4 font-semibold">
+            Candidaturas Pendentes {applications.length > 0 && `(${applications.length})`}
+          </h2>
+          {applications.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma candidatura pendente.</p>
+          ) : (
+            <div className="space-y-3">
+              {applications.map((a) => (
+                <EmployeeApplicationReview key={a.id} application={a} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="mb-4 font-semibold">Criar Colaborador Manualmente</h2>
           <CreateEmployeeForm />
         </CardContent>
       </Card>

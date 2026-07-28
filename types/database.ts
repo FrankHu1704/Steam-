@@ -120,6 +120,26 @@ export interface EmployeePayout {
   paid_at: string | null;
 }
 
+export interface EmployeeApplication {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  bi_number: string;
+  address: string;
+  city: string;
+  province: string;
+  mpesa_number: string | null;
+  emola_number: string | null;
+  message: string | null;
+  status: "pending" | "approved" | "rejected";
+  rejection_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_employee_id: string | null;
+  created_at: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -425,6 +445,7 @@ export interface Database {
       employee_link_clicks: Row<EmployeeLinkClick>;
       employee_commissions: Row<EmployeeCommission>;
       employee_payouts: Row<EmployeePayout>;
+      employee_applications: Row<EmployeeApplication>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

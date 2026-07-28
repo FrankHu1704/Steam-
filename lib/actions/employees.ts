@@ -15,7 +15,7 @@ function generateTempPassword(): string {
   return crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 10);
 }
 
-export async function createEmployee(input: {
+export interface ProvisionEmployeeInput {
   name: string;
   email: string;
   phone: string;
@@ -26,10 +26,15 @@ export async function createEmployee(input: {
   mpesaNumber: string;
   emolaNumber: string;
   commissionPercent: number;
-}) {
-  const admin = await requireAdminUser();
-  if (!admin) return { error: "Acesso negado." };
+  createdBy: string | null;
+}
 
+/** Core account-creation logic shared by the admin "Criar Colaborador" form
+ * and approving a self-service application — always the final step, either
+ * way, only an admin can trigger it. */
+export async function provisionEmployeeAccount(
+  input: ProvisionEmployeeInput
+): Promise<{ error?: string; ok?: boolean; referralLink?: string }> {
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
   const biNumber = input.biNumber.trim();
@@ -83,7 +88,7 @@ export async function createEmployee(input: {
     emola_number: emolaNumber ? normalizeMozambiquePhone(emolaNumber) : null,
     referral_code: referralCode,
     commission_percent: Math.min(90, Math.max(0, input.commissionPercent)),
-    created_by: admin.user.id,
+    created_by: input.createdBy,
   });
   if (insertError) {
     await supabase.auth.admin.deleteUser(created.user.id);
@@ -95,6 +100,13 @@ export async function createEmployee(input: {
 
   revalidatePath("/admin/colaboradores");
   return { ok: true, referralLink };
+}
+
+export async function createEmployee(input: Omit<ProvisionEmployeeInput, "createdBy">) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  return provisionEmployeeAccount({ ...input, createdBy: admin.user.id });
 }
 
 export async function toggleEmployeeActive(employeeId: string, active: boolean) {

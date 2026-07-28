@@ -10,6 +10,8 @@ const PROTECTED_PREFIXES: { prefix: string; loginPath: string }[] = [
   { prefix: "/colaborador", loginPath: "/colaborador/login" },
 ];
 
+const PUBLIC_EXACT_PATHS = new Set(["/colaborador/login", "/colaborador/candidatura"]);
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -37,7 +39,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  if (pathname !== "/colaborador/login") {
+  if (!PUBLIC_EXACT_PATHS.has(pathname)) {
     const match = PROTECTED_PREFIXES.find((p) => pathname.startsWith(p.prefix));
     if (match && !user) {
       const url = request.nextUrl.clone();
