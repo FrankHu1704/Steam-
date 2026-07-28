@@ -34,7 +34,7 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("balance_available, email, phone, recruited_by_employee_id, created_at")
+    .select("name, balance_available, email, phone, recruited_by_employee_id, created_at")
     .eq("id", order.producer_id)
     .single();
   await supabase
@@ -124,6 +124,23 @@ export async function creditOrder(orderId: string): Promise<void> {
     body: `Vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
     url: "/dashboard",
   });
+
+  // Every sale on the platform also notifies every admin — not just the
+  // producer — so the admin can keep track of all activity from one place.
+  const { data: admins } = await supabase.from("profiles").select("id").eq("role", "admin");
+  for (const adminProfile of admins ?? []) {
+    await supabase.from("notifications").insert({
+      user_id: adminProfile.id,
+      type: "sale",
+      title: "Nova venda",
+      message: `${producer?.name ?? "Um produtor"} vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
+    });
+    await sendPushToUser(adminProfile.id, {
+      title: "Nova venda 🎉",
+      body: `${producer?.name ?? "Produtor"} vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
+      url: "/admin/orders",
+    });
+  }
 
   if (producer?.email) {
     await sendSaleNotificationEmail({
