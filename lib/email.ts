@@ -285,6 +285,9 @@ export async function sendEmployeeWelcomeEmail(input: {
         ) +
         emailButton("Entrar na Área de Colaboradores", loginUrl) +
         emailParagraph(
+          `É obrigatório seguir as redes sociais oficiais da PagaJá:<br/><a href="https://www.instagram.com/pagaja.co.mz">Instagram</a> · <a href="https://www.tiktok.com/@pagaja.site">TikTok</a>`
+        ) +
+        emailParagraph(
           `<span style="color:#9ca3af;font-size:12px;">Recomendamos que troque a palavra-passe assim que entrar pela primeira vez.</span>`
         ),
     }),

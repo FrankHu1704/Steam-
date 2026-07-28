@@ -1,5 +1,17 @@
 import { redirect } from "next/navigation";
-import { MousePointerClick, UserPlus, Rocket, Wallet, Info, User, Phone, MapPin, CreditCard } from "lucide-react";
+import {
+  MousePointerClick,
+  UserPlus,
+  Rocket,
+  Wallet,
+  Info,
+  User,
+  Phone,
+  MapPin,
+  CreditCard,
+  Instagram,
+  Music2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { getEmployeeByUserId, getEmployeeOverview } from "@/lib/data/employees";
@@ -81,6 +93,35 @@ export default async function ColaboradorOverviewPage() {
         </div>
       </div>
 
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <p className="font-semibold">Siga as redes sociais da PagaJá</p>
+            <p className="text-sm text-muted-foreground">
+              É obrigatório seguir o Instagram e o TikTok oficiais da PagaJá.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <a
+              href="https://www.instagram.com/pagaja.co.mz"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-md hover:-translate-y-0.5 transition-transform"
+            >
+              <Instagram className="h-4 w-4" /> Instagram
+            </a>
+            <a
+              href="https://www.tiktok.com/@pagaja.site"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-md hover:-translate-y-0.5 transition-transform"
+            >
+              <Music2 className="h-4 w-4" /> TikTok
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
       <ReferralLinkCard link={referralLink} />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -98,6 +139,7 @@ export default async function ColaboradorOverviewPage() {
             </p>
             <p>• O saldo acumulado é pago automaticamente todo dia 1 do mês, via M-Pesa.</p>
             <p>• "A produzir" conta produtores recrutados que já têm pelo menos um produto aprovado.</p>
+            <p>• É obrigatório seguir o Instagram e o TikTok oficiais da PagaJá.</p>
           </CardContent>
         </Card>
 
