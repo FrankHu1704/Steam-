@@ -330,8 +330,7 @@ export async function updateSetting(key: string, value: unknown) {
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("settings")
-    .update({ value, updated_at: new Date().toISOString() })
-    .eq("key", key);
+    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
   if (error) return { error: error.message };
   return { ok: true };
 }
