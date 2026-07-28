@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { MarkPaidButton } from "@/components/admin/mark-paid-button";
 import { MarkFailedButton } from "@/components/admin/mark-failed-button";
+import { MarkRefundedButton } from "@/components/admin/mark-refunded-button";
 import { getAllOrders } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
 
@@ -50,6 +51,11 @@ export default async function AdminOrdersPage() {
                         <div className="flex justify-end gap-2">
                           <MarkPaidButton orderId={order.id} />
                           <MarkFailedButton orderId={order.id} />
+                        </div>
+                      )}
+                      {order.status === "paid" && (
+                        <div className="flex justify-end">
+                          <MarkRefundedButton orderId={order.id} />
                         </div>
                       )}
                     </td>

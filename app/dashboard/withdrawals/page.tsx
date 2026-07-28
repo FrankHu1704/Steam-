@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, Wallet, TrendingUp, Clock, CreditCard } from "lucide-react";
+import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
@@ -50,8 +50,19 @@ export default async function WithdrawalsPage() {
     </div>
   );
 
+  const negativeBalanceBanner = profile.balance_available < 0 && (
+    <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+      <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+      <p className="text-destructive">
+        O seu saldo está negativo — uma ou mais vendas já pagas foram reembolsadas/estornadas depois de já terem sido
+        creditadas. O valor em falta será descontado automaticamente das próximas vendas.
+      </p>
+    </div>
+  );
+
   const overview = (
     <div className="space-y-6">
+      {negativeBalanceBanner}
       {b2cBanner}
 
       <div className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg sm:p-8">

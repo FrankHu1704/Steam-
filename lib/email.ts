@@ -225,6 +225,39 @@ export async function sendPaymentFailedEmail(input: {
   });
 }
 
+export async function sendRefundNotificationEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  buyerName: string;
+  productTitle: string;
+  amount: number;
+  currency: string;
+  newBalance: number;
+}) {
+  await sendEmail({
+    to: input.producerEmail,
+    subject: `Venda reembolsada/estornada — ${input.productTitle}`,
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "↩️",
+      title: "Venda reembolsada",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! A venda de <strong>${input.productTitle}</strong> para <strong>${input.buyerName}</strong>, no valor de <strong>${input.amount} ${input.currency}</strong>, foi reembolsada ou estornada pelo processador de pagamento.`
+        ) +
+        emailInfoBox([
+          { label: "Cliente", value: input.buyerName },
+          { label: "Produto", value: input.productTitle },
+          { label: "Valor reembolsado", value: `${input.amount} ${input.currency}` },
+          { label: "Novo saldo disponível", value: `${input.newBalance} ${input.currency}`, emphasize: true },
+        ]) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">O valor desta venda foi descontado do seu saldo disponível porque já não foi efetivamente recebido pela PagaJá. Se já tinha levantado este valor, o seu saldo pode ficar negativo até à próxima venda.</span>`
+        ),
+    }),
+  });
+}
+
 export async function sendSaleNotificationEmail(input: {
   producerEmail: string;
   productTitle: string;

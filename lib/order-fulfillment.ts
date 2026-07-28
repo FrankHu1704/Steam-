@@ -1,5 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendSaleNotificationEmail, sendBuyerReceiptEmail, sendPaymentFailedEmail, siteUrl } from "@/lib/email";
+import {
+  sendSaleNotificationEmail,
+  sendBuyerReceiptEmail,
+  sendPaymentFailedEmail,
+  sendRefundNotificationEmail,
+  siteUrl,
+} from "@/lib/email";
 import { sendSaleSms } from "@/lib/sms";
 import { sendBuyerWhatsappReceipt } from "@/lib/whatsapp";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
@@ -130,6 +136,89 @@ export async function creditOrder(orderId: string): Promise<void> {
     .from("orders")
     .update({ credited_at: new Date().toISOString(), platform_fee_amount: platformFeeAmount })
     .eq("id", order.id);
+}
+
+// Called whenever a paid order is refunded or charged back by the payment
+// processor — claws back whatever creditOrder() paid out, so a producer's
+// balance can't silently stay inflated by money PagaJá no longer actually
+// holds. Idempotent via refunded_at, mirroring credited_at on creditOrder.
+export async function refundOrder(orderId: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
+  if (!order || order.refunded_at) return;
+
+  // Never credited in the first place (still pending/failed when the
+  // refund arrived) — nothing to claw back, just record the final status.
+  if (!order.credited_at) {
+    await supabase
+      .from("orders")
+      .update({ status: "refunded", refunded_at: new Date().toISOString() })
+      .eq("id", order.id);
+    return;
+  }
+
+  const commission = order.affiliate_commission_amount ?? 0;
+  const platformFeeAmount = order.platform_fee_amount ?? 0;
+  const ownerNet = Math.max(0, order.total_amount - commission - platformFeeAmount);
+
+  const { data: producer } = await supabase
+    .from("profiles")
+    .select("balance_available, email, name")
+    .eq("id", order.producer_id)
+    .single();
+  // Intentionally allowed to go negative — if the producer already withdrew
+  // this money, the debt has to show up somewhere rather than being erased.
+  const newBalance = (producer?.balance_available ?? 0) - ownerNet;
+  await supabase.from("profiles").update({ balance_available: newBalance }).eq("id", order.producer_id);
+
+  if (order.affiliate_id && commission > 0) {
+    const { data: affiliate } = await supabase.from("affiliates").select("*").eq("id", order.affiliate_id).single();
+    if (affiliate) {
+      const { data: affiliateProfile } = await supabase
+        .from("profiles")
+        .select("balance_available")
+        .eq("id", affiliate.affiliate_id)
+        .single();
+      await supabase
+        .from("profiles")
+        .update({ balance_available: (affiliateProfile?.balance_available ?? 0) - commission })
+        .eq("id", affiliate.affiliate_id);
+      await supabase
+        .from("affiliates")
+        .update({
+          sales: Math.max(0, affiliate.sales - 1),
+          commission_earned: Math.max(0, affiliate.commission_earned - commission),
+        })
+        .eq("id", affiliate.id);
+    }
+  }
+
+  await supabase
+    .from("orders")
+    .update({ status: "refunded", refunded_at: new Date().toISOString() })
+    .eq("id", order.id);
+
+  const { data: product } = await supabase.from("products").select("title").eq("id", order.product_id).single();
+
+  await supabase.from("notifications").insert({
+    user_id: order.producer_id,
+    type: "refund",
+    title: "Venda reembolsada",
+    message: `A venda de ${order.total_amount} ${order.currency} foi reembolsada/estornada.`,
+  });
+
+  if (producer?.email) {
+    await sendRefundNotificationEmail({
+      producerEmail: producer.email,
+      producerName: producer.name,
+      buyerName: order.buyer_name,
+      productTitle: product?.title ?? "o seu produto",
+      amount: order.total_amount,
+      currency: order.currency,
+      newBalance,
+    });
+  }
 }
 
 // Called wherever an order transitions to "failed" (instant charge-creation

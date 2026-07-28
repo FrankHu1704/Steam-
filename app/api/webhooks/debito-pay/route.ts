@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/debito-pay";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
+import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { completeProductionUnlock } from "@/lib/production-unlock-fulfillment";
 
 interface WebhookBody {
@@ -94,6 +94,12 @@ export async function POST(request: Request) {
     "id",
     payment.id
   );
+
+  if (body.event === "payment.refunded" || body.event === "payment.chargeback") {
+    await refundOrder(order.id);
+    return NextResponse.json({ ok: true });
+  }
+
   await supabase
     .from("orders")
     .update({ status: newStatus, paid_at: body.event === "payment.completed" ? new Date().toISOString() : order.paid_at })

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature, getAuthoritativeStatus } from "@/lib/zumbopay";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
+import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { completeProductionUnlock } from "@/lib/production-unlock-fulfillment";
 
 interface WebhookBody {
@@ -63,6 +63,15 @@ export async function POST(request: Request) {
     if (!result.handled) return NextResponse.json({ ok: true, note: "no matching order or unlock" });
     if (result.error) return NextResponse.json({ ok: false, error: result.error }, { status: 409 });
     return NextResponse.json({ ok: true, production_unlock: sourceId });
+  }
+
+  // Matched by keyword rather than an exact event name, since the precise
+  // vocabulary ZumboPay uses for refunds/chargebacks isn't confirmed against
+  // their docs — this must fire even for an already-"paid" order (that's the
+  // whole point: undo a credit that already happened).
+  if (/refund|chargeback|estorno/.test(eventName)) {
+    await refundOrder(order.id);
+    return NextResponse.json({ ok: true, status: "refunded" });
   }
 
   if (order.status === "paid") return NextResponse.json({ ok: true, already_paid: true });
