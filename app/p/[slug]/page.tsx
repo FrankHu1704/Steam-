@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Flame } from "lucide-react";
+import { Flame, ImageOff } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { StarRating } from "@/components/reviews/star-rating";
@@ -73,9 +73,13 @@ export default async function ProductSalePage({
       <div className="container grid max-w-5xl gap-10 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
-            {product.cover_image_url && (
+            {product.cover_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={product.cover_image_url} alt={product.title} className="aspect-video w-full object-cover" />
+            ) : (
+              <div className="flex aspect-video w-full items-center justify-center bg-muted">
+                <ImageOff className="h-10 w-10 text-muted-foreground" />
+              </div>
             )}
             <div className="p-6">
               <h1 className="text-2xl font-bold">{product.title}</h1>
@@ -132,13 +136,17 @@ export default async function ProductSalePage({
             )}
             <div className="p-6">
               <div className="flex items-center gap-3 border-b border-border pb-4">
-                {product.cover_image_url && (
+                {product.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={product.cover_image_url}
                     alt={product.title}
                     className="h-14 w-14 shrink-0 rounded-lg object-cover"
                   />
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <ImageOff className="h-5 w-5 text-muted-foreground" />
+                  </div>
                 )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{product.title}</p>

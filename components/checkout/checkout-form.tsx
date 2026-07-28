@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Zap,
   ReceiptText,
+  XCircle,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -255,7 +256,11 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   if (step === "failed") {
     return (
       <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center">
-        <p className="font-semibold text-destructive">O pagamento não foi concluído.</p>
+        <XCircle className="mx-auto h-10 w-10 text-destructive" />
+        <p className="mt-3 font-semibold text-destructive">O pagamento não foi concluído.</p>
+        <p className="text-sm text-muted-foreground">
+          Isto pode acontecer por saldo insuficiente ou cancelamento no telemóvel. Pode tentar de novo.
+        </p>
         <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => setStep("form")}>
           Tentar novamente
         </Button>
@@ -340,7 +345,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
                 type="button"
                 onClick={() => setPaymentMethod(m)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-white p-3 transition-all",
+                  "relative flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-card p-3 transition-all",
                   selected ? "border-primary shadow-md shadow-primary/10" : "border-border hover:border-primary/40 hover:shadow-sm"
                 )}
               >
@@ -350,7 +355,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
                   </span>
                 )}
                 <PaymentIcon method={m} />
-                <span className="text-xs font-medium text-slate-700">{PAYMENT_LABELS[m]}</span>
+                <span className="text-xs font-medium text-foreground">{PAYMENT_LABELS[m]}</span>
               </button>
             );
           })}
