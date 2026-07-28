@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getActivePaymentProvider, providerModule } from "@/lib/payments";
+import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from "@/lib/payments";
 
 // Shared B2C payout logic — used by both the admin "Pagar via B2C" action
 // and the producer self-service instant-payout action (available to
@@ -16,15 +16,18 @@ export async function payWithdrawalB2C(
     return { ok: false, error: "Este levantamento já foi pago." };
   }
   if (withdrawal.status === "rejected") return { ok: false, error: "Este levantamento foi rejeitado." };
-  // Ambos os processadores só suportam B2C instantâneo para M-Pesa — outros
-  // métodos ficam pendentes à espera de pagamento manual.
-  if (withdrawal.payout_method !== "mpesa") {
-    return { ok: false, error: "Pagamento instantâneo via B2C só suporta M-Pesa por agora." };
-  }
 
   const providerName = await getActivePaymentProvider();
+  const allowedMethods = b2cMethodsForProvider(providerName);
+  if (!(allowedMethods as readonly string[]).includes(withdrawal.payout_method)) {
+    return {
+      ok: false,
+      error: `Pagamento instantâneo via B2C não suporta ${withdrawal.payout_method} no processador ativo.`,
+    };
+  }
+
   const result = await providerModule(providerName).createPayout({
-    method: "mpesa",
+    method: withdrawal.payout_method as "mpesa" | "emola",
     amount: withdrawal.net_amount,
     destination: withdrawal.destination,
     notes: `Levantamento PagaJá ${withdrawal.id}`,

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashSecret, generateClientCredentials, generateWebhookSecret } from "@/lib/api-auth";
-import { getActivePaymentProvider, providerModule } from "@/lib/payments";
+import { getActivePaymentProvider, providerModule, type PaymentProviderName } from "@/lib/payments";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { ApiKey, DeveloperWebhook, ApiKeyMode } from "@/types/database";
 
@@ -134,7 +134,8 @@ export async function checkProductionUnlockStatus(unlockId: string): Promise<{ s
 
   if (unlock.provider_payment_id) {
     try {
-      const providerName = unlock.provider === "zumbopay" ? "zumbopay" : "debito_pay";
+      const providerName: PaymentProviderName =
+        unlock.provider === "zumbopay" || unlock.provider === "netshop" ? unlock.provider : "debito_pay";
       const remote = await providerModule(providerName).checkChargeStatus(unlock.provider_payment_id);
       if (remote.status === "success") {
         await admin

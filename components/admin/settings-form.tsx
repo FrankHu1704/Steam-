@@ -20,7 +20,7 @@ export function SettingsForm({
   platformFeePercent: number;
   platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
-  paymentProvider: "debito_pay" | "zumbopay";
+  paymentProvider: "debito_pay" | "zumbopay" | "netshop";
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
@@ -103,10 +103,11 @@ export function SettingsForm({
           <Select
             id="payment-provider"
             value={provider}
-            onChange={(e) => setProvider(e.target.value as "debito_pay" | "zumbopay")}
+            onChange={(e) => setProvider(e.target.value as "debito_pay" | "zumbopay" | "netshop")}
           >
             <option value="debito_pay">Debito Pay</option>
             <option value="zumbopay">ZumboPay</option>
+            <option value="netshop">NetShop</option>
           </Select>
           <p className="text-xs text-muted-foreground">Define qual processador é usado no checkout da PagaJá.</p>
         </div>

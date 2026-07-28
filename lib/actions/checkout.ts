@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PaymentMethod } from "@/lib/debito-pay";
-import { getActivePaymentProvider, providerModule, methodsForProvider } from "@/lib/payments";
+import { getActivePaymentProvider, providerModule, methodsForProvider, type PaymentProviderName } from "@/lib/payments";
 import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import type { Product } from "@/types/database";
 
@@ -248,7 +248,8 @@ export async function getOrderStatus(orderId: string) {
 
     if (payment?.provider_payment_id) {
       try {
-        const providerName = payment.provider === "zumbopay" ? "zumbopay" : "debito_pay";
+        const providerName: PaymentProviderName =
+          payment.provider === "zumbopay" || payment.provider === "netshop" ? payment.provider : "debito_pay";
         const remote = await providerModule(providerName).checkChargeStatus(payment.provider_payment_id);
         // remote.status is the provider's vocabulary ("success"/"pending"/
         // "failed"/"expired") — orders.status is the order_status enum,

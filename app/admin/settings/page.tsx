@@ -9,8 +9,11 @@ export default async function AdminSettingsPage() {
   const platformFixedFeeAmount = Number(settings.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
   const withdrawalMinimumAmount = Number(settings.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
   const paymentProvider =
-    (settings.find((s) => s.key === "payment_provider")?.value as "debito_pay" | "zumbopay" | undefined) ??
-    "debito_pay";
+    (settings.find((s) => s.key === "payment_provider")?.value as
+      | "debito_pay"
+      | "zumbopay"
+      | "netshop"
+      | undefined) ?? "debito_pay";
 
   return (
     <div className="space-y-6">

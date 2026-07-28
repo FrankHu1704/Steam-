@@ -6,7 +6,7 @@ import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedE
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
-import { getActivePaymentProvider, providerModule } from "@/lib/payments";
+import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from "@/lib/payments";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -107,13 +107,13 @@ export async function sendManualB2CPayout(input: {
   if (!input.destination.trim() || !(input.amount > 0)) {
     return { error: "Destino e valor válido são obrigatórios." };
   }
-  // Ambos os processadores só suportam B2C instantâneo para M-Pesa — o mesmo
-  // limite já aplicado ao pagamento de levantamentos.
-  if (input.method !== "mpesa") {
-    return { error: "Pagamento instantâneo via B2C só suporta M-Pesa por agora." };
-  }
 
   const providerName = await getActivePaymentProvider();
+  const allowedMethods = b2cMethodsForProvider(providerName);
+  if (!(allowedMethods as readonly string[]).includes(input.method)) {
+    return { error: `Pagamento instantâneo via B2C não suporta ${input.method} no processador ativo.` };
+  }
+
   const result = await providerModule(providerName).createPayout({
     method: input.method,
     amount: input.amount,

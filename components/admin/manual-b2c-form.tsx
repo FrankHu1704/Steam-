@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { sendManualB2CPayout } from "@/lib/actions/admin";
 
-export function ManualB2CForm({ providerLabel }: { providerLabel: string }) {
+export function ManualB2CForm({ providerLabel, emolaSupported }: { providerLabel: string; emolaSupported: boolean }) {
   const router = useRouter();
   const [method, setMethod] = useState<"mpesa" | "emola">("mpesa");
   const [destination, setDestination] = useState("");
@@ -42,7 +42,9 @@ export function ManualB2CForm({ providerLabel }: { providerLabel: string }) {
           <Label htmlFor="b2c-method">Método</Label>
           <Select id="b2c-method" value={method} onChange={(e) => setMethod(e.target.value as "mpesa" | "emola")}>
             <option value="mpesa">M-Pesa (instantâneo)</option>
-            <option value="emola">e-Mola (sem B2C automático — pagar manualmente)</option>
+            <option value="emola">
+              {emolaSupported ? "e-Mola (instantâneo)" : "e-Mola (sem B2C automático — pagar manualmente)"}
+            </option>
           </Select>
         </div>
         <div>

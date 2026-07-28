@@ -4,11 +4,15 @@ import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalReviewActions } from "@/components/admin/withdrawal-review-actions";
 import { ManualB2CForm } from "@/components/admin/manual-b2c-form";
 import { getAllWithdrawals } from "@/lib/data/admin";
-import { getActivePaymentProvider, providerModule, type PaymentProviderName } from "@/lib/payments";
+import { getActivePaymentProvider, providerModule, b2cMethodsForProvider, type PaymentProviderName } from "@/lib/payments";
 import { formatCurrency } from "@/lib/utils";
 
 const METHOD_LABEL: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola" };
-const PROVIDER_LABEL: Record<PaymentProviderName, string> = { zumbopay: "ZumboPay", debito_pay: "Debito Pay" };
+const PROVIDER_LABEL: Record<PaymentProviderName, string> = {
+  zumbopay: "ZumboPay",
+  debito_pay: "Debito Pay",
+  netshop: "NetShop",
+};
 
 export default async function AdminWithdrawalsPage() {
   const providerName = await getActivePaymentProvider();
@@ -58,7 +62,10 @@ export default async function AdminWithdrawalsPage() {
         <h2 className="mb-3 font-semibold">Enviar B2C manual</h2>
         <Card>
           <CardContent className="p-6">
-            <ManualB2CForm providerLabel={PROVIDER_LABEL[providerName]} />
+            <ManualB2CForm
+              providerLabel={PROVIDER_LABEL[providerName]}
+              emolaSupported={b2cMethodsForProvider(providerName).includes("emola")}
+            />
           </CardContent>
         </Card>
       </div>
