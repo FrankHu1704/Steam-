@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, ImageOff, PackageSearch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/badge";
@@ -53,14 +53,21 @@ export function ProductsGrid({ products }: { products: Product[] }) {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.length === 0 && <p className="text-muted-foreground">Nenhum produto encontrado.</p>}
+        {filtered.length === 0 && (
+          <div className="col-span-full flex flex-col items-center gap-2 py-16 text-center">
+            <PackageSearch className="h-10 w-10 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>
+          </div>
+        )}
         {filtered.map((p) => (
           <div key={p.id} className="rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-lg">
             <Link href={`/dashboard/products/${p.id}`}>
-              <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
-                {p.cover_image_url && (
+              <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
+                {p.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover" />
+                ) : (
+                  <ImageOff className="h-6 w-6 text-muted-foreground" />
                 )}
               </div>
               <div className="mt-3 flex items-start justify-between gap-2">

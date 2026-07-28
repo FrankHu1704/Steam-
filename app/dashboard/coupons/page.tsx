@@ -1,3 +1,4 @@
+import { Ticket } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CouponForm } from "@/components/coupons/coupon-form";
 import { CouponRowActions } from "@/components/coupons/coupon-row-actions";
@@ -31,7 +32,10 @@ export default async function CouponsPage() {
       <Card>
         <CardContent className="p-0">
           {coupons.length === 0 ? (
-            <p className="py-16 text-center text-sm text-muted-foreground">Ainda não criou nenhum cupão.</p>
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <Ticket className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Ainda não criou nenhum cupão.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -46,7 +50,7 @@ export default async function CouponsPage() {
                 </thead>
                 <tbody>
                   {coupons.map((coupon) => (
-                    <tr key={coupon.id} className="border-b border-border/60 last:border-0">
+                    <tr key={coupon.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                       <td className="p-4 font-mono font-semibold">{coupon.code}</td>
                       <td className="p-4 text-muted-foreground">{coupon.product_title ?? "Todos os produtos"}</td>
                       <td className="p-4">

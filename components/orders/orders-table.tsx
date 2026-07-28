@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { Download, Search, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
@@ -83,13 +83,16 @@ export function OrdersTable({ orders }: { orders: ProducerOrder[] }) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                  Nenhum pedido encontrado.
+                <td colSpan={6} className="p-0">
+                  <div className="flex flex-col items-center gap-2 py-16 text-center">
+                    <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
+                  </div>
                 </td>
               </tr>
             ) : (
               filtered.map((order) => (
-                <tr key={order.id} className="border-b border-border/60 last:border-0">
+                <tr key={order.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                   <td className="p-4 font-medium">{order.product_title}</td>
                   <td className="p-4 text-muted-foreground">
                     {order.buyer_name}
