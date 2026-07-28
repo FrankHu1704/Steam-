@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Clock, CheckCircle2, XCircle, LayoutGrid, ImageOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { ProductReviewActions } from "@/components/admin/product-review-actions";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { getAllProducts } from "@/lib/data/admin";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export default async function AdminProductsPage({
   searchParams,
@@ -17,10 +17,10 @@ export default async function AdminProductsPage({
   const products = await getAllProducts(activeStatus || undefined);
 
   const filters = [
-    { label: "Pendentes", value: "pending" },
-    { label: "Aprovados", value: "approved" },
-    { label: "Rejeitados", value: "rejected" },
-    { label: "Todos", value: "" },
+    { label: "Pendentes", value: "pending", icon: Clock },
+    { label: "Aprovados", value: "approved", icon: CheckCircle2 },
+    { label: "Rejeitados", value: "rejected", icon: XCircle },
+    { label: "Todos", value: "", icon: LayoutGrid },
   ];
 
   return (
@@ -35,10 +35,14 @@ export default async function AdminProductsPage({
           <a
             key={f.value}
             href={f.value ? `/admin/products?status=${f.value}` : "/admin/products"}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium ${
-              activeStatus === f.value ? "bg-brand-gradient text-white" : "bg-muted text-muted-foreground"
-            }`}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+              activeStatus === f.value
+                ? "bg-brand-gradient text-white shadow-sm"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            )}
           >
+            <f.icon className="h-3.5 w-3.5" />
             {f.label}
           </a>
         ))}
@@ -47,12 +51,27 @@ export default async function AdminProductsPage({
       <Card>
         <CardContent className="p-0">
           {products.length === 0 ? (
-            <p className="py-16 text-center text-sm text-muted-foreground">Nenhum produto encontrado.</p>
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <LayoutGrid className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Nenhum produto encontrado.</p>
+            </div>
           ) : (
             <div className="divide-y divide-border">
               {products.map((product) => (
-                <div key={product.id} className="flex flex-wrap items-center justify-between gap-4 p-4">
-                  <div className="min-w-0">
+                <div key={product.id} className="flex flex-wrap items-center gap-4 p-4">
+                  {product.cover_image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={product.cover_image_url}
+                      alt=""
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      <ImageOff className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">{product.title}</p>
                     <p className="text-xs text-muted-foreground">
                       por {product.producer_name} · {formatCurrency(product.price, product.currency as "MZN" | "ZAR")} ·{" "}

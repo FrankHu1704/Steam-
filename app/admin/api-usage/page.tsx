@@ -1,15 +1,26 @@
-import { Code2, KeyRound, Activity } from "lucide-react";
+import { KeyRound, Activity, Store } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { getApiUsageSummary } from "@/lib/data/admin";
 
 export default async function AdminApiUsagePage() {
   const usage = await getApiUsageSummary();
 
   const tiles = [
-    { label: "Chaves ativas", value: usage.activeKeys, icon: KeyRound },
-    { label: "Chaves live", value: usage.liveKeys, icon: KeyRound },
-    { label: "Chamadas (30 dias)", value: usage.callsLast30Days, icon: Activity },
-    { label: "Produtores com chaves", value: usage.producers.length, icon: Code2 },
+    { label: "Chaves ativas", value: usage.activeKeys, icon: KeyRound, style: "bg-primary/10 text-primary" },
+    { label: "Chaves live", value: usage.liveKeys, icon: KeyRound, style: "bg-emerald-500/10 text-emerald-600" },
+    {
+      label: "Chamadas (30 dias)",
+      value: usage.callsLast30Days,
+      icon: Activity,
+      style: "bg-amber-500/10 text-amber-600",
+    },
+    {
+      label: "Produtores com chaves",
+      value: usage.producers.length,
+      icon: Store,
+      style: "bg-violet-500/10 text-violet-600",
+    },
   ];
 
   return (
@@ -27,7 +38,7 @@ export default async function AdminApiUsagePage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-muted-foreground">{tile.label}</p>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-white">
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", tile.style)}>
                   <tile.icon className="h-4 w-4" />
                 </div>
               </div>

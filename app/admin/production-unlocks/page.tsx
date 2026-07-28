@@ -1,3 +1,4 @@
+import { Code2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { MarkUnlockPaidButton } from "@/components/admin/mark-unlock-paid-button";
@@ -20,7 +21,10 @@ export default async function AdminProductionUnlocksPage() {
       <Card>
         <CardContent className="p-0">
           {unlocks.length === 0 ? (
-            <p className="py-16 text-center text-sm text-muted-foreground">Nenhum pedido de desbloqueio ainda.</p>
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <Code2 className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Nenhum pedido de desbloqueio ainda.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -36,7 +40,7 @@ export default async function AdminProductionUnlocksPage() {
                 </thead>
                 <tbody>
                   {unlocks.map((u) => (
-                    <tr key={u.id} className="border-b border-border/60 last:border-0">
+                    <tr key={u.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                       <td className="p-4 font-medium">
                         {u.producer_name}
                         <div className="text-xs font-normal text-muted-foreground">{u.producer_email}</div>

@@ -1,18 +1,54 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Eye, Users2, Store, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { getAllUsers } from "@/lib/data/admin";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
+
+function initials(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "?"
+  );
+}
 
 export default async function AdminUsersPage() {
   const users = await getAllUsers();
+
+  const producers = users.filter((u) => u.role === "producer").length;
+  const admins = users.filter((u) => u.role === "admin").length;
+
+  const tiles = [
+    { label: "Total", value: users.length, icon: Users2, style: "bg-primary/10 text-primary" },
+    { label: "Produtores", value: producers, icon: Store, style: "bg-amber-500/10 text-amber-600" },
+    { label: "Admins", value: admins, icon: ShieldCheck, style: "bg-emerald-500/10 text-emerald-600" },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Utilizadores</h1>
         <p className="text-sm text-muted-foreground">{users.length} contas registadas.</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {tiles.map((tile) => (
+          <Card key={tile.label}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">{tile.label}</p>
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", tile.style)}>
+                  <tile.icon className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-3 text-2xl font-bold">{tile.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>
@@ -32,8 +68,15 @@ export default async function AdminUsersPage() {
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="border-b border-border/60 last:border-0">
-                    <td className="p-4 font-medium">{user.name}</td>
+                  <tr key={user.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-semibold text-white">
+                          {initials(user.name)}
+                        </span>
+                        <span className="font-medium">{user.name}</span>
+                      </div>
+                    </td>
                     <td className="p-4 text-muted-foreground">{user.email}</td>
                     <td className="p-4 text-muted-foreground">{user.phone ?? "—"}</td>
                     <td className="p-4">{formatCurrency(user.balance_available, user.currency as "MZN" | "ZAR")}</td>

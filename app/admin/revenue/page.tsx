@@ -1,18 +1,36 @@
 import { Wallet, TrendingUp, ShoppingCart, ArrowDownToLine } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPlatformRevenue } from "@/lib/data/admin";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export default async function AdminRevenuePage() {
   const revenue = await getPlatformRevenue();
 
   const tiles = [
-    { label: "Receita total", value: revenue.totalRevenue, icon: Wallet, highlight: true },
-    { label: "Receita este mês", value: revenue.monthRevenue, icon: TrendingUp, highlight: true },
-    { label: "Taxas de vendas (total)", value: revenue.salesFeesTotal, icon: ShoppingCart },
-    { label: "Taxas de vendas (mês)", value: revenue.salesFeesMonth, icon: ShoppingCart },
-    { label: "Taxas de saques (total)", value: revenue.withdrawalFeesTotal, icon: ArrowDownToLine },
-    { label: "Taxas de saques (mês)", value: revenue.withdrawalFeesMonth, icon: ArrowDownToLine },
+    {
+      label: "Taxas de vendas (total)",
+      value: revenue.salesFeesTotal,
+      icon: ShoppingCart,
+      style: "bg-primary/10 text-primary",
+    },
+    {
+      label: "Taxas de vendas (mês)",
+      value: revenue.salesFeesMonth,
+      icon: ShoppingCart,
+      style: "bg-amber-500/10 text-amber-600",
+    },
+    {
+      label: "Taxas de saques (total)",
+      value: revenue.withdrawalFeesTotal,
+      icon: ArrowDownToLine,
+      style: "bg-emerald-500/10 text-emerald-600",
+    },
+    {
+      label: "Taxas de saques (mês)",
+      value: revenue.withdrawalFeesMonth,
+      icon: ArrowDownToLine,
+      style: "bg-violet-500/10 text-violet-600",
+    },
   ];
 
   return (
@@ -24,13 +42,36 @@ export default async function AdminRevenuePage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="relative overflow-hidden rounded-2xl bg-brand-gradient p-5 text-white shadow-lg">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <p className="text-sm font-medium text-white/80">Receita total</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+              <Wallet className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="relative mt-3 text-3xl font-bold">{formatCurrency(revenue.totalRevenue, "MZN")}</p>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl bg-brand-gradient p-5 text-white shadow-lg">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <p className="text-sm font-medium text-white/80">Receita este mês</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+              <TrendingUp className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="relative mt-3 text-3xl font-bold">{formatCurrency(revenue.monthRevenue, "MZN")}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((tile) => (
-          <Card key={tile.label} className={tile.highlight ? "border-primary/40" : undefined}>
+          <Card key={tile.label}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-muted-foreground">{tile.label}</p>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-white">
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", tile.style)}>
                   <tile.icon className="h-4 w-4" />
                 </div>
               </div>

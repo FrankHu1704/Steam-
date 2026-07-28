@@ -2,12 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/badge";
+import { Badge, StatusBadge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { PrivateMessageForm } from "@/components/admin/private-message-form";
 import { getUserDetail } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
+
+function initials(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "?"
+  );
+}
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,8 +34,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <Link href="/admin/users" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Voltar aos utilizadores
         </Link>
-        <h1 className="mt-2 text-2xl font-bold">{profile.name}</h1>
-        <p className="text-sm text-muted-foreground">{profile.email}</p>
+        <div className="mt-3 flex items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-base font-semibold text-white">
+            {initials(profile.name)}
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold">{profile.name}</h1>
+            <p className="text-sm text-muted-foreground">{profile.email}</p>
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -47,11 +65,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Email verificado</p>
-            <p className="font-medium">{profile.email_verified ? "Sim" : "Não"}</p>
+            <Badge variant={profile.email_verified ? "success" : "secondary"}>
+              {profile.email_verified ? "Sim" : "Não"}
+            </Badge>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">API produção</p>
-            <p className="font-medium">{profile.production_unlocked_at ? "Desbloqueada" : "Bloqueada"}</p>
+            <Badge variant={profile.production_unlocked_at ? "success" : "secondary"}>
+              {profile.production_unlocked_at ? "Desbloqueada" : "Bloqueada"}
+            </Badge>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Papel</p>
@@ -127,7 +149,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   </thead>
                   <tbody>
                     {ordersAsProducer.map((o) => (
-                      <tr key={o.id} className="border-b border-border/60 last:border-0">
+                      <tr key={o.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                         <td className="p-3">{o.product_title}</td>
                         <td className="p-3 text-muted-foreground">{o.buyer_name}</td>
                         <td className="p-3">{formatCurrency(o.total_amount, o.currency as "MZN" | "ZAR")}</td>
@@ -167,7 +189,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   </thead>
                   <tbody>
                     {withdrawals.map((w) => (
-                      <tr key={w.id} className="border-b border-border/60 last:border-0">
+                      <tr key={w.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                         <td className="p-3">{formatCurrency(w.amount, currency)}</td>
                         <td className="p-3">{formatCurrency(w.net_amount, currency)}</td>
                         <td className="p-3 text-muted-foreground">{w.payout_method}</td>
@@ -206,7 +228,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   </thead>
                   <tbody>
                     {purchasesAsBuyer.map((o) => (
-                      <tr key={o.id} className="border-b border-border/60 last:border-0">
+                      <tr key={o.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                         <td className="p-3">{o.product_title}</td>
                         <td className="p-3">{formatCurrency(o.total_amount, o.currency as "MZN" | "ZAR")}</td>
                         <td className="p-3">
