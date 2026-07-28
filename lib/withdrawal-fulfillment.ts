@@ -1,9 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createPayout } from "@/lib/zumbopay";
+import { getActivePaymentProvider, providerModule } from "@/lib/payments";
 
-// Shared B2C payout logic — used by both the admin "Pagar via ZumboPay"
-// action and the producer self-service instant-payout action (available
-// to producers who unlocked the developer API's production mode).
+// Shared B2C payout logic — used by both the admin "Pagar via B2C" action
+// and the producer self-service instant-payout action (available to
+// producers who unlocked the developer API's production mode). Uses
+// whichever payment provider is currently active, since that's whichever
+// one actually holds PagaJá's merchant wallet balance.
 export async function payWithdrawalB2C(
   withdrawalId: string
 ): Promise<{ ok: boolean; error?: string; reference?: string }> {
@@ -14,13 +16,14 @@ export async function payWithdrawalB2C(
     return { ok: false, error: "Este levantamento já foi pago." };
   }
   if (withdrawal.status === "rejected") return { ok: false, error: "Este levantamento foi rejeitado." };
-  // ZumboPay só suporta B2C instantâneo (auto_dispatch) para M-Pesa — outros
-  // métodos ficam pendentes à espera de aprovação manual do lado deles.
+  // Ambos os processadores só suportam B2C instantâneo para M-Pesa — outros
+  // métodos ficam pendentes à espera de pagamento manual.
   if (withdrawal.payout_method !== "mpesa") {
     return { ok: false, error: "Pagamento instantâneo via B2C só suporta M-Pesa por agora." };
   }
 
-  const result = await createPayout({
+  const providerName = await getActivePaymentProvider();
+  const result = await providerModule(providerName).createPayout({
     method: "mpesa",
     amount: withdrawal.net_amount,
     destination: withdrawal.destination,

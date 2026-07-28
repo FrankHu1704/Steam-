@@ -6,7 +6,7 @@ import { Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { updateWithdrawalStatus, payWithdrawalViaZumboPay } from "@/lib/actions/admin";
+import { updateWithdrawalStatus, payWithdrawalViaB2C } from "@/lib/actions/admin";
 import type { PayoutMethod, WithdrawalStatus } from "@/types/database";
 
 export function WithdrawalReviewActions({
@@ -31,7 +31,7 @@ export function WithdrawalReviewActions({
 
   async function handleAutoPayout() {
     setPending(true);
-    const res = await payWithdrawalViaZumboPay(withdrawalId);
+    const res = await payWithdrawalViaB2C(withdrawalId);
     setPending(false);
     if (res.error) {
       toast.error(res.error);

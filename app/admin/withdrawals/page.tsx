@@ -4,15 +4,17 @@ import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalReviewActions } from "@/components/admin/withdrawal-review-actions";
 import { ManualB2CForm } from "@/components/admin/manual-b2c-form";
 import { getAllWithdrawals } from "@/lib/data/admin";
-import { getWalletBalances } from "@/lib/zumbopay";
+import { getActivePaymentProvider, providerModule, type PaymentProviderName } from "@/lib/payments";
 import { formatCurrency } from "@/lib/utils";
 
 const METHOD_LABEL: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola" };
+const PROVIDER_LABEL: Record<PaymentProviderName, string> = { zumbopay: "ZumboPay", debito_pay: "Debito Pay" };
 
 export default async function AdminWithdrawalsPage() {
+  const providerName = await getActivePaymentProvider();
   const [withdrawals, wallets] = await Promise.all([
     getAllWithdrawals(),
-    getWalletBalances().catch(() => []),
+    providerModule(providerName).getWalletBalances().catch(() => []),
   ]);
 
   return (
@@ -23,12 +25,13 @@ export default async function AdminWithdrawalsPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 font-semibold">Saldo no ZumboPay</h2>
+        <h2 className="mb-3 font-semibold">Saldo no {PROVIDER_LABEL[providerName]} (processador ativo)</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {wallets.length === 0 ? (
             <Card className="sm:col-span-2">
               <CardContent className="p-6 text-sm text-muted-foreground">
-                Não foi possível obter o saldo do ZumboPay agora — verifique se ZUMBOPAY_API_KEY está configurada.
+                Não foi possível obter o saldo do {PROVIDER_LABEL[providerName]} agora — verifique se as chaves de API
+                estão configuradas.
               </CardContent>
             </Card>
           ) : (
@@ -55,7 +58,7 @@ export default async function AdminWithdrawalsPage() {
         <h2 className="mb-3 font-semibold">Enviar B2C manual</h2>
         <Card>
           <CardContent className="p-6">
-            <ManualB2CForm />
+            <ManualB2CForm providerLabel={PROVIDER_LABEL[providerName]} />
           </CardContent>
         </Card>
       </div>

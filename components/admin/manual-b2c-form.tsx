@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { sendManualB2CPayout } from "@/lib/actions/admin";
 
-export function ManualB2CForm() {
+export function ManualB2CForm({ providerLabel }: { providerLabel: string }) {
   const router = useRouter();
   const [method, setMethod] = useState<"mpesa" | "emola">("mpesa");
   const [destination, setDestination] = useState("");
@@ -42,7 +42,7 @@ export function ManualB2CForm() {
           <Label htmlFor="b2c-method">Método</Label>
           <Select id="b2c-method" value={method} onChange={(e) => setMethod(e.target.value as "mpesa" | "emola")}>
             <option value="mpesa">M-Pesa (instantâneo)</option>
-            <option value="emola">e-Mola (manual no ZumboPay)</option>
+            <option value="emola">e-Mola (sem B2C automático — pagar manualmente)</option>
           </Select>
         </div>
         <div>
@@ -73,7 +73,8 @@ export function ManualB2CForm() {
         <Input id="b2c-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Motivo do pagamento" />
       </div>
       <p className="text-xs text-muted-foreground">
-        Para pagamentos avulsos (reembolsos, correções, bónus) — não associados a um pedido de levantamento.
+        Para pagamentos avulsos (reembolsos, correções, bónus) — não associados a um pedido de levantamento. Enviado
+        via {providerLabel} (processador ativo).
       </p>
       <Button type="submit" disabled={pending}>
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
