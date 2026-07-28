@@ -34,8 +34,9 @@ export default async function AdminWithdrawalsPage() {
           {wallets.length === 0 ? (
             <Card className="sm:col-span-2">
               <CardContent className="p-6 text-sm text-muted-foreground">
-                Não foi possível obter o saldo do {PROVIDER_LABEL[providerName]} agora — verifique se as chaves de API
-                estão configuradas.
+                {providerName === "netshop"
+                  ? "O NetShop não disponibiliza consulta de saldo pela API pública — verifique o saldo diretamente no painel deles."
+                  : `Não foi possível obter o saldo do ${PROVIDER_LABEL[providerName]} agora — verifique se as chaves de API estão configuradas.`}
               </CardContent>
             </Card>
           ) : (
