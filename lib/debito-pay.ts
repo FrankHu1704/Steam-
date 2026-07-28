@@ -141,6 +141,7 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      action: "payout",
       payment_method: "mpesa",
       wallet_code: walletCodeForMethod("mpesa"),
       amount: input.amount,
