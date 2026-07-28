@@ -2,10 +2,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from "@/lib/payments";
 
 // Shared B2C payout logic — used by both the admin "Pagar via B2C" action
-// and the producer self-service instant-payout action (available to
-// producers who unlocked the developer API's production mode). Uses
-// whichever payment provider is currently active, since that's whichever
-// one actually holds PagaJá's merchant wallet balance.
+// and the producer self-service instant-payout action. If the active
+// provider can't dispatch (unsupported method, insufficient balance, etc.),
+// this returns ok:false without touching the withdrawal's status, so it
+// stays "pending" for the admin to pay manually. Uses whichever payment
+// provider is currently active, since that's whichever one actually holds
+// PagaJá's merchant wallet balance.
 export async function payWithdrawalB2C(
   withdrawalId: string
 ): Promise<{ ok: boolean; error?: string; reference?: string }> {
