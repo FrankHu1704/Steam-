@@ -159,6 +159,7 @@ export async function createOrder(input: CreateOrderInput) {
       total_amount: totalAmount,
       currency: product.currency,
       status: "pending",
+      payment_method: input.paymentMethod,
       affiliate_id: affiliateId,
       affiliate_commission_amount: affiliateCommissionAmount,
       utm_source: input.utmSource ?? null,
@@ -192,6 +193,12 @@ export async function createOrder(input: CreateOrderInput) {
     });
   } catch (err) {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
+    await supabase.from("logs").insert({
+      action: "checkout_charge_error",
+      target_table: "orders",
+      target_id: order.id,
+      metadata: { error: (err as Error).message, provider: providerName, method: input.paymentMethod },
+    });
     await notifyProducerOfFailedPayment(order.id);
     return { error: (err as Error).message };
   }
@@ -200,7 +207,6 @@ export async function createOrder(input: CreateOrderInput) {
   // refunded/expired) — providers report "success", not "paid".
   const paymentStatus = charge.status === "success" ? "paid" : (charge.status ?? "pending");
 
-  await supabase.from("orders").update({ payment_method: input.paymentMethod }).eq("id", order.id);
   await supabase.from("payments").insert({
     order_id: order.id,
     provider: providerName,
