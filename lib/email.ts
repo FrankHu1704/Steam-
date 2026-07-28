@@ -360,6 +360,44 @@ export async function sendWithdrawalRequestedEmail(input: {
   });
 }
 
+export async function sendAdminWithdrawalRequestedEmail(input: {
+  adminEmail: string;
+  producerName: string;
+  amount: number;
+  netAmount: number;
+  currency: string;
+  payoutMethod: string;
+  destination: string;
+  instant: boolean;
+}) {
+  const methodLabel: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola", mkesh: "mKesh", bank_transfer: "Transferência bancária" };
+  await sendEmail({
+    to: input.adminEmail,
+    subject: input.instant
+      ? `Levantamento pago automaticamente — ${input.producerName}`
+      : `Levantamento pendente de aprovação — ${input.producerName}`,
+    html: emailBannerCard({
+      bannerColor: input.instant ? "#059669" : "#D97706",
+      icon: input.instant ? "⚡" : "🕒",
+      title: input.instant ? "Levantamento pago via B2C" : "Levantamento a aguardar aprovação",
+      bodyHtml:
+        emailParagraph(
+          input.instant
+            ? `<strong>${input.producerName}</strong> pediu um levantamento e foi pago automaticamente via B2C.`
+            : `<strong>${input.producerName}</strong> pediu um levantamento, mas o pagamento automático via B2C não foi possível — precisa da sua aprovação/pagamento manual.`
+        ) +
+        emailInfoBox([
+          { label: "Produtor", value: input.producerName },
+          { label: "Valor bruto", value: `${input.amount} ${input.currency}` },
+          { label: "Valor líquido", value: `${input.netAmount} ${input.currency}`, emphasize: true },
+          { label: "Método", value: methodLabel[input.payoutMethod] ?? input.payoutMethod },
+          { label: "Destino", value: input.destination },
+        ]) +
+        emailButton("Ver Levantamentos", `${siteUrl()}/admin/withdrawals`),
+    }),
+  });
+}
+
 export async function sendBuyerReceiptEmail(input: { buyerEmail: string; productTitle: string; accessUrl: string }) {
   await sendEmail({
     to: input.buyerEmail,

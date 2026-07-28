@@ -3,8 +3,49 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
-import { sendWithdrawalRequestedEmail } from "@/lib/email";
+import { sendWithdrawalRequestedEmail, sendAdminWithdrawalRequestedEmail } from "@/lib/email";
+import { sendPushToUser } from "@/lib/push";
 import type { PayoutMethod } from "@/types/database";
+
+async function notifyAdminsOfWithdrawal(
+  supabase: ReturnType<typeof createAdminClient>,
+  input: {
+    producerName: string;
+    amount: number;
+    netAmount: number;
+    currency: string;
+    payoutMethod: string;
+    destination: string;
+    instant: boolean;
+  }
+) {
+  const { data: admins } = await supabase.from("profiles").select("id, email").eq("role", "admin");
+  for (const admin of admins ?? []) {
+    await supabase.from("notifications").insert({
+      user_id: admin.id,
+      type: "withdrawal",
+      title: input.instant ? "Levantamento pago via B2C" : "Levantamento pendente de aprovação",
+      message: `${input.producerName} pediu um levantamento de ${input.netAmount} ${input.currency}${input.instant ? " — pago automaticamente." : " — precisa da sua aprovação."}`,
+    });
+    await sendPushToUser(admin.id, {
+      title: input.instant ? "Levantamento pago via B2C" : "Levantamento pendente ⏳",
+      body: `${input.producerName} — ${input.netAmount} ${input.currency}`,
+      url: "/admin/withdrawals",
+    });
+    if (admin.email) {
+      await sendAdminWithdrawalRequestedEmail({
+        adminEmail: admin.email,
+        producerName: input.producerName,
+        amount: input.amount,
+        netAmount: input.netAmount,
+        currency: input.currency,
+        payoutMethod: input.payoutMethod,
+        destination: input.destination,
+        instant: input.instant,
+      });
+    }
+  }
+}
 
 export async function requestWithdrawal(input: { amount: number; payoutMethod: PayoutMethod; destination: string }) {
   const authClient = await createClient();
@@ -83,6 +124,16 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
     instant: instant.ok,
   });
 
+  await notifyAdminsOfWithdrawal(supabase, {
+    producerName: profile.name,
+    amount: input.amount,
+    netAmount,
+    currency: profile.currency,
+    payoutMethod: input.payoutMethod,
+    destination: input.destination,
+    instant: instant.ok,
+  });
+
   return { withdrawalId: withdrawal.id as string, instant: instant.ok };
 }
 
@@ -111,6 +162,15 @@ export async function requestSelfServiceB2CPayout(withdrawalId: string) {
   if (profile) {
     await sendWithdrawalRequestedEmail({
       producerEmail: profile.email,
+      producerName: profile.name,
+      amount: withdrawal.amount,
+      netAmount: withdrawal.net_amount,
+      currency: withdrawal.currency,
+      payoutMethod: withdrawal.payout_method,
+      destination: withdrawal.destination,
+      instant: true,
+    });
+    await notifyAdminsOfWithdrawal(supabase, {
       producerName: profile.name,
       amount: withdrawal.amount,
       netAmount: withdrawal.net_amount,
