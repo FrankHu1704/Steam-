@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText } from "lucide-react";
+import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText, PackagePlus, ImageOff, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,20 +11,83 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { uploadCoverImage, uploadProductFile, type UploadedFile } from "@/lib/upload";
-import { upsertProduct } from "@/lib/actions/products";
-import { slugify } from "@/lib/utils";
+import { upsertProduct, setBumpOffers } from "@/lib/actions/products";
+import { slugify, formatCurrency } from "@/lib/utils";
 import type { Category, Product, ProductFile } from "@/types/database";
+
+function BumpOffersPicker({ productId, candidates, initialSelectedIds }: { productId: string; candidates: Product[]; initialSelectedIds: string[] }) {
+  const [selected, setSelected] = useState<string[]>(initialSelectedIds);
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  async function toggle(id: string) {
+    const next = selected.includes(id) ? selected.filter((i) => i !== id) : [...selected, id];
+    setSelected(next);
+    setSavingId(id);
+    await setBumpOffers(productId, next);
+    setSavingId(null);
+  }
+
+  if (candidates.length === 0) {
+    return (
+      <p className="mt-3 text-xs text-muted-foreground">
+        Não tem outros produtos aprovados para oferecer como order bump.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+      {candidates.map((c) => (
+        <label
+          key={c.id}
+          className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border p-2.5 text-sm hover:border-primary/40"
+        >
+          <span className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+              {c.cover_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.cover_image_url} alt={c.title} className="h-full w-full object-cover" />
+              ) : (
+                <ImageOff className="h-4 w-4 text-muted-foreground" />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-medium">{c.title}</span>
+              <span className="block text-xs text-muted-foreground">
+                {formatCurrency(c.promo_price ?? c.price, c.currency as "MZN" | "ZAR")}
+              </span>
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            {savingId === c.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-border text-primary"
+              checked={selected.includes(c.id)}
+              onChange={() => toggle(c.id)}
+              disabled={savingId === c.id}
+            />
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 export function ProductForm({
   userId,
   categories,
   product,
   existingFiles,
+  bumpCandidates,
+  bumpOfferIds,
 }: {
   userId: string;
   categories: Category[];
   product?: Product;
   existingFiles?: ProductFile[];
+  bumpCandidates?: Product[];
+  bumpOfferIds?: string[];
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(product?.title ?? "");
@@ -38,6 +101,7 @@ export function ProductForm({
   const [commissionPercent, setCommissionPercent] = useState(
     String(product?.affiliate_commission_percent ?? 20)
   );
+  const [bumpEnabled, setBumpEnabled] = useState(product?.bump_enabled ?? false);
   const [seoTitle, setSeoTitle] = useState(product?.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(product?.seo_description ?? "");
   const [trackingScript, setTrackingScript] = useState(product?.tracking_script ?? "");
@@ -127,6 +191,7 @@ export function ProductForm({
         videoUrl: videoUrl || null,
         affiliateEnabled,
         affiliateCommissionPercent: Number(commissionPercent),
+        bumpEnabled,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         trackingScript: trackingScript || null,
@@ -426,6 +491,33 @@ export function ProductForm({
                 onChange={(e) => setCommissionPercent(e.target.value)}
               />
             </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="flex items-center gap-1.5 font-semibold">
+                <PackagePlus className="h-4 w-4" /> Order Bump
+              </h2>
+              <p className="text-xs text-muted-foreground">Ofereça outro produto seu no checkout.</p>
+            </div>
+            <Switch checked={bumpEnabled} onChange={(e) => setBumpEnabled(e.target.checked)} />
+          </div>
+          {bumpEnabled && (
+            <>
+              {product?.id ? (
+                <BumpOffersPicker
+                  productId={product.id}
+                  candidates={bumpCandidates ?? []}
+                  initialSelectedIds={bumpOfferIds ?? []}
+                />
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Guarde o produto primeiro para escolher quais produtos aparecem como order bump.
+                </p>
+              )}
+            </>
           )}
         </div>
 

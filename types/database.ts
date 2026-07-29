@@ -162,6 +162,7 @@ export interface Product {
   currency: string;
   affiliate_enabled: boolean;
   affiliate_commission_percent: number;
+  bump_enabled: boolean;
   status: ProductStatus;
   rejection_reason: string | null;
   seo_title: string | null;
@@ -237,6 +238,14 @@ export interface OrderBump {
   order_id: string;
   bump_product_id: string;
   price: number;
+  created_at: string;
+}
+
+export interface ProductBumpOffer {
+  id: string;
+  product_id: string;
+  bump_product_id: string;
+  sort_order: number;
   created_at: string;
 }
 
@@ -423,6 +432,7 @@ export interface Database {
       coupons: Row<Coupon>;
       orders: Row<Order>;
       order_bumps: Row<OrderBump>;
+      product_bump_offers: Row<ProductBumpOffer>;
       payments: Row<Payment>;
       downloads: Row<Download>;
       affiliates: Row<Affiliate>;

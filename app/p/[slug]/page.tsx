@@ -45,13 +45,17 @@ export default async function ProductSalePage({
   const providerName = await getActivePaymentProvider();
   const paymentMethods = methodsForProvider(providerName, product.currency);
 
-  const { data: bumps } = await supabase
-    .from("products")
-    .select("*")
-    .eq("producer_id", product.producer_id)
-    .eq("status", "approved")
-    .neq("id", product.id)
-    .limit(2);
+  let bumps: Product[] = [];
+  if (product.bump_enabled) {
+    const { data: bumpOffers } = await supabase
+      .from("product_bump_offers")
+      .select("sort_order, bump_product:bump_product_id(*)")
+      .eq("product_id", product.id)
+      .order("sort_order");
+    bumps = ((bumpOffers ?? []) as unknown as { bump_product: Product | null }[])
+      .map((o) => o.bump_product)
+      .filter((p): p is Product => p != null && p.status === "approved");
+  }
 
   const [reviews, ratingSummary] = await Promise.all([
     getProductReviews(product.id),

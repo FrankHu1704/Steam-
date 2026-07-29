@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getCategories, getProductForOwner } from "@/lib/data/products";
+import { getCategories, getProductForOwner, getBumpCandidates, getBumpOfferIds } from "@/lib/data/products";
 import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductActions } from "@/components/products/product-actions";
@@ -23,11 +23,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   const categories = await getCategories();
   const supabase = await createClient();
-  const { data: files } = await supabase
-    .from("product_files")
-    .select("*")
-    .eq("product_id", id)
-    .order("sort_order");
+  const [{ data: files }, bumpCandidates, bumpOfferIds] = await Promise.all([
+    supabase.from("product_files").select("*").eq("product_id", id).order("sort_order"),
+    getBumpCandidates(user.id, id),
+    getBumpOfferIds(id),
+  ]);
 
   const category = categories.find((c) => c.id === product.category_id);
   const isCourseProduct = category ? COURSE_CATEGORY_SLUGS.includes(category.slug) : false;
@@ -74,6 +74,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           categories={categories}
           product={product}
           existingFiles={(files as ProductFile[]) ?? []}
+          bumpCandidates={bumpCandidates}
+          bumpOfferIds={bumpOfferIds}
         />
       </div>
     </div>

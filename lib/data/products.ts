@@ -38,3 +38,27 @@ export async function getPublicProductBySlug(slug: string): Promise<Product | nu
     .single();
   return data as Product | null;
 }
+
+// Other approved products of the same producer that could be picked as an
+// order bump for a given product (excludes the product itself).
+export async function getBumpCandidates(producerId: string, excludeProductId: string): Promise<Product[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select("*")
+    .eq("producer_id", producerId)
+    .eq("status", "approved")
+    .neq("id", excludeProductId)
+    .order("title");
+  return (data as Product[]) ?? [];
+}
+
+export async function getBumpOfferIds(productId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("product_bump_offers")
+    .select("bump_product_id")
+    .eq("product_id", productId)
+    .order("sort_order");
+  return (data ?? []).map((r) => r.bump_product_id as string);
+}

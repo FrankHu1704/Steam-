@@ -18,6 +18,7 @@ interface UpsertProductInput {
   videoUrl: string | null;
   affiliateEnabled: boolean;
   affiliateCommissionPercent: number;
+  bumpEnabled: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
   trackingScript: string | null;
@@ -59,6 +60,7 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     video_url: input.videoUrl,
     affiliate_enabled: input.affiliateEnabled,
     affiliate_commission_percent: Math.min(90, Math.max(0, input.affiliateCommissionPercent)),
+    bump_enabled: input.bumpEnabled,
     seo_title: input.seoTitle,
     seo_description: input.seoDescription,
     tracking_script: input.trackingScript,
@@ -152,4 +154,35 @@ export async function toggleProductStatus(productId: string, status: "approved" 
 
 export async function redirectToProduct(id: string) {
   redirect(`/dashboard/products/${id}`);
+}
+
+export async function setBumpOffers(productId: string, bumpProductIds: string[]): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .eq("producer_id", user.id)
+    .single();
+  if (!product) return { error: "Produto não encontrado." };
+
+  await supabase.from("product_bump_offers").delete().eq("product_id", productId);
+  if (bumpProductIds.length > 0) {
+    const { error } = await supabase.from("product_bump_offers").insert(
+      bumpProductIds.map((bumpProductId, i) => ({
+        product_id: productId,
+        bump_product_id: bumpProductId,
+        sort_order: i,
+      }))
+    );
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/products/${productId}`);
+  return {};
 }
