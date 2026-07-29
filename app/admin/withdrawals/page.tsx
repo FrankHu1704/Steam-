@@ -1,9 +1,9 @@
-import { Wallet } from "lucide-react";
+import { Wallet, Zap, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalReviewActions } from "@/components/admin/withdrawal-review-actions";
 import { ManualB2CForm } from "@/components/admin/manual-b2c-form";
-import { getAllWithdrawals } from "@/lib/data/admin";
+import { getAllWithdrawals, getB2CHistory } from "@/lib/data/admin";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider, type PaymentProviderName } from "@/lib/payments";
 import { formatCurrency } from "@/lib/utils";
 
@@ -16,9 +16,10 @@ const PROVIDER_LABEL: Record<PaymentProviderName, string> = {
 
 export default async function AdminWithdrawalsPage() {
   const providerName = await getActivePaymentProvider();
-  const [withdrawals, wallets] = await Promise.all([
+  const [withdrawals, wallets, b2cHistory] = await Promise.all([
     getAllWithdrawals(),
     providerModule(providerName).getWalletBalances().catch(() => []),
+    getB2CHistory(),
   ]);
 
   return (
@@ -96,6 +97,68 @@ export default async function AdminWithdrawalsPage() {
           )}
         </CardContent>
       </Card>
+
+      <div>
+        <h2 className="mb-3 flex items-center gap-2 font-semibold">
+          <Zap className="h-4 w-4" /> Histórico de B2C
+        </h2>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Todas as tentativas de pagamento instantâneo via B2C — automáticas ou manuais, com sucesso ou falha.
+        </p>
+        <Card>
+          <CardContent className="p-0">
+            {b2cHistory.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-16 text-center">
+                <Zap className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Ainda não há tentativas de B2C registadas.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="p-4 font-medium">Produtor</th>
+                      <th className="p-4 font-medium">Valor</th>
+                      <th className="p-4 font-medium">Método</th>
+                      <th className="p-4 font-medium">Processador</th>
+                      <th className="p-4 font-medium">Resultado</th>
+                      <th className="p-4 font-medium">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {b2cHistory.map((attempt) => (
+                      <tr key={attempt.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+                        <td className="p-4 font-medium">{attempt.producerName}</td>
+                        <td className="p-4">{formatCurrency(attempt.netAmount, attempt.currency as "MZN" | "ZAR")}</td>
+                        <td className="p-4 capitalize text-muted-foreground">
+                          {METHOD_LABEL[attempt.payoutMethod] ?? attempt.payoutMethod}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {PROVIDER_LABEL[attempt.provider as PaymentProviderName] ?? attempt.provider}
+                        </td>
+                        <td className="p-4">
+                          {attempt.success ? (
+                            <span className="flex items-center gap-1.5 text-emerald-600">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Pago{attempt.reference ? ` · ${attempt.reference}` : ""}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-red-600" title={attempt.error ?? undefined}>
+                              <XCircle className="h-3.5 w-3.5" /> Falhou{attempt.error ? ` · ${attempt.error}` : ""}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {new Date(attempt.created_at).toLocaleString("pt-MZ")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

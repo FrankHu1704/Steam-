@@ -314,3 +314,46 @@ export async function getRecentLogs(limit = 100): Promise<LogEntry[]> {
   const { data } = await supabase.from("logs").select("*").order("created_at", { ascending: false }).limit(limit);
   return (data as LogEntry[]) ?? [];
 }
+
+export interface B2CAttempt {
+  id: string;
+  created_at: string;
+  withdrawalId: string | null;
+  producerName: string;
+  amount: number;
+  netAmount: number;
+  currency: string;
+  payoutMethod: string;
+  provider: string;
+  success: boolean;
+  error: string | null;
+  reference: string | null;
+}
+
+export async function getB2CHistory(limit = 100): Promise<B2CAttempt[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("logs")
+    .select("*")
+    .eq("action", "b2c_payout_attempt")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return ((data ?? []) as LogEntry[]).map((log) => {
+    const m = (log.metadata ?? {}) as Record<string, unknown>;
+    return {
+      id: log.id,
+      created_at: log.created_at,
+      withdrawalId: log.target_id,
+      producerName: (m.producer_name as string) ?? "—",
+      amount: (m.amount as number) ?? 0,
+      netAmount: (m.net_amount as number) ?? 0,
+      currency: (m.currency as string) ?? "MZN",
+      payoutMethod: (m.payout_method as string) ?? "—",
+      provider: (m.provider as string) ?? "—",
+      success: Boolean(m.success),
+      error: (m.error as string | null) ?? null,
+      reference: (m.reference as string | null) ?? null,
+    };
+  });
+}

@@ -12,8 +12,33 @@ export async function payWithdrawalB2C(
   withdrawalId: string
 ): Promise<{ ok: boolean; error?: string; reference?: string }> {
   const supabase = createAdminClient();
-  const { data: withdrawal } = await supabase.from("withdrawals").select("*").eq("id", withdrawalId).single();
+  const { data: withdrawal } = await supabase
+    .from("withdrawals")
+    .select("*, profiles!producer_id(name)")
+    .eq("id", withdrawalId)
+    .single();
   if (!withdrawal) return { ok: false, error: "Levantamento não encontrado." };
+  const producerName = (withdrawal as unknown as { profiles: { name: string } | null }).profiles?.name ?? "—";
+
+  async function logAttempt(input: { success: boolean; error?: string; reference?: string; provider: string }) {
+    await supabase.from("logs").insert({
+      action: "b2c_payout_attempt",
+      target_table: "withdrawals",
+      target_id: withdrawalId,
+      metadata: {
+        producer_name: producerName,
+        amount: withdrawal.amount,
+        net_amount: withdrawal.net_amount,
+        currency: withdrawal.currency,
+        payout_method: withdrawal.payout_method,
+        provider: input.provider,
+        success: input.success,
+        error: input.error ?? null,
+        reference: input.reference ?? null,
+      },
+    });
+  }
+
   if (withdrawal.status === "paid" || withdrawal.status === "confirmed") {
     return { ok: false, error: "Este levantamento já foi pago." };
   }
@@ -22,10 +47,9 @@ export async function payWithdrawalB2C(
   const providerName = await getActivePaymentProvider();
   const allowedMethods = b2cMethodsForProvider(providerName);
   if (!(allowedMethods as readonly string[]).includes(withdrawal.payout_method)) {
-    return {
-      ok: false,
-      error: `Pagamento instantâneo via B2C não suporta ${withdrawal.payout_method} no processador ativo.`,
-    };
+    const error = `Pagamento instantâneo via B2C não suporta ${withdrawal.payout_method} no processador ativo.`;
+    await logAttempt({ success: false, error, provider: providerName });
+    return { ok: false, error };
   }
 
   const result = await providerModule(providerName).createPayout({
@@ -37,17 +61,23 @@ export async function payWithdrawalB2C(
   });
 
   if (!result.success || result.status !== "success") {
-    return { ok: false, error: result.error ?? "Pagamento não confirmado pelo processador." };
+    const error = result.error ?? "Pagamento não confirmado pelo processador.";
+    await logAttempt({ success: false, error, provider: providerName });
+    return { ok: false, error };
   }
+
+  const reference = result.providerReference ?? result.reference;
 
   await supabase
     .from("withdrawals")
     .update({
       status: "paid",
       paid_at: new Date().toISOString(),
-      payout_reference: result.providerReference ?? result.reference ?? null,
+      payout_reference: reference ?? null,
     })
     .eq("id", withdrawalId);
 
-  return { ok: true, reference: result.providerReference ?? result.reference };
+  await logAttempt({ success: true, reference, provider: providerName });
+
+  return { ok: true, reference };
 }
