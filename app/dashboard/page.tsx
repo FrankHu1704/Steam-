@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wallet, TrendingUp, CalendarDays, Users2, ArrowUpRight, PhoneCall, Trophy } from "lucide-react";
+import { Wallet, TrendingUp, CalendarDays, Users2, ArrowUpRight, ArrowDownRight, PhoneCall, Trophy, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ export default async function DashboardOverviewPage({
       value: formatCurrency(stats.salesMonth, currency),
       icon: TrendingUp,
       style: "bg-primary/10 text-primary",
+      change: stats.salesMonthChangePercent,
     },
     {
       label: "Lucro do mês",
@@ -99,6 +100,21 @@ export default async function DashboardOverviewPage({
                   </div>
                 </div>
                 <p className="mt-3 text-2xl font-bold">{tile.value}</p>
+                {"change" in tile && tile.change != null && (
+                  <p
+                    className={cn(
+                      "mt-1 flex items-center gap-1 text-xs font-medium",
+                      tile.change >= 0 ? "text-emerald-600" : "text-destructive"
+                    )}
+                  >
+                    {tile.change >= 0 ? (
+                      <ArrowUpRight className="h-3 w-3" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3" />
+                    )}
+                    {Math.abs(tile.change)}% vs. mês passado
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -175,7 +191,14 @@ export default async function DashboardOverviewPage({
                           style={{ width: `${Math.max(4, (p.revenue / maxRevenue) * 100)}%` }}
                         />
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{p.salesCount} vendas</p>
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span>{p.salesCount} vendas</span>
+                        {p.conversionPercent != null && (
+                          <span className="flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5">
+                            <Target className="h-3 w-3" /> {p.conversionPercent}% conversão
+                          </span>
+                        )}
+                      </p>
                     </div>
                   </div>
                 );

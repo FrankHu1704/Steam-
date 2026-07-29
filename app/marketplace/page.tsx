@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, ShoppingBag, Instagram, MessageCircle } from "lucide-react";
+import { Search, ShoppingBag, Instagram, MessageCircle, ImageOff, Star, Flame } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { Input } from "@/components/ui/input";
@@ -7,20 +7,27 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
 import { BecomeAffiliateButton } from "@/components/affiliates/affiliate-actions";
-import { getMarketplaceProducts, getMarketplaceCategories } from "@/lib/data/marketplace";
+import { getMarketplaceProducts, getMarketplaceCategories, type MarketplaceSort } from "@/lib/data/marketplace";
 import { formatCurrency } from "@/lib/utils";
 
 const INSTAGRAM_URL = "https://www.instagram.com/pagaja.co.mz?igsh=MThwNXl1eWx1eGtvcA==";
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/Ga5A5WwQ4EJ9yI8DaR860t?s=cl&p=a&ilr=1&amv=1";
 
+const SORT_OPTIONS: { value: MarketplaceSort; label: string }[] = [
+  { value: "vendidos", label: "Mais vendidos" },
+  { value: "recentes", label: "Mais recentes" },
+  { value: "menor_preco", label: "Menor preço" },
+  { value: "maior_preco", label: "Maior preço" },
+];
+
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; categoria?: string }>;
+  searchParams: Promise<{ q?: string; categoria?: string; ordenar?: MarketplaceSort }>;
 }) {
-  const { q, categoria } = await searchParams;
+  const { q, categoria, ordenar } = await searchParams;
   const [products, categories] = await Promise.all([
-    getMarketplaceProducts({ search: q, categorySlug: categoria }),
+    getMarketplaceProducts({ search: q, categorySlug: categoria, sort: ordenar }),
     getMarketplaceCategories(),
   ]);
 
@@ -53,24 +60,46 @@ export default async function MarketplacePage({
               </option>
             ))}
           </Select>
+          <Select name="ordenar" defaultValue={ordenar ?? "vendidos"} className="w-44">
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
           <Button type="submit">Filtrar</Button>
         </form>
 
         {products.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">Nenhum produto encontrado.</p>
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <ShoppingBag className="h-10 w-10 text-muted-foreground" />
+            <p className="text-muted-foreground">Nenhum produto encontrado.</p>
+          </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => (
+            {products.map((product) => {
+              const hasPromo = product.promo_price != null;
+              const discountPercent = hasPromo
+                ? Math.round((1 - (product.promo_price as number) / product.price) * 100)
+                : 0;
+              return (
               <div key={product.id} className="flex flex-col rounded-2xl border border-border bg-card p-4">
                 <Link href={`/p/${product.slug}`} className="block">
-                  <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
-                    {product.cover_image_url && (
+                  <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
+                    {product.cover_image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={product.cover_image_url}
                         alt={product.title}
                         className="h-full w-full object-cover transition-transform hover:scale-105"
                       />
+                    ) : (
+                      <ImageOff className="h-8 w-8 text-muted-foreground" />
+                    )}
+                    {hasPromo && (
+                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                        <Flame className="h-3 w-3" /> -{discountPercent}%
+                      </span>
                     )}
                   </div>
                   <div className="mt-3">
@@ -81,12 +110,28 @@ export default async function MarketplacePage({
                     )}
                     <p className="mt-0.5 truncate font-semibold">{product.title}</p>
                     <p className="text-xs text-muted-foreground">por {product.producer_name}</p>
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      {product.ratingCount > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          {product.ratingAverage} ({product.ratingCount})
+                        </span>
+                      )}
+                      {product.sales_count > 0 && <span>{product.sales_count} vendas</span>}
+                    </div>
                   </div>
                 </Link>
 
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="font-bold">
-                    {formatCurrency(product.promo_price ?? product.price, product.currency as "MZN" | "ZAR")}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                  <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                    <span className="whitespace-nowrap font-bold">
+                      {formatCurrency(product.promo_price ?? product.price, product.currency as "MZN" | "ZAR")}
+                    </span>
+                    {hasPromo && (
+                      <span className="whitespace-nowrap text-xs text-muted-foreground line-through">
+                        {formatCurrency(product.price, product.currency as "MZN" | "ZAR")}
+                      </span>
+                    )}
                   </span>
                   {product.affiliate_enabled && (
                     <StatusBadge status={`${product.affiliate_commission_percent}% comissão`} />
@@ -104,7 +149,8 @@ export default async function MarketplacePage({
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

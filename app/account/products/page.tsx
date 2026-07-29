@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, GraduationCap } from "lucide-react";
+import { Package, GraduationCap, ImageOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LeaveReviewButton } from "@/components/reviews/leave-review-button";
@@ -44,9 +44,13 @@ export default async function MyProductsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((order, i) => (
             <Card key={order.product_id} className="overflow-hidden">
-              {order.product_cover && (
+              {order.product_cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={order.product_cover} alt={order.product_title} className="aspect-video w-full object-cover" />
+              ) : (
+                <div className="flex aspect-video w-full items-center justify-center bg-muted">
+                  <ImageOff className="h-8 w-8 text-muted-foreground" />
+                </div>
               )}
               <CardContent className="p-4">
                 <p className="font-semibold">{order.product_title}</p>

@@ -6,12 +6,15 @@ export interface TopProduct {
   title: string;
   salesCount: number;
   revenue: number;
+  viewCount: number;
+  conversionPercent: number | null;
 }
 
 export interface DashboardStats {
   salesToday: number;
   salesMonth: number;
   profitMonth: number;
+  salesMonthChangePercent: number | null;
   ordersCount: number;
   customersCount: number;
   chart: { date: string; total: number }[];
@@ -28,6 +31,9 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
+
+  const startOfLastMonth = new Date(startOfMonth);
+  startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -76,6 +82,8 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
       title: order.products?.title ?? "Produto",
       salesCount: 0,
       revenue: 0,
+      viewCount: 0,
+      conversionPercent: null,
     };
     entry.salesCount += 1;
     entry.revenue += order.total_amount;
@@ -86,6 +94,18 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
+  if (topProducts.length > 0) {
+    const { data: viewRows } = await supabase
+      .from("products")
+      .select("id, view_count")
+      .in("id", topProducts.map((p) => p.id));
+    const viewsById = new Map((viewRows ?? []).map((v) => [v.id, v.view_count as number]));
+    for (const p of topProducts) {
+      p.viewCount = viewsById.get(p.id) ?? 0;
+      p.conversionPercent = p.viewCount > 0 ? Math.round((p.salesCount / p.viewCount) * 1000) / 10 : null;
+    }
+  }
+
   const { data: allBuyers } = await supabase
     .from("orders")
     .select("buyer_email")
@@ -93,10 +113,22 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
     .eq("status", "paid");
   const customersCount = new Set((allBuyers ?? []).map((o) => o.buyer_email)).size;
 
+  const { data: lastMonthOrders } = await supabase
+    .from("orders")
+    .select("total_amount")
+    .eq("producer_id", producerId)
+    .eq("status", "paid")
+    .gte("paid_at", startOfLastMonth.toISOString())
+    .lt("paid_at", startOfMonth.toISOString());
+  const salesLastMonth = (lastMonthOrders ?? []).reduce((sum, o) => sum + o.total_amount, 0);
+  const salesMonthChangePercent =
+    salesLastMonth > 0 ? Math.round(((salesMonth - salesLastMonth) / salesLastMonth) * 1000) / 10 : null;
+
   return {
     salesToday,
     salesMonth,
     profitMonth,
+    salesMonthChangePercent,
     ordersCount: orders.length,
     customersCount,
     chart: Array.from(byDay.entries()).map(([date, total]) => ({ date, total })),
