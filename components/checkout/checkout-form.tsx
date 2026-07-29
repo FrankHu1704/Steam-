@@ -336,7 +336,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
 
       <div className="space-y-1.5">
         <Label>Método de pagamento</Label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className={cn("grid gap-2", methods.length === 4 ? "grid-cols-2" : "grid-cols-3")}>
           {methods.map((m) => {
             const selected = paymentMethod === m;
             return (
@@ -405,7 +405,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
         )}
       </div>
 
-      <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4 text-sm">
+      <div className="space-y-2 rounded-xl border border-border bg-muted p-4 text-sm">
         <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
           <ReceiptText className="h-3.5 w-3.5" /> Resumo do pedido
         </p>

@@ -154,14 +154,19 @@ export default async function ProductSalePage({
                 )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{product.title}</p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-lg font-bold text-primary">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <p className="whitespace-nowrap text-lg font-bold text-primary">
                       {formatCurrency(product.promo_price ?? product.price, product.currency as "MZN" | "ZAR")}
                     </p>
                     {hasPromo && (
-                      <p className="text-xs text-muted-foreground line-through">
-                        {formatCurrency(product.price, product.currency as "MZN" | "ZAR")}
-                      </p>
+                      <>
+                        <p className="whitespace-nowrap text-xs text-muted-foreground line-through">
+                          {formatCurrency(product.price, product.currency as "MZN" | "ZAR")}
+                        </p>
+                        <span className="whitespace-nowrap rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">
+                          -{Math.round((1 - (product.promo_price as number) / product.price) * 100)}%
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
