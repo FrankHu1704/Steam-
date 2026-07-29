@@ -116,14 +116,19 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
 
   const { data: product } = await supabase
     .from("products")
-    .select("sales_count")
+    .select("id")
     .eq("id", productId)
     .eq("producer_id", user.id)
     .single();
 
   if (!product) return { error: "Produto não encontrado." };
-  if (product.sales_count > 0) {
-    return { error: "Produtos com vendas não podem ser apagados — pause-o em vez disso." };
+
+  const { count: ordersCount } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+  if ((ordersCount ?? 0) > 0) {
+    return { error: "Este produto já tem pedidos associados (mesmo falhados ou pendentes) e não pode ser apagado — pause-o em vez disso." };
   }
 
   const { error } = await supabase.from("products").delete().eq("id", productId);

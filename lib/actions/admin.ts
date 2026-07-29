@@ -229,12 +229,17 @@ export async function adminDeleteProduct(productId: string) {
   const supabase = createAdminClient();
   const { data: product } = await supabase
     .from("products")
-    .select("title, sales_count, profiles!producer_id(name, email)")
+    .select("title, profiles!producer_id(name, email)")
     .eq("id", productId)
-    .single<{ title: string; sales_count: number; profiles: { name: string; email: string } | null }>();
+    .single<{ title: string; profiles: { name: string; email: string } | null }>();
   if (!product) return { error: "Produto não encontrado." };
-  if (product.sales_count > 0) {
-    return { error: "Produtos com vendas não podem ser apagados — peça ao produtor para pausá-lo." };
+
+  const { count: ordersCount } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+  if ((ordersCount ?? 0) > 0) {
+    return { error: "Este produto já tem pedidos associados (mesmo falhados ou pendentes) e não pode ser apagado — peça ao produtor para pausá-lo." };
   }
 
   const { error } = await supabase.from("products").delete().eq("id", productId);
