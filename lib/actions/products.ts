@@ -191,3 +191,36 @@ export async function setBumpOffers(productId: string, bumpProductIds: string[])
   revalidatePath(`/dashboard/products/${productId}`);
   return {};
 }
+
+export async function setUpsellOffer(
+  productId: string,
+  upsellProductId: string | null,
+  customPrice: number | null
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .eq("producer_id", user.id)
+    .single();
+  if (!product) return { error: "Produto não encontrado." };
+
+  await supabase.from("product_upsells").delete().eq("product_id", productId);
+  if (upsellProductId) {
+    const { error } = await supabase.from("product_upsells").insert({
+      product_id: productId,
+      upsell_product_id: upsellProductId,
+      custom_price: customPrice,
+    });
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/products/${productId}`);
+  return {};
+}

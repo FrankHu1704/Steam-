@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Loader2,
@@ -16,15 +16,139 @@ import {
   Zap,
   ReceiptText,
   XCircle,
+  ImageOff,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createOrder, getOrderStatus, validateCoupon, type CouponPreview } from "@/lib/actions/checkout";
+import {
+  createOrder,
+  getOrderStatus,
+  validateCoupon,
+  getUpsellOfferForOrder,
+  acceptUpsellOffer,
+  type CouponPreview,
+  type UpsellOfferPreview,
+} from "@/lib/actions/checkout";
 import { getDownloadLinks } from "@/lib/actions/downloads";
 import type { PaymentMethod } from "@/lib/debito-pay";
 import type { Product } from "@/types/database";
+
+export function UpsellOfferCard({ orderId }: { orderId: string }) {
+  const [offer, setOffer] = useState<UpsellOfferPreview | null>(null);
+  const [status, setStatus] = useState<"loading" | "idle" | "accepting" | "pending" | "paid" | "failed" | "declined">(
+    "loading"
+  );
+  const [upsellOrderId, setUpsellOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const result = await getUpsellOfferForOrder(orderId);
+      setOffer(result);
+      setStatus(result ? "idle" : "declined");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
+
+  async function pollUpsell(id: string) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const result = await getOrderStatus(id);
+      if (result.status === "paid") {
+        setStatus("paid");
+        return;
+      }
+      if (result.status === "failed" || result.status === "expired") {
+        setStatus("failed");
+        return;
+      }
+    }
+  }
+
+  async function handleAccept() {
+    if (!offer) return;
+    setStatus("accepting");
+    const result = await acceptUpsellOffer(orderId, offer.productId);
+    if (result.error || !result.orderId) {
+      setStatus("failed");
+      return;
+    }
+    setUpsellOrderId(result.orderId);
+    if (result.status === "success") {
+      setStatus("paid");
+      return;
+    }
+    setStatus("pending");
+    void pollUpsell(result.orderId);
+  }
+
+  if (status === "loading" || status === "declined" || !offer) return null;
+
+  if (status === "paid") {
+    return (
+      <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center text-sm dark:border-emerald-900 dark:bg-emerald-950">
+        <CheckCircle2 className="mx-auto h-6 w-6 text-emerald-600" />
+        <p className="mt-2 font-semibold">Oferta adicionada com sucesso!</p>
+        <p className="text-muted-foreground">Enviámos o acesso de {offer.title} para o seu email.</p>
+      </div>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center text-sm">
+        <p className="text-destructive">Não foi possível confirmar o pagamento da oferta.</p>
+        {upsellOrderId && <p className="mt-1 text-xs text-muted-foreground">Pode tentar comprá-lo normalmente mais tarde.</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 overflow-hidden rounded-xl border-2 border-primary/40 bg-primary/5 p-4">
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase text-primary">
+        <Zap className="h-3.5 w-3.5" /> Oferta especial só agora
+      </p>
+      <div className="mt-2 flex items-center gap-3">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+          {offer.coverImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={offer.coverImageUrl} alt={offer.title} className="h-full w-full object-cover" />
+          ) : (
+            <ImageOff className="h-5 w-5 text-muted-foreground" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{offer.title}</p>
+          <p className="text-sm font-bold text-primary">
+            {formatCurrency(offer.price, offer.currency as "MZN" | "ZAR")}
+          </p>
+        </div>
+      </div>
+      {status === "pending" ? (
+        <div className="mt-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> A confirmar pagamento…
+        </div>
+      ) : (
+        <div className="mt-3 flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            className="flex-1"
+            onClick={handleAccept}
+            disabled={status === "accepting"}
+          >
+            {status === "accepting" && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+            Sim, quero também!
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setStatus("declined")}>
+            Não, obrigado
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const MOBILE_MONEY_METHODS: PaymentMethod[] = ["mpesa", "emola", "mkesh"];
 
@@ -194,26 +318,29 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
 
   if (step === "paid") {
     return (
-      <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-900 dark:bg-emerald-950">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-        <p className="mt-3 font-semibold">Pagamento confirmado!</p>
-        <p className="text-sm text-muted-foreground">
-          Enviámos os ficheiros para {email}. Também pode transferi-los abaixo.
-        </p>
-        <div className="mt-4 space-y-2 text-left">
-          {files.map((f, i) => (
-            <a
-              key={i}
-              href={f.url ?? "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:border-primary"
-            >
-              <Download className="h-4 w-4 text-primary" />
-              {f.name}
-            </a>
-          ))}
+      <div className="mt-6">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-900 dark:bg-emerald-950">
+          <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+          <p className="mt-3 font-semibold">Pagamento confirmado!</p>
+          <p className="text-sm text-muted-foreground">
+            Enviámos os ficheiros para {email}. Também pode transferi-los abaixo.
+          </p>
+          <div className="mt-4 space-y-2 text-left">
+            {files.map((f, i) => (
+              <a
+                key={i}
+                href={f.url ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:border-primary"
+              >
+                <Download className="h-4 w-4 text-primary" />
+                {f.name}
+              </a>
+            ))}
+          </div>
         </div>
+        {orderId && <UpsellOfferCard orderId={orderId} />}
       </div>
     );
   }

@@ -72,6 +72,10 @@ interface CreateOrderInput {
   utmCampaign?: string;
   utmContent?: string;
   utmTerm?: string;
+  // Post-purchase upsell: overrides the product's own price and tags the
+  // resulting order as originating from the order it upsold from.
+  customPrice?: number;
+  upsellOfOrderId?: string;
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -96,7 +100,7 @@ export async function createOrder(input: CreateOrderInput) {
     return { error: "Método de pagamento indisponível." };
   }
 
-  const baseAmount = product.promo_price ?? product.price;
+  const baseAmount = input.customPrice ?? product.promo_price ?? product.price;
 
   let discountAmount = 0;
   let couponId: string | null = null;
@@ -167,6 +171,7 @@ export async function createOrder(input: CreateOrderInput) {
       utm_campaign: input.utmCampaign ?? null,
       utm_content: input.utmContent ?? null,
       utm_term: input.utmTerm ?? null,
+      upsell_of_order_id: input.upsellOfOrderId ?? null,
     })
     .select("id")
     .single();
@@ -298,4 +303,84 @@ export async function getOrderStatus(orderId: string) {
   }
 
   return { status: order.status };
+}
+
+export interface UpsellOfferPreview {
+  productId: string;
+  productSlug: string;
+  title: string;
+  coverImageUrl: string | null;
+  price: number;
+  currency: string;
+}
+
+// Shown on the order confirmation page right after a payment succeeds —
+// null if the purchased product has no upsell configured, or if this order
+// is itself the result of accepting one (never chain upsell offers).
+export async function getUpsellOfferForOrder(orderId: string): Promise<UpsellOfferPreview | null> {
+  const supabase = createAdminClient();
+  const { data: order } = await supabase
+    .from("orders")
+    .select("product_id, status, upsell_of_order_id")
+    .eq("id", orderId)
+    .single();
+  if (!order || order.status !== "paid" || order.upsell_of_order_id) return null;
+
+  const { data: upsell } = await supabase
+    .from("product_upsells")
+    .select("upsell_product_id, custom_price")
+    .eq("product_id", order.product_id)
+    .maybeSingle();
+  if (!upsell) return null;
+
+  const { data: upsellProduct } = await supabase
+    .from("products")
+    .select("slug, title, cover_image_url, price, promo_price, currency, status")
+    .eq("id", upsell.upsell_product_id)
+    .single();
+  if (!upsellProduct || upsellProduct.status !== "approved") return null;
+
+  return {
+    productId: upsell.upsell_product_id as string,
+    productSlug: upsellProduct.slug,
+    title: upsellProduct.title,
+    coverImageUrl: upsellProduct.cover_image_url,
+    price: upsell.custom_price ?? upsellProduct.promo_price ?? upsellProduct.price,
+    currency: upsellProduct.currency,
+  };
+}
+
+// The buyer clicks one button — we replay their name/email/phone/payment
+// method from the order they just paid, so no re-typing is needed. Mobile
+// money still needs a fresh STK-push approval on the buyer's phone; that
+// part of the flow can't be skipped, only the form-filling can.
+export async function acceptUpsellOffer(orderId: string, upsellProductId: string) {
+  const supabase = createAdminClient();
+  const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
+  if (!order || order.status !== "paid") return { error: "Pedido original não encontrado ou não confirmado." };
+
+  const { data: upsell } = await supabase
+    .from("product_upsells")
+    .select("upsell_product_id, custom_price")
+    .eq("product_id", order.product_id)
+    .eq("upsell_product_id", upsellProductId)
+    .maybeSingle();
+  if (!upsell) return { error: "Esta oferta já não está disponível." };
+
+  const { data: upsellProduct } = await supabase
+    .from("products")
+    .select("slug, status")
+    .eq("id", upsellProductId)
+    .single();
+  if (!upsellProduct || upsellProduct.status !== "approved") return { error: "Produto indisponível." };
+
+  return createOrder({
+    productSlug: upsellProduct.slug,
+    buyerName: order.buyer_name,
+    buyerEmail: order.buyer_email,
+    buyerPhone: order.buyer_phone ?? undefined,
+    paymentMethod: order.payment_method as PaymentMethod,
+    customPrice: upsell.custom_price ?? undefined,
+    upsellOfOrderId: order.id,
+  });
 }

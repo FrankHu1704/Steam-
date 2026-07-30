@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText, PackagePlus, ImageOff, Loader2 } from "lucide-react";
+import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText, PackagePlus, ImageOff, Loader2, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,9 +11,10 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { uploadCoverImage, uploadProductFile, type UploadedFile } from "@/lib/upload";
-import { upsertProduct, setBumpOffers } from "@/lib/actions/products";
+import { upsertProduct, setBumpOffers, setUpsellOffer } from "@/lib/actions/products";
 import { slugify, formatCurrency } from "@/lib/utils";
 import type { Category, Product, ProductFile } from "@/types/database";
+import type { UpsellOffer } from "@/lib/data/products";
 
 function BumpOffersPicker({ productId, candidates, initialSelectedIds }: { productId: string; candidates: Product[]; initialSelectedIds: string[] }) {
   const [selected, setSelected] = useState<string[]>(initialSelectedIds);
@@ -74,6 +75,91 @@ function BumpOffersPicker({ productId, candidates, initialSelectedIds }: { produ
   );
 }
 
+function UpsellPicker({
+  productId,
+  candidates,
+  initialOffer,
+}: {
+  productId: string;
+  candidates: Product[];
+  initialOffer: UpsellOffer | null;
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(initialOffer?.upsellProductId ?? null);
+  const [customPrice, setCustomPrice] = useState(initialOffer?.customPrice != null ? String(initialOffer.customPrice) : "");
+  const [saving, setSaving] = useState(false);
+
+  async function save(nextId: string | null, nextPrice: string) {
+    setSaving(true);
+    await setUpsellOffer(productId, nextId, nextPrice ? Number(nextPrice) : null);
+    setSaving(false);
+  }
+
+  function handleSelect(id: string) {
+    const nextId = selectedId === id ? null : id;
+    setSelectedId(nextId);
+    void save(nextId, customPrice);
+  }
+
+  if (candidates.length === 0) {
+    return (
+      <p className="mt-3 text-xs text-muted-foreground">
+        Não tem outros produtos aprovados para oferecer como upsell.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="max-h-64 space-y-2 overflow-y-auto">
+        {candidates.map((c) => (
+          <label
+            key={c.id}
+            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border p-2.5 text-sm hover:border-primary/40"
+          >
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                {c.cover_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.cover_image_url} alt={c.title} className="h-full w-full object-cover" />
+                ) : (
+                  <ImageOff className="h-4 w-4 text-muted-foreground" />
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate font-medium">{c.title}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {formatCurrency(c.promo_price ?? c.price, c.currency as "MZN" | "ZAR")}
+                </span>
+              </span>
+            </span>
+            <input
+              type="radio"
+              className="h-4 w-4 border-border text-primary"
+              checked={selectedId === c.id}
+              onChange={() => handleSelect(c.id)}
+              disabled={saving}
+            />
+          </label>
+        ))}
+      </div>
+      {selectedId && (
+        <div>
+          <Label htmlFor="upsellPrice">Preço especial do upsell (opcional)</Label>
+          <Input
+            id="upsellPrice"
+            type="number"
+            min="0"
+            placeholder="Deixe em branco para usar o preço normal"
+            value={customPrice}
+            onChange={(e) => setCustomPrice(e.target.value)}
+            onBlur={() => void save(selectedId, customPrice)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProductForm({
   userId,
   categories,
@@ -81,6 +167,7 @@ export function ProductForm({
   existingFiles,
   bumpCandidates,
   bumpOfferIds,
+  upsellOffer,
 }: {
   userId: string;
   categories: Category[];
@@ -88,6 +175,7 @@ export function ProductForm({
   existingFiles?: ProductFile[];
   bumpCandidates?: Product[];
   bumpOfferIds?: string[];
+  upsellOffer?: UpsellOffer | null;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(product?.title ?? "");
@@ -518,6 +606,22 @@ export function ProductForm({
                 </p>
               )}
             </>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="flex items-center gap-1.5 font-semibold">
+            <Zap className="h-4 w-4" /> Upsell pós-compra
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Depois de pagar, o comprador vê uma oferta para levar também este produto com um clique.
+          </p>
+          {product?.id ? (
+            <UpsellPicker productId={product.id} candidates={bumpCandidates ?? []} initialOffer={upsellOffer ?? null} />
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Guarde o produto primeiro para escolher o upsell.
+            </p>
           )}
         </div>
 

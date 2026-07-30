@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getCategories, getProductForOwner, getBumpCandidates, getBumpOfferIds } from "@/lib/data/products";
+import { getCategories, getProductForOwner, getBumpCandidates, getBumpOfferIds, getUpsellOffer } from "@/lib/data/products";
 import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductActions } from "@/components/products/product-actions";
@@ -23,10 +23,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   const categories = await getCategories();
   const supabase = await createClient();
-  const [{ data: files }, bumpCandidates, bumpOfferIds] = await Promise.all([
+  const [{ data: files }, bumpCandidates, bumpOfferIds, upsellOffer] = await Promise.all([
     supabase.from("product_files").select("*").eq("product_id", id).order("sort_order"),
     getBumpCandidates(user.id, id),
     getBumpOfferIds(id),
+    getUpsellOffer(id),
   ]);
 
   const category = categories.find((c) => c.id === product.category_id);
@@ -76,6 +77,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           existingFiles={(files as ProductFile[]) ?? []}
           bumpCandidates={bumpCandidates}
           bumpOfferIds={bumpOfferIds}
+          upsellOffer={upsellOffer}
         />
       </div>
     </div>

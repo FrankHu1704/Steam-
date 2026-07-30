@@ -62,3 +62,19 @@ export async function getBumpOfferIds(productId: string): Promise<string[]> {
     .order("sort_order");
   return (data ?? []).map((r) => r.bump_product_id as string);
 }
+
+export interface UpsellOffer {
+  upsellProductId: string;
+  customPrice: number | null;
+}
+
+export async function getUpsellOffer(productId: string): Promise<UpsellOffer | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("product_upsells")
+    .select("upsell_product_id, custom_price")
+    .eq("product_id", productId)
+    .maybeSingle();
+  if (!data) return null;
+  return { upsellProductId: data.upsell_product_id as string, customPrice: data.custom_price as number | null };
+}

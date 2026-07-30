@@ -3,6 +3,7 @@ import { Download, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDownloadLinks } from "@/lib/actions/downloads";
 import { getOrderStatus } from "@/lib/actions/checkout";
+import { UpsellOfferCard } from "@/components/checkout/checkout-form";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function OrderAccessPage({ params }: { params: Promise<{ id: string }> }) {
@@ -84,6 +85,7 @@ async function PaidState({ orderId, productTitle }: { orderId: string; productTi
           </a>
         ))}
       </div>
+      <UpsellOfferCard orderId={orderId} />
     </div>
   );
 }

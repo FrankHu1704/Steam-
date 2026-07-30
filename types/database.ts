@@ -231,6 +231,8 @@ export interface Order {
   utm_campaign: string | null;
   utm_content: string | null;
   utm_term: string | null;
+  upsell_of_order_id: string | null;
+  abandoned_notified_at: string | null;
 }
 
 export interface OrderBump {
@@ -246,6 +248,14 @@ export interface ProductBumpOffer {
   product_id: string;
   bump_product_id: string;
   sort_order: number;
+  created_at: string;
+}
+
+export interface ProductUpsell {
+  id: string;
+  product_id: string;
+  upsell_product_id: string;
+  custom_price: number | null;
   created_at: string;
 }
 
@@ -433,6 +443,7 @@ export interface Database {
       orders: Row<Order>;
       order_bumps: Row<OrderBump>;
       product_bump_offers: Row<ProductBumpOffer>;
+      product_upsells: Row<ProductUpsell>;
       payments: Row<Payment>;
       downloads: Row<Download>;
       affiliates: Row<Affiliate>;
