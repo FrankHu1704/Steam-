@@ -25,16 +25,7 @@ export interface AchievementProgress {
   progressPercent: number;
 }
 
-export async function getProducerAchievements(producerId: string): Promise<AchievementProgress> {
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("orders")
-    .select("id", { count: "exact", head: true })
-    .eq("producer_id", producerId)
-    .eq("status", "paid");
-
-  const totalSales = count ?? 0;
-
+export function tierForSalesCount(totalSales: number): AchievementProgress {
   let currentTier = ACHIEVEMENT_TIERS[0];
   for (const tier of ACHIEVEMENT_TIERS) {
     if (totalSales >= tier.threshold) currentTier = tier;
@@ -47,4 +38,19 @@ export async function getProducerAchievements(producerId: string): Promise<Achie
     : 100;
 
   return { totalSales, currentTier, nextTier, progressPercent };
+}
+
+// PUBLIC_BADGE_TIER_KEYS marks which tiers earn a visible badge on the
+// marketplace (Ouro and above) — lower tiers stay dashboard-only.
+export const PUBLIC_BADGE_MIN_INDEX = ACHIEVEMENT_TIERS.findIndex((t) => t.key === "ouro");
+
+export async function getProducerAchievements(producerId: string): Promise<AchievementProgress> {
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("lifetime_sales_count")
+    .eq("id", producerId)
+    .single();
+
+  return tierForSalesCount(profile?.lifetime_sales_count ?? 0);
 }

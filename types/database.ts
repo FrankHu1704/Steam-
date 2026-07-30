@@ -70,6 +70,7 @@ export interface Profile {
   currency: string;
   production_unlocked_at: string | null;
   recruited_by_employee_id: string | null;
+  lifetime_sales_count: number;
   created_at: string;
 }
 

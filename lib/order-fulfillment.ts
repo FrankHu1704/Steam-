@@ -34,12 +34,15 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("name, balance_available, email, phone, recruited_by_employee_id, created_at")
+    .select("name, balance_available, email, phone, recruited_by_employee_id, created_at, lifetime_sales_count")
     .eq("id", order.producer_id)
     .single();
   await supabase
     .from("profiles")
-    .update({ balance_available: (producer?.balance_available ?? 0) + ownerNet })
+    .update({
+      balance_available: (producer?.balance_available ?? 0) + ownerNet,
+      lifetime_sales_count: (producer?.lifetime_sales_count ?? 0) + 1,
+    })
     .eq("id", order.producer_id);
 
   // Employee/collaborator recruiter commission — 5% of the sale for the
@@ -213,13 +216,19 @@ export async function refundOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("balance_available, email, name")
+    .select("balance_available, email, name, lifetime_sales_count")
     .eq("id", order.producer_id)
     .single();
   // Intentionally allowed to go negative — if the producer already withdrew
   // this money, the debt has to show up somewhere rather than being erased.
   const newBalance = (producer?.balance_available ?? 0) - ownerNet;
-  await supabase.from("profiles").update({ balance_available: newBalance }).eq("id", order.producer_id);
+  await supabase
+    .from("profiles")
+    .update({
+      balance_available: newBalance,
+      lifetime_sales_count: Math.max(0, (producer?.lifetime_sales_count ?? 0) - 1),
+    })
+    .eq("id", order.producer_id);
 
   if (order.affiliate_id && commission > 0) {
     const { data: affiliate } = await supabase.from("affiliates").select("*").eq("id", order.affiliate_id).single();

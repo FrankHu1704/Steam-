@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ACHIEVEMENT_TIERS, PUBLIC_BADGE_MIN_INDEX, tierForSalesCount } from "@/lib/data/achievements";
 import type { Category, Product } from "@/types/database";
 
 export interface MarketplaceListing extends Product {
@@ -6,6 +7,7 @@ export interface MarketplaceListing extends Product {
   category_name: string | null;
   ratingAverage: number;
   ratingCount: number;
+  producerBadge: { label: string; icon: string } | null;
 }
 
 export type MarketplaceSort = "vendidos" | "recentes" | "menor_preco" | "maior_preco";
@@ -23,7 +25,7 @@ export async function getMarketplaceProducts(
 
   let query = supabase
     .from("products")
-    .select("*, profiles!producer_id(name), categories(name)")
+    .select("*, profiles!producer_id(name, lifetime_sales_count), categories(name)")
     .eq("status", "approved");
 
   if (opts.search) query = query.ilike("title", `%${opts.search}%`);
@@ -34,7 +36,7 @@ export async function getMarketplaceProducts(
 
   const { data } = await query;
   const products = (data ?? []) as (Product & {
-    profiles: { name: string } | null;
+    profiles: { name: string; lifetime_sales_count: number } | null;
     categories: { name: string } | null;
   })[];
 
@@ -52,12 +54,15 @@ export async function getMarketplaceProducts(
 
   let listings: MarketplaceListing[] = products.map((p) => {
     const rating = ratingByProduct.get(p.id);
+    const { currentTier } = tierForSalesCount(p.profiles?.lifetime_sales_count ?? 0);
+    const tierIndex = ACHIEVEMENT_TIERS.findIndex((t) => t.key === currentTier.key);
     return {
       ...p,
       producer_name: p.profiles?.name ?? "Produtor",
       category_name: p.categories?.name ?? null,
       ratingAverage: rating ? Math.round((rating.total / rating.count) * 10) / 10 : 0,
       ratingCount: rating?.count ?? 0,
+      producerBadge: tierIndex >= PUBLIC_BADGE_MIN_INDEX ? { label: currentTier.label, icon: currentTier.icon } : null,
     };
   });
 

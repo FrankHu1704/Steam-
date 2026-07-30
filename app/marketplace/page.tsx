@@ -109,7 +109,17 @@ export default async function MarketplacePage({
                       </span>
                     )}
                     <p className="mt-0.5 truncate font-semibold">{product.title}</p>
-                    <p className="text-xs text-muted-foreground">por {product.producer_name}</p>
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      por {product.producer_name}
+                      {product.producerBadge && (
+                        <span
+                          title={`Vendedor ${product.producerBadge.label}`}
+                          className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600"
+                        >
+                          {product.producerBadge.icon} {product.producerBadge.label}
+                        </span>
+                      )}
+                    </p>
                     <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
                       {product.ratingCount > 0 && (
                         <span className="flex items-center gap-1">
