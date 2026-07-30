@@ -331,7 +331,7 @@ export async function sendWithdrawalRequestedEmail(input: {
   const methodLabel: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola", mkesh: "mKesh", bank_transfer: "Transferência bancária" };
   await sendEmail({
     to: input.producerEmail,
-    subject: input.instant ? "Levantamento pago instantaneamente! ⚡" : "Levantamento pedido — a aguardar processamento",
+    subject: input.instant ? "Levantamento pago! ⚡" : "Levantamento pedido — a aguardar processamento",
     html: emailBannerCard({
       bannerColor: input.instant ? "#059669" : "#2563EB",
       icon: input.instant ? "⚡" : "🕒",
@@ -339,7 +339,7 @@ export async function sendWithdrawalRequestedEmail(input: {
       bodyHtml:
         emailParagraph(
           input.instant
-            ? `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu levantamento foi processado e pago instantaneamente.`
+            ? `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu levantamento foi processado e pago com sucesso.`
             : `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! Recebemos o seu pedido de levantamento — está a aguardar processamento.`
         ) +
         emailInfoBox([

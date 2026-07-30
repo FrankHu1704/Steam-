@@ -113,16 +113,20 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
   // stays "pending" for admin to pay manually, exactly as before.
   const instant = await payWithdrawalB2C(withdrawal.id);
 
-  await sendWithdrawalRequestedEmail({
-    producerEmail: profile.email,
-    producerName: profile.name,
-    amount: input.amount,
-    netAmount,
-    currency: profile.currency,
-    payoutMethod: input.payoutMethod,
-    destination: input.destination,
-    instant: instant.ok,
-  });
+  // payWithdrawalB2C() already emails the producer when it succeeds
+  // instantly — only the "still pending" case needs sending here.
+  if (!instant.ok) {
+    await sendWithdrawalRequestedEmail({
+      producerEmail: profile.email,
+      producerName: profile.name,
+      amount: input.amount,
+      netAmount,
+      currency: profile.currency,
+      payoutMethod: input.payoutMethod,
+      destination: input.destination,
+      instant: false,
+    });
+  }
 
   await notifyAdminsOfWithdrawal(supabase, {
     producerName: profile.name,
@@ -158,18 +162,9 @@ export async function requestSelfServiceB2CPayout(withdrawalId: string) {
   const result = await payWithdrawalB2C(withdrawalId);
   if (!result.ok) return { error: result.error };
 
+  // payWithdrawalB2C() already emails the producer on success.
   const { data: profile } = await supabase.from("profiles").select("name, email").eq("id", user.id).single();
   if (profile) {
-    await sendWithdrawalRequestedEmail({
-      producerEmail: profile.email,
-      producerName: profile.name,
-      amount: withdrawal.amount,
-      netAmount: withdrawal.net_amount,
-      currency: withdrawal.currency,
-      payoutMethod: withdrawal.payout_method,
-      destination: withdrawal.destination,
-      instant: true,
-    });
     await notifyAdminsOfWithdrawal(supabase, {
       producerName: profile.name,
       amount: withdrawal.amount,

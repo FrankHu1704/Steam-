@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from "@/lib/payments";
+import { sendWithdrawalRequestedEmail } from "@/lib/email";
 
 // Shared B2C payout logic — used by both the admin "Pagar via B2C" action
 // and the producer self-service instant-payout action. If the active
@@ -14,11 +15,12 @@ export async function payWithdrawalB2C(
   const supabase = createAdminClient();
   const { data: withdrawal } = await supabase
     .from("withdrawals")
-    .select("*, profiles!producer_id(name)")
+    .select("*, profiles!producer_id(name, email)")
     .eq("id", withdrawalId)
     .single();
   if (!withdrawal) return { ok: false, error: "Levantamento não encontrado." };
-  const producerName = (withdrawal as unknown as { profiles: { name: string } | null }).profiles?.name ?? "—";
+  const producerProfile = (withdrawal as unknown as { profiles: { name: string; email: string } | null }).profiles;
+  const producerName = producerProfile?.name ?? "—";
 
   async function logAttempt(input: { success: boolean; error?: string; reference?: string; provider: string }) {
     await supabase.from("logs").insert({
@@ -78,6 +80,19 @@ export async function payWithdrawalB2C(
     .eq("id", withdrawalId);
 
   await logAttempt({ success: true, reference, provider: providerName });
+
+  if (producerProfile?.email) {
+    await sendWithdrawalRequestedEmail({
+      producerEmail: producerProfile.email,
+      producerName,
+      amount: withdrawal.amount,
+      netAmount: withdrawal.net_amount,
+      currency: withdrawal.currency,
+      payoutMethod: withdrawal.payout_method,
+      destination: withdrawal.destination,
+      instant: true,
+    });
+  }
 
   return { ok: true, reference };
 }

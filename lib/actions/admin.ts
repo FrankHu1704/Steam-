@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -93,6 +93,27 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
   }
 
   await supabase.from("withdrawals").update(updates).eq("id", withdrawalId);
+
+  if (status === "paid") {
+    const { data: producer } = await supabase
+      .from("profiles")
+      .select("name, email")
+      .eq("id", withdrawal.producer_id)
+      .single();
+    if (producer?.email) {
+      await sendWithdrawalRequestedEmail({
+        producerEmail: producer.email,
+        producerName: producer.name,
+        amount: withdrawal.amount,
+        netAmount: withdrawal.net_amount,
+        currency: withdrawal.currency,
+        payoutMethod: withdrawal.payout_method,
+        destination: withdrawal.destination,
+        instant: true,
+      });
+    }
+  }
+
   return { ok: true };
 }
 
