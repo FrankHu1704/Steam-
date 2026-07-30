@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Clock, CheckCircle2, XCircle, LayoutGrid, ImageOff } from "lucide-react";
+import { ExternalLink, Clock, CheckCircle2, XCircle, LayoutGrid, ImageOff, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { ProductReviewActions } from "@/components/admin/product-review-actions";
@@ -88,6 +88,16 @@ export default async function AdminProductsPage({
                       >
                         Ver produto <ExternalLink className="h-3 w-3" />
                       </Link>
+                    )}
+                    {product.tracking_script && (
+                      <details className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs dark:border-amber-900 dark:bg-amber-950">
+                        <summary className="flex cursor-pointer items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
+                          <ShieldAlert className="h-3.5 w-3.5" /> Este produto tem script personalizado — reveja antes de aprovar
+                        </summary>
+                        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-black/80 p-2 font-mono text-[11px] text-emerald-300">
+                          {product.tracking_script}
+                        </pre>
+                      </details>
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-3">

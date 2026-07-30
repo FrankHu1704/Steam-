@@ -21,18 +21,6 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient();
 
-  // Temporary diagnostic: capture every header + the raw body so we can see
-  // exactly what Debito Pay sends, regardless of whether verification below
-  // passes. Safe to remove once the header name / signing scheme is confirmed.
-  await supabase.from("logs").insert({
-    action: "webhook_debug",
-    target_table: "payments",
-    metadata: {
-      headers: Object.fromEntries(request.headers.entries()),
-      rawBody,
-    },
-  });
-
   if (!verifyWebhookSignature(rawBody, signature)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
