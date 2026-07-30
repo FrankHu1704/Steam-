@@ -19,6 +19,7 @@ interface UpsertProductInput {
   affiliateEnabled: boolean;
   affiliateCommissionPercent: number;
   bumpEnabled: boolean;
+  showInMarketplace: boolean;
   coAuthorWalletId: string | null;
   coAuthorSplitPercent: number | null;
   seoTitle: string | null;
@@ -66,6 +67,7 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     affiliate_enabled: input.affiliateEnabled,
     affiliate_commission_percent: Math.min(90, Math.max(0, input.affiliateCommissionPercent)),
     bump_enabled: input.bumpEnabled,
+    show_in_marketplace: input.showInMarketplace,
     co_author_wallet_id: input.coAuthorWalletId || null,
     co_author_split_percent: input.coAuthorWalletId ? input.coAuthorSplitPercent : null,
     seo_title: input.seoTitle,

@@ -190,6 +190,7 @@ export function ProductForm({
     String(product?.affiliate_commission_percent ?? 20)
   );
   const [bumpEnabled, setBumpEnabled] = useState(product?.bump_enabled ?? false);
+  const [showInMarketplace, setShowInMarketplace] = useState(product?.show_in_marketplace ?? true);
   const [coAuthorEnabled, setCoAuthorEnabled] = useState(!!product?.co_author_wallet_id);
   const [coAuthorWalletId, setCoAuthorWalletId] = useState(product?.co_author_wallet_id ?? "");
   const [coAuthorSplitPercent, setCoAuthorSplitPercent] = useState(
@@ -285,6 +286,7 @@ export function ProductForm({
         affiliateEnabled,
         affiliateCommissionPercent: Number(commissionPercent),
         bumpEnabled,
+        showInMarketplace,
         coAuthorWalletId: coAuthorEnabled ? coAuthorWalletId.trim() || null : null,
         coAuthorSplitPercent: coAuthorEnabled && coAuthorSplitPercent ? Number(coAuthorSplitPercent) : null,
         seoTitle: seoTitle || null,
@@ -564,6 +566,18 @@ export function ProductForm({
               }}
             />
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">Visibilidade no Marketplace</h2>
+              <p className="text-xs text-muted-foreground">
+                Se desligar, o produto continua à venda pelo link directo, mas não aparece na pesquisa pública.
+              </p>
+            </div>
+            <Switch checked={showInMarketplace} onChange={(e) => setShowInMarketplace(e.target.checked)} />
+          </div>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6">

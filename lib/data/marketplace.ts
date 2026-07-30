@@ -26,7 +26,8 @@ export async function getMarketplaceProducts(
   let query = supabase
     .from("products")
     .select("*, profiles!producer_id(name, lifetime_sales_count), categories(name)")
-    .eq("status", "approved");
+    .eq("status", "approved")
+    .eq("show_in_marketplace", true);
 
   if (opts.search) query = query.ilike("title", `%${opts.search}%`);
   if (categoryId) query = query.eq("category_id", categoryId);

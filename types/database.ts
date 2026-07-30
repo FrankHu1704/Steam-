@@ -166,6 +166,7 @@ export interface Product {
   bump_enabled: boolean;
   co_author_wallet_id: string | null;
   co_author_split_percent: number | null;
+  show_in_marketplace: boolean;
   status: ProductStatus;
   rejection_reason: string | null;
   seo_title: string | null;
