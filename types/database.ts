@@ -164,8 +164,6 @@ export interface Product {
   affiliate_enabled: boolean;
   affiliate_commission_percent: number;
   bump_enabled: boolean;
-  co_author_wallet_id: string | null;
-  co_author_split_percent: number | null;
   show_in_marketplace: boolean;
   status: ProductStatus;
   rejection_reason: string | null;
@@ -237,7 +235,6 @@ export interface Order {
   utm_term: string | null;
   upsell_of_order_id: string | null;
   abandoned_notified_at: string | null;
-  co_author_split_percent: number | null;
 }
 
 export interface OrderBump {

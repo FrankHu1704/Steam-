@@ -59,10 +59,6 @@ interface ChargeInput {
   customerEmail: string;
   customerPhone?: string;
   returnUrl?: string;
-  /** Co-production revenue split — routes through the hosted /payments
-   * checkout (type: "split") instead of the direct STK push, since ZumboPay
-   * only supports splitting on that endpoint. Percent shares only. */
-  split?: { recipientWalletId: string; percent: number };
 }
 
 interface ChargeResult {
@@ -102,32 +98,6 @@ function mapStatus(raw: string): "success" | "pending" | "failed" {
 
 export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
   const walletId = walletIdForMethod(input.paymentMethod);
-
-  // Co-production revenue split — only available via the hosted /payments
-  // checkout (type: "split"), so this applies regardless of method and
-  // always returns a checkout_url instead of doing a direct STK push.
-  if (input.split) {
-    const { status, body } = await request("POST", "/payments", {
-      type: "split",
-      title: "PagaJá",
-      amount: input.amount,
-      currency: input.currency,
-      channels: [input.paymentMethod === "visa_mastercard" ? "card" : input.paymentMethod],
-      wallet_id: walletId,
-      description: "Compra na PagaJá (co-produção)",
-      source: "pagaja",
-      source_id: input.sourceId,
-      return_url: input.returnUrl,
-      callback_url: input.returnUrl,
-      splits: [{ recipient_wallet_id: input.split.recipientWalletId, share_type: "percent", share_value: input.split.percent }],
-    });
-    const checkoutUrl = body?.checkout_url ?? body?.data?.checkout_url;
-    const reference = body?.data?.reference ?? body?.reference;
-    if (!checkoutUrl || !reference) {
-      throw new Error(body?.error?.message || body?.error || `Falha no pagamento (HTTP ${status})`);
-    }
-    return { success: true, payment_id: reference, reference, status: "pending", checkout_url: checkoutUrl };
-  }
 
   // M-Pesa/e-Mola: direct STK push, stays entirely in our own checkout UI.
   if (input.paymentMethod === "mpesa" || input.paymentMethod === "emola") {

@@ -27,20 +27,10 @@ export async function creditOrder(orderId: string): Promise<void> {
   const platformFeePercent = Number(feeSettings?.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
   const platformFixedFeeAmount = Number(feeSettings?.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
 
-  // Co-produced sale: the co-author's share went straight to their own
-  // ZumboPay wallet and never touched PagaJá at all — and ZumboPay's own
-  // 8% split fee comes off the top before that division happens. So the
-  // producer's own fee/net must be computed on what PagaJá actually
-  // received, not the full sale price.
-  const ZUMBOPAY_SPLIT_FEE_PERCENT = 8;
-  const producerSaleBase = order.co_author_split_percent
-    ? order.total_amount * (1 - ZUMBOPAY_SPLIT_FEE_PERCENT / 100) * (1 - order.co_author_split_percent / 100)
-    : order.total_amount;
-
   const commission = order.affiliate_commission_amount ?? 0;
-  const percentFee = (producerSaleBase - commission) * (platformFeePercent / 100);
+  const percentFee = (order.total_amount - commission) * (platformFeePercent / 100);
   const platformFeeAmount = Math.round((percentFee + platformFixedFeeAmount) * 100) / 100;
-  const ownerNet = Math.max(0, producerSaleBase - commission - platformFeeAmount);
+  const ownerNet = Math.max(0, order.total_amount - commission - platformFeeAmount);
 
   const { data: producer } = await supabase
     .from("profiles")

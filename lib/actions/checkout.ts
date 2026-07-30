@@ -4,7 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PaymentMethod } from "@/lib/debito-pay";
 import { getActivePaymentProvider, providerModule, methodsForProvider, type PaymentProviderName } from "@/lib/payments";
-import * as zumboPay from "@/lib/zumbopay";
 import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import type { Product } from "@/types/database";
 
@@ -173,10 +172,6 @@ export async function createOrder(input: CreateOrderInput) {
       utm_content: input.utmContent ?? null,
       utm_term: input.utmTerm ?? null,
       upsell_of_order_id: input.upsellOfOrderId ?? null,
-      co_author_split_percent:
-        product.co_author_wallet_id && product.co_author_split_percent && providerName === "zumbopay"
-          ? product.co_author_split_percent
-          : null,
     })
     .select("id")
     .single();
@@ -191,33 +186,16 @@ export async function createOrder(input: CreateOrderInput) {
 
   let charge;
   try {
-    // Co-produced products split the sale with a co-author's own ZumboPay
-    // wallet at charge time — only possible when ZumboPay is the active
-    // provider, since it's their split-payment endpoint being used.
-    if (product.co_author_wallet_id && product.co_author_split_percent && providerName === "zumbopay") {
-      charge = await zumboPay.createCharge({
-        paymentMethod: input.paymentMethod,
-        amount: totalAmount,
-        currency: product.currency as "MZN" | "ZAR",
-        sourceId: order.id,
-        customerName: input.buyerName,
-        customerEmail: input.buyerEmail,
-        customerPhone: input.buyerPhone,
-        returnUrl: input.returnUrl,
-        split: { recipientWalletId: product.co_author_wallet_id, percent: product.co_author_split_percent },
-      });
-    } else {
-      charge = await providerModule(providerName).createCharge({
-        paymentMethod: input.paymentMethod,
-        amount: totalAmount,
-        currency: product.currency as "MZN" | "ZAR",
-        sourceId: order.id,
-        customerName: input.buyerName,
-        customerEmail: input.buyerEmail,
-        customerPhone: input.buyerPhone,
-        returnUrl: input.returnUrl,
-      });
-    }
+    charge = await providerModule(providerName).createCharge({
+      paymentMethod: input.paymentMethod,
+      amount: totalAmount,
+      currency: product.currency as "MZN" | "ZAR",
+      sourceId: order.id,
+      customerName: input.buyerName,
+      customerEmail: input.buyerEmail,
+      customerPhone: input.buyerPhone,
+      returnUrl: input.returnUrl,
+    });
   } catch (err) {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
     await supabase.from("logs").insert({

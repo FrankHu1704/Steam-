@@ -191,11 +191,6 @@ export function ProductForm({
   );
   const [bumpEnabled, setBumpEnabled] = useState(product?.bump_enabled ?? false);
   const [showInMarketplace, setShowInMarketplace] = useState(product?.show_in_marketplace ?? true);
-  const [coAuthorEnabled, setCoAuthorEnabled] = useState(!!product?.co_author_wallet_id);
-  const [coAuthorWalletId, setCoAuthorWalletId] = useState(product?.co_author_wallet_id ?? "");
-  const [coAuthorSplitPercent, setCoAuthorSplitPercent] = useState(
-    product?.co_author_split_percent ? String(product.co_author_split_percent) : "30"
-  );
   const [seoTitle, setSeoTitle] = useState(product?.seo_title ?? "");
   const [seoDescription, setSeoDescription] = useState(product?.seo_description ?? "");
   const [trackingScript, setTrackingScript] = useState(product?.tracking_script ?? "");
@@ -287,8 +282,6 @@ export function ProductForm({
         affiliateCommissionPercent: Number(commissionPercent),
         bumpEnabled,
         showInMarketplace,
-        coAuthorWalletId: coAuthorEnabled ? coAuthorWalletId.trim() || null : null,
-        coAuthorSplitPercent: coAuthorEnabled && coAuthorSplitPercent ? Number(coAuthorSplitPercent) : null,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         trackingScript: trackingScript || null,
@@ -643,47 +636,6 @@ export function ProductForm({
             <p className="mt-3 text-xs text-muted-foreground">
               Guarde o produto primeiro para escolher o upsell.
             </p>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold">Co-produção (ZumboPay)</h2>
-              <p className="text-xs text-muted-foreground">
-                Divide automaticamente a receita desta venda com outra pessoa que já tenha a sua própria carteira
-                ZumboPay — ex: uma aula gravada em parceria.
-              </p>
-            </div>
-            <Switch checked={coAuthorEnabled} onChange={(e) => setCoAuthorEnabled(e.target.checked)} />
-          </div>
-          {coAuthorEnabled && (
-            <div className="mt-4 space-y-3">
-              <div>
-                <Label htmlFor="coAuthorWallet">Wallet ID do co-autor (ZumboPay)</Label>
-                <Input
-                  id="coAuthorWallet"
-                  placeholder="wlt_..."
-                  value={coAuthorWalletId}
-                  onChange={(e) => setCoAuthorWalletId(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="coAuthorSplit">Percentagem do co-autor (%)</Label>
-                <Input
-                  id="coAuthorSplit"
-                  type="number"
-                  min="1"
-                  max="99"
-                  value={coAuthorSplitPercent}
-                  onChange={(e) => setCoAuthorSplitPercent(e.target.value)}
-                />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Só funciona enquanto o ZumboPay for o processador de pagamento activo. A taxa do ZumboPay (8%) é
-                aplicada antes da divisão — o restante fica dividido entre a sua conta e a do co-autor.
-              </p>
-            </div>
           )}
         </div>
 

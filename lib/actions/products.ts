@@ -20,8 +20,6 @@ interface UpsertProductInput {
   affiliateCommissionPercent: number;
   bumpEnabled: boolean;
   showInMarketplace: boolean;
-  coAuthorWalletId: string | null;
-  coAuthorSplitPercent: number | null;
   seoTitle: string | null;
   seoDescription: string | null;
   trackingScript: string | null;
@@ -47,10 +45,6 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
   if (input.promoPrice != null && input.promoPrice < 50) {
     return { error: "O preço promocional também deve ser de pelo menos 50 MT." };
   }
-  if (input.coAuthorWalletId && (!input.coAuthorSplitPercent || input.coAuthorSplitPercent <= 0 || input.coAuthorSplitPercent >= 100)) {
-    return { error: "Indique uma percentagem de co-produção entre 1 e 99." };
-  }
-
   const baseSlug = slugify(input.title);
   const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -68,8 +62,6 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     affiliate_commission_percent: Math.min(90, Math.max(0, input.affiliateCommissionPercent)),
     bump_enabled: input.bumpEnabled,
     show_in_marketplace: input.showInMarketplace,
-    co_author_wallet_id: input.coAuthorWalletId || null,
-    co_author_split_percent: input.coAuthorWalletId ? input.coAuthorSplitPercent : null,
     seo_title: input.seoTitle,
     seo_description: input.seoDescription,
     tracking_script: input.trackingScript,
