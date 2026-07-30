@@ -41,3 +41,25 @@ export async function getReviewedOrderIds(buyerId: string): Promise<Set<string>>
   const { data } = await supabase.from("reviews").select("order_id").eq("buyer_id", buyerId);
   return new Set((data ?? []).map((r) => r.order_id));
 }
+
+export interface ProducerReview extends Review {
+  buyer_name: string;
+  product_title: string;
+}
+
+export async function getProducerReviews(producerId: string): Promise<ProducerReview[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("reviews")
+    .select("*, profiles!buyer_id(name), products!inner(title, producer_id)")
+    .eq("products.producer_id", producerId)
+    .order("created_at", { ascending: false });
+  return ((data ?? []) as (Review & {
+    profiles: { name: string } | null;
+    products: { title: string } | null;
+  })[]).map((r) => ({
+    ...r,
+    buyer_name: r.profiles?.name ?? "Comprador",
+    product_title: r.products?.title ?? "Produto",
+  }));
+}
