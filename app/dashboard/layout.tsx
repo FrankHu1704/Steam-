@@ -12,6 +12,7 @@ import {
   Puzzle,
   Sparkles,
   Star,
+  Trophy,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
@@ -29,6 +30,7 @@ const NAV: ShellNavItem[] = [
   { href: "/dashboard/integracoes", label: "Integrações", icon: <Puzzle className="h-4 w-4" /> },
   { href: "/dashboard/affiliates", label: "Afiliados", icon: <Users2 className="h-4 w-4" /> },
   { href: "/dashboard/reviews", label: "Avaliações", icon: <Star className="h-4 w-4" /> },
+  { href: "/dashboard/achievements", label: "Premiações", icon: <Trophy className="h-4 w-4" /> },
   { href: "/dashboard/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
   { href: "/dashboard/developer", label: "Programador", icon: <Code2 className="h-4 w-4" /> },
   { href: "/dashboard/settings", label: "Definições", icon: <Settings className="h-4 w-4" /> },

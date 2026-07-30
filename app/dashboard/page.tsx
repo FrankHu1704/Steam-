@@ -7,6 +7,7 @@ import { SalesChart } from "@/components/dashboard/sales-chart";
 import { cn, formatCurrency } from "@/lib/utils";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getDashboardStats, DASHBOARD_PERIODS, type DashboardPeriod } from "@/lib/data/dashboard";
+import { getProducerAchievements } from "@/lib/data/achievements";
 
 export default async function DashboardOverviewPage({
   searchParams,
@@ -20,7 +21,10 @@ export default async function DashboardOverviewPage({
   const requestedDays = Number(daysParam);
   const days = (DASHBOARD_PERIODS.includes(requestedDays as DashboardPeriod) ? requestedDays : 14) as DashboardPeriod;
 
-  const stats = await getDashboardStats(user.id, days);
+  const [stats, achievements] = await Promise.all([
+    getDashboardStats(user.id, days),
+    getProducerAchievements(user.id),
+  ]);
   const currency = profile.currency as "MZN" | "ZAR";
 
   const tiles = [
@@ -49,7 +53,16 @@ export default async function DashboardOverviewPage({
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Visão Geral</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">Visão Geral</h1>
+            <Link
+              href="/dashboard/achievements"
+              title={`Nível ${achievements.currentTier.label}`}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-sm"
+            >
+              {achievements.currentTier.icon}
+            </Link>
+          </div>
           <p className="text-sm text-muted-foreground">Olá, {profile.name}. Aqui está o seu resumo financeiro.</p>
         </div>
         <Button asChild>
