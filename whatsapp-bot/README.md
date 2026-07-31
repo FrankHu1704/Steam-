@@ -28,13 +28,15 @@ cp .env.example .env
 npm start
 ```
 
-Na primeira vez, o script pede o número (com DDI, ex: `258849311757`) e
-mostra um **código de pareamento** no terminal. No telemóvel que vai ser o
-número oficial da PagaJá:
+Na primeira vez, o script mostra um **QR code** no terminal. No telemóvel
+que vai ser o número oficial da PagaJá:
 
 1. WhatsApp → Configurações → Aparelhos conectados
-2. Conectar aparelho → Conectar com número de telefone
-3. Insira o código mostrado no terminal
+2. Conectar aparelho
+3. Aponte a câmara para o QR code mostrado no terminal
+
+Se o Termux estiver com a letra pequena e o QR ficar cortado, aumente o
+tamanho do terminal (ou rode o telemóvel para paisagem) antes de escanear.
 
 Depois de ligado, a sessão fica gravada em `./sessions` — não precisa de
 ligar outra vez a menos que apague essa pasta ou termine sessão no

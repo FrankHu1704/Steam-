@@ -10,7 +10,7 @@ const pino = require("pino");
 const { Boom } = require("@hapi/boom");
 const fs = require("fs");
 const https = require("https");
-const readline = require("readline");
+const qrcode = require("qrcode-terminal");
 const { createClient } = require("@supabase/supabase-js");
 
 // ============================================================
@@ -196,20 +196,8 @@ async function handleMessage(sock, msg) {
 }
 
 // ============================================================
-// CONEXÃO (Baileys — pareamento por código, sem QR)
+// CONEXÃO (Baileys — QR code)
 // ============================================================
-function perguntarNumero(p) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((r) => rl.question(p, (a) => { rl.close(); r(a.trim()); }));
-}
-
-// Pedido apenas uma vez por execução — o handshake inicial do WhatsApp
-// fecha a ligação em bruto uma ou duas vezes antes do pareamento
-// completar, o que é normal. Sem esta flag, cada fecho reentrava em
-// conectar() e pedia um código NOVO a cada ~5s, invalidando o anterior
-// antes de haver tempo de o escrever no telemóvel.
-let pairingCodePedido = false;
-
 async function conectar() {
   if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
   const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
@@ -221,26 +209,16 @@ async function conectar() {
     browser: ["PagaJá", "Chrome", "1.0"],
   });
 
-  if (!sock.authState.creds.registered && !pairingCodePedido) {
-    pairingCodePedido = true;
-    const numero = process.env.PAGAJA_BOT_PHONE_NUMBER || (await perguntarNumero("📱 Número com DDI (ex: 258849311757): "));
-    const codigo = await sock.requestPairingCode(numero.replace(/\D/g, ""));
-    console.log("\n🔑 Código de pareamento: " + codigo);
-    console.log("👉 No WhatsApp: Configurações → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone");
-    console.log("⏱️  Introduza o código nos próximos ~60 segundos.\n");
-  }
-
   sock.ev.on("creds.update", saveCreds);
-  sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
+  sock.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      console.log("\n📷 Escaneie este QR code no WhatsApp (Configurações → Aparelhos conectados → Conectar aparelho):\n");
+      qrcode.generate(qr, { small: true });
+    }
+
     if (connection === "close") {
-      // Ainda a aguardar que o código seja introduzido no telemóvel — NÃO
-      // reconectar sozinho aqui (isso pediria um código novo e invalidaria
-      // o que já está no ecrã). É normal a ligação fechar uma ou duas
-      // vezes em bruto durante esta espera.
-      if (!sock.authState.creds.registered) {
-        console.log("⌛ Ligação fechada enquanto aguardava o código. Se o código expirou, pare (Ctrl+C) e corra 'npm start' outra vez para gerar um novo.");
-        return;
-      }
       const code = new Boom(lastDisconnect && lastDisconnect.error).output.statusCode;
       if (code !== DisconnectReason.loggedOut) {
         console.log("🔄 Reconectando em 5s...");
