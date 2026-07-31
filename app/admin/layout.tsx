@@ -13,6 +13,7 @@ import {
   BarChart3,
   MessageSquareText,
   Briefcase,
+  MessageCircle,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { requireAdminUser } from "@/lib/data/admin";
@@ -31,6 +32,7 @@ const NAV: ShellNavItem[] = [
   { href: "/admin/broadcast", label: "Comunicados", icon: <Megaphone className="h-4 w-4" /> },
   { href: "/admin/production-unlocks", label: "Produção API", icon: <Code2 className="h-4 w-4" /> },
   { href: "/admin/api-usage", label: "Uso da API", icon: <Code2 className="h-4 w-4" /> },
+  { href: "/admin/whatsapp-bot", label: "Assistente WhatsApp", icon: <MessageCircle className="h-4 w-4" /> },
   { href: "/admin/notifications", label: "Notificações", icon: <MessageSquareText className="h-4 w-4" /> },
   { href: "/admin/settings", label: "Definições", icon: <Settings className="h-4 w-4" /> },
   { href: "/admin/logs", label: "Logs", icon: <ScrollText className="h-4 w-4" /> },

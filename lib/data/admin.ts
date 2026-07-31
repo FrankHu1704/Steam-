@@ -339,6 +339,59 @@ export async function getRecentLogs(limit = 100): Promise<LogEntry[]> {
   return (data as LogEntry[]) ?? [];
 }
 
+export interface WhatsappBotConversationSummary {
+  phone: string;
+  messageCount: number;
+  lastMessage: string;
+  lastMessageAt: string;
+  lastRole: "user" | "assistant";
+}
+
+export async function getWhatsappBotConversations(limit = 500): Promise<WhatsappBotConversationSummary[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("whatsapp_bot_messages")
+    .select("phone, role, content, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  const byPhone = new Map<string, WhatsappBotConversationSummary>();
+  for (const row of data ?? []) {
+    const existing = byPhone.get(row.phone);
+    if (!existing) {
+      byPhone.set(row.phone, {
+        phone: row.phone,
+        messageCount: 1,
+        lastMessage: row.content,
+        lastMessageAt: row.created_at,
+        lastRole: row.role as "user" | "assistant",
+      });
+    } else {
+      existing.messageCount += 1;
+    }
+  }
+
+  return Array.from(byPhone.values()).sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+}
+
+export interface WhatsappBotMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
+export async function getWhatsappBotThread(phone: string, limit = 200): Promise<WhatsappBotMessage[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("whatsapp_bot_messages")
+    .select("id, role, content, created_at")
+    .eq("phone", phone)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  return (data as WhatsappBotMessage[]) ?? [];
+}
+
 export interface B2CAttempt {
   id: string;
   created_at: string;
