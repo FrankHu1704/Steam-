@@ -1,7 +1,17 @@
 import Link from "next/link";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 const INSTAGRAM_URL = "https://www.instagram.com/pagaja.co.mz?igsh=MThwNXl1eWx1eGtvcA==";
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/Ga5A5WwQ4EJ9yI8DaR860t?s=cl&p=a&ilr=1&amv=1";
+
+const PARTNERS = [
+  { name: "Frank AI Solutions", logo: "/partner-logos/frank-ai-solutions.jpg", wide: true },
+  { name: "Visa & Mastercard", logo: "/partner-logos/visa.jpg" },
+  { name: "mKesh", logo: "/partner-logos/mkesh.jpg" },
+  { name: "e-Mola", logo: "/partner-logos/emola.jpg" },
+  { name: "M-Pesa", logo: "/partner-logos/mpesa.jpg" },
+];
 
 export function SiteFooter() {
   return (
@@ -56,7 +66,30 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <p className="container mt-10 text-xs text-muted-foreground">
+      <div className="container mt-10 border-t border-border pt-8">
+        <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Parceiros</p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
+          {PARTNERS.map((p) => (
+            <div
+              key={p.name}
+              className={cn(
+                "flex shrink-0 items-center justify-center rounded-xl bg-zinc-950 p-3",
+                p.wide ? "h-16 w-40" : "h-16 w-16"
+              )}
+            >
+              <Image
+                src={p.logo}
+                alt={p.name}
+                width={p.wide ? 160 : 64}
+                height={64}
+                className="h-full w-full object-contain"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="container mt-8 text-xs text-muted-foreground">
         © {new Date().getFullYear()} PagaJá. Todos os direitos reservados.
       </p>
     </footer>
