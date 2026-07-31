@@ -34,13 +34,19 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("name, balance_available, email, phone, recruited_by_employee_id, created_at, lifetime_sales_count")
+    .select(
+      "name, balance_available, balance_available_dev, email, phone, recruited_by_employee_id, created_at, lifetime_sales_count"
+    )
     .eq("id", order.producer_id)
     .single();
+  // "api" orders come from a producer's own external app charging through
+  // the developer API (Pagar API) — kept in a separate wallet from regular
+  // marketplace product sales so the two revenue streams never mix.
+  const walletField = order.source === "api" ? "balance_available_dev" : "balance_available";
   await supabase
     .from("profiles")
     .update({
-      balance_available: (producer?.balance_available ?? 0) + ownerNet,
+      [walletField]: (producer?.[walletField] ?? 0) + ownerNet,
       lifetime_sales_count: (producer?.lifetime_sales_count ?? 0) + 1,
     })
     .eq("id", order.producer_id);
@@ -216,16 +222,17 @@ export async function refundOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("balance_available, email, name, lifetime_sales_count")
+    .select("balance_available, balance_available_dev, email, name, lifetime_sales_count")
     .eq("id", order.producer_id)
     .single();
+  const walletField = order.source === "api" ? "balance_available_dev" : "balance_available";
   // Intentionally allowed to go negative — if the producer already withdrew
   // this money, the debt has to show up somewhere rather than being erased.
-  const newBalance = (producer?.balance_available ?? 0) - ownerNet;
+  const newBalance = (producer?.[walletField] ?? 0) - ownerNet;
   await supabase
     .from("profiles")
     .update({
-      balance_available: newBalance,
+      [walletField]: newBalance,
       lifetime_sales_count: Math.max(0, (producer?.lifetime_sales_count ?? 0) - 1),
     })
     .eq("id", order.producer_id);

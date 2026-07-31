@@ -76,6 +76,10 @@ interface CreateOrderInput {
   // resulting order as originating from the order it upsold from.
   customPrice?: number;
   upsellOfOrderId?: string;
+  // Which wallet this sale credits: "marketplace" (default, the hosted
+  // PagaJá checkout) or "api" (charged through the developer/Pagar API by
+  // the producer's own external app) — see lib/order-fulfillment.ts.
+  source?: "marketplace" | "api";
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -172,6 +176,7 @@ export async function createOrder(input: CreateOrderInput) {
       utm_content: input.utmContent ?? null,
       utm_term: input.utmTerm ?? null,
       upsell_of_order_id: input.upsellOfOrderId ?? null,
+      source: input.source ?? "marketplace",
     })
     .select("id")
     .single();

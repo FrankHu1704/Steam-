@@ -117,6 +117,7 @@ export default async function AdminWithdrawalsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{w.wallet_source === "dev" ? "Programador" : "Produtor"}</Badge>
                     <StatusBadge status={w.status} />
                     <WithdrawalReviewActions withdrawalId={w.id} status={w.status} payoutMethod={w.payout_method} />
                   </div>

@@ -40,7 +40,7 @@ export default async function WithdrawalsPage() {
     </div>
   );
 
-  const negativeBalanceBanner = profile.balance_available < 0 && (
+  const negativeBalanceBanner = (profile.balance_available < 0 || profile.balance_available_dev < 0) && (
     <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
       <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
       <p className="text-destructive">
@@ -55,37 +55,49 @@ export default async function WithdrawalsPage() {
       {negativeBalanceBanner}
       {b2cBanner}
 
-      <div className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
-          <Wallet className="h-4 w-4" /> Olá {profile.name.split(" ")[0]}, o seu saldo disponível é de
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
+            <Wallet className="h-4 w-4" /> Carteira Produtor
+          </div>
+          <p className="relative mt-2 text-3xl font-bold sm:text-4xl">
+            {formatCurrency(profile.balance_available, currency)}
+          </p>
+          <p className="relative mt-1 text-xs text-white/70">Vendas dos seus produtos no marketplace PagaJá.</p>
         </div>
-        <p className="relative mt-2 text-4xl font-bold sm:text-5xl">
-          {formatCurrency(profile.balance_available, currency)}
-        </p>
-        <p className="relative mt-1 text-sm text-white/70">Pronto para transferência imediata via M-Pesa ou e-Mola.</p>
+        <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
+            <Wallet className="h-4 w-4" /> Carteira Programador (API)
+          </div>
+          <p className="relative mt-2 text-3xl font-bold sm:text-4xl">
+            {formatCurrency(profile.balance_available_dev, currency)}
+          </p>
+          <p className="relative mt-1 text-xs text-white/70">Cobranças feitas através da sua própria app via API.</p>
+        </div>
+      </div>
 
-        <div className="relative mt-6 grid grid-cols-3 divide-x divide-white/15 border-t border-white/15 pt-4">
-          <div className="flex items-center gap-2 pr-3">
-            <TrendingUp className="h-4 w-4 shrink-0 text-white/70" />
-            <div>
-              <p className="text-[11px] text-white/60">Mínimo</p>
-              <p className="text-sm font-semibold">{formatCurrency(minimumAmount, currency)}</p>
-            </div>
+      <div className="grid grid-cols-3 divide-x divide-border rounded-2xl border border-border p-4">
+        <div className="flex items-center gap-2 pr-3">
+          <TrendingUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div>
+            <p className="text-[11px] text-muted-foreground">Mínimo</p>
+            <p className="text-sm font-semibold">{formatCurrency(minimumAmount, currency)}</p>
           </div>
-          <div className="flex items-center gap-2 px-3">
-            <Clock className="h-4 w-4 shrink-0 text-white/70" />
-            <div>
-              <p className="text-[11px] text-white/60">Prazo</p>
-              <p className="text-sm font-semibold">{canUseB2C ? "Instantâneo" : "Até 24h"}</p>
-            </div>
+        </div>
+        <div className="flex items-center gap-2 px-3">
+          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div>
+            <p className="text-[11px] text-muted-foreground">Prazo</p>
+            <p className="text-sm font-semibold">{canUseB2C ? "Instantâneo" : "Até 24h"}</p>
           </div>
-          <div className="flex items-center gap-2 pl-3">
-            <CreditCard className="h-4 w-4 shrink-0 text-white/70" />
-            <div>
-              <p className="text-[11px] text-white/60">Padrão</p>
-              <p className="text-sm font-semibold">{defaultWallet ? METHOD_LABEL[defaultWallet.method] : "Nenhuma"}</p>
-            </div>
+        </div>
+        <div className="flex items-center gap-2 pl-3">
+          <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div>
+            <p className="text-[11px] text-muted-foreground">Padrão</p>
+            <p className="text-sm font-semibold">{defaultWallet ? METHOD_LABEL[defaultWallet.method] : "Nenhuma"}</p>
           </div>
         </div>
       </div>
@@ -95,6 +107,7 @@ export default async function WithdrawalsPage() {
           <h2 className="mb-4 font-semibold">Solicitar Saque</h2>
           <WithdrawalForm
             balanceAvailable={profile.balance_available}
+            balanceAvailableDev={profile.balance_available_dev}
             currency={profile.currency}
             feePercent={feePercent}
             minimumAmount={minimumAmount}
@@ -119,6 +132,7 @@ export default async function WithdrawalsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
+                  <th className="p-4 font-medium">Carteira</th>
                   <th className="p-4 font-medium">Valor</th>
                   <th className="p-4 font-medium">Líquido</th>
                   <th className="p-4 font-medium">Método</th>
@@ -130,6 +144,9 @@ export default async function WithdrawalsPage() {
               <tbody>
                 {withdrawals.map((w) => (
                   <tr key={w.id} className="border-b border-border/60 last:border-0">
+                    <td className="p-4 text-muted-foreground">
+                      {w.wallet_source === "dev" ? "Programador" : "Produtor"}
+                    </td>
                     <td className="p-4">{formatCurrency(w.amount, currency)}</td>
                     <td className="p-4 font-medium">{formatCurrency(w.net_amount, currency)}</td>
                     <td className="p-4 capitalize text-muted-foreground">{w.payout_method.replace(/_/g, " ")}</td>

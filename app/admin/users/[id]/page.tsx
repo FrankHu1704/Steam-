@@ -53,12 +53,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p className="font-medium">{profile.phone ?? "—"}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Saldo disponível</p>
+            <p className="text-xs text-muted-foreground">Saldo Produtor</p>
             <p className="font-medium">{formatCurrency(profile.balance_available, currency)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Saldo pendente</p>
-            <p className="font-medium">{formatCurrency(profile.balance_pending, currency)}</p>
+            <p className="text-xs text-muted-foreground">Saldo Programador (API)</p>
+            <p className="font-medium">{formatCurrency(profile.balance_available_dev, currency)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Membro desde</p>
@@ -190,6 +190,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="p-3 font-medium">Carteira</th>
                       <th className="p-3 font-medium">Valor</th>
                       <th className="p-3 font-medium">Líquido</th>
                       <th className="p-3 font-medium">Método</th>
@@ -200,6 +201,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   <tbody>
                     {withdrawals.map((w) => (
                       <tr key={w.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+                        <td className="p-3 text-muted-foreground">
+                          {w.wallet_source === "dev" ? "Programador" : "Produtor"}
+                        </td>
                         <td className="p-3">{formatCurrency(w.amount, currency)}</td>
                         <td className="p-3">{formatCurrency(w.net_amount, currency)}</td>
                         <td className="p-3 text-muted-foreground">{w.payout_method}</td>

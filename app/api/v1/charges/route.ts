@@ -68,6 +68,7 @@ export async function POST(req: Request) {
     buyerEmail,
     buyerPhone,
     paymentMethod,
+    source: "api",
   });
 
   if (result.error || !result.orderId) {

@@ -91,13 +91,20 @@ export default async function DashboardOverviewPage({
         >
           <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
           <div className="relative flex items-center justify-between">
-            <p className="text-sm font-medium text-white/80">Saldo disponível</p>
+            <p className="text-sm font-medium text-white/80">Saldos disponíveis</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
-          <p className="relative mt-3 text-3xl font-bold">{formatCurrency(profile.balance_available, currency)}</p>
-          <p className="relative mt-1 flex items-center gap-1 text-xs text-white/70">
+          <div className="relative mt-3 flex items-end justify-between gap-3 border-b border-white/15 pb-3">
+            <p className="text-xs text-white/70">Produtor</p>
+            <p className="text-2xl font-bold">{formatCurrency(profile.balance_available, currency)}</p>
+          </div>
+          <div className="relative mt-3 flex items-end justify-between gap-3">
+            <p className="text-xs text-white/70">Programador (API)</p>
+            <p className="text-2xl font-bold">{formatCurrency(profile.balance_available_dev, currency)}</p>
+          </div>
+          <p className="relative mt-3 flex items-center gap-1 text-xs text-white/70">
             Sacar agora <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
           </p>
         </Link>

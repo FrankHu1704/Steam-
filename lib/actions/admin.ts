@@ -77,14 +77,15 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
     updates.reviewed_at = new Date().toISOString();
     updates.rejection_reason = note ?? null;
 
+    const walletField = withdrawal.wallet_source === "dev" ? "balance_available_dev" : "balance_available";
     const { data: producer } = await supabase
       .from("profiles")
-      .select("balance_available")
+      .select("balance_available, balance_available_dev")
       .eq("id", withdrawal.producer_id)
       .single();
     await supabase
       .from("profiles")
-      .update({ balance_available: (producer?.balance_available ?? 0) + withdrawal.amount })
+      .update({ [walletField]: (producer?.[walletField] ?? 0) + withdrawal.amount })
       .eq("id", withdrawal.producer_id);
   }
   if (status === "paid") {

@@ -47,7 +47,12 @@ async function notifyAdminsOfWithdrawal(
   }
 }
 
-export async function requestWithdrawal(input: { amount: number; payoutMethod: PayoutMethod; destination: string }) {
+export async function requestWithdrawal(input: {
+  amount: number;
+  payoutMethod: PayoutMethod;
+  destination: string;
+  walletSource?: "producer" | "dev";
+}) {
   const authClient = await createClient();
   const {
     data: { user },
@@ -57,14 +62,18 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
   if (input.amount <= 0) return { error: "Indique um valor válido." };
   if (!input.destination.trim()) return { error: "Indique o destino do levantamento." };
 
+  const walletSource = input.walletSource ?? "producer";
+  const walletField = walletSource === "dev" ? "balance_available_dev" : "balance_available";
+
   const supabase = createAdminClient();
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, email, balance_available, currency")
+    .select("name, email, balance_available, balance_available_dev, currency")
     .eq("id", user.id)
     .single();
   if (!profile) return { error: "Perfil não encontrado." };
+  const currentBalance = profile[walletField];
 
   const { data: minSetting } = await supabase
     .from("settings")
@@ -75,7 +84,7 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
   if (input.amount < minimumAmount) {
     return { error: `O valor mínimo para levantamento é ${minimumAmount} MT.` };
   }
-  if (input.amount > profile.balance_available) return { error: "Saldo insuficiente." };
+  if (input.amount > currentBalance) return { error: "Saldo insuficiente." };
 
   const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();
   const feePercent = typeof feeSetting?.value === "number" ? feeSetting.value : Number(feeSetting?.value ?? 5);
@@ -93,6 +102,7 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
       currency: profile.currency,
       payout_method: input.payoutMethod,
       destination: input.destination,
+      wallet_source: walletSource,
       status: "pending",
     })
     .select("id")
@@ -103,7 +113,7 @@ export async function requestWithdrawal(input: { amount: number; payoutMethod: P
   await supabase
     .from("profiles")
     .update({
-      balance_available: profile.balance_available - input.amount,
+      [walletField]: currentBalance - input.amount,
     })
     .eq("id", user.id);
 

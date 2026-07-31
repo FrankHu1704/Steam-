@@ -71,6 +71,7 @@ export interface Profile {
   production_unlocked_at: string | null;
   recruited_by_employee_id: string | null;
   lifetime_sales_count: number;
+  balance_available_dev: number;
   created_at: string;
 }
 
@@ -235,6 +236,7 @@ export interface Order {
   utm_term: string | null;
   upsell_of_order_id: string | null;
   abandoned_notified_at: string | null;
+  source: "marketplace" | "api";
 }
 
 export interface OrderBump {
@@ -314,6 +316,7 @@ export interface Withdrawal {
   currency: string;
   payout_method: PayoutMethod;
   destination: string;
+  wallet_source: "producer" | "dev";
   status: WithdrawalStatus;
   rejection_reason: string | null;
   payout_reference: string | null;

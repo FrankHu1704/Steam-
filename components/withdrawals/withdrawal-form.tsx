@@ -27,12 +27,14 @@ const WALLET_LOGO: Record<"mpesa" | "emola", string> = {
 
 export function WithdrawalForm({
   balanceAvailable,
+  balanceAvailableDev,
   currency,
   feePercent,
   minimumAmount,
   wallets,
 }: {
   balanceAvailable: number;
+  balanceAvailableDev: number;
   currency: string;
   feePercent: number;
   minimumAmount: number;
@@ -41,6 +43,7 @@ export function WithdrawalForm({
   const router = useRouter();
   const defaultWallet = wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
 
+  const [walletSource, setWalletSource] = useState<"producer" | "dev">("producer");
   const [amount, setAmount] = useState("");
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(defaultWallet?.id ?? null);
   const [useOther, setUseOther] = useState(wallets.length === 0);
@@ -49,6 +52,7 @@ export function WithdrawalForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  const currentBalance = walletSource === "dev" ? balanceAvailableDev : balanceAvailable;
   const numericAmount = Number(amount) || 0;
   const feeAmount = Math.round(numericAmount * (feePercent / 100) * 100) / 100;
   const netAmount = Math.max(0, numericAmount - feeAmount);
@@ -73,7 +77,12 @@ export function WithdrawalForm({
     }
 
     setPending(true);
-    const result = await requestWithdrawal({ amount: numericAmount, payoutMethod: method, destination: dest });
+    const result = await requestWithdrawal({
+      amount: numericAmount,
+      payoutMethod: method,
+      destination: dest,
+      walletSource,
+    });
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -91,19 +100,47 @@ export function WithdrawalForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
+        <Label>Carteira</Label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setWalletSource("producer")}
+            className={cn(
+              "rounded-xl border-2 px-3 py-2.5 text-left transition-colors",
+              walletSource === "producer" ? "border-primary bg-primary/5" : "border-border"
+            )}
+          >
+            <p className="text-xs text-muted-foreground">Produtor</p>
+            <p className="font-semibold">{formatCurrency(balanceAvailable, currency as "MZN" | "ZAR")}</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setWalletSource("dev")}
+            className={cn(
+              "rounded-xl border-2 px-3 py-2.5 text-left transition-colors",
+              walletSource === "dev" ? "border-primary bg-primary/5" : "border-border"
+            )}
+          >
+            <p className="text-xs text-muted-foreground">Programador (API)</p>
+            <p className="font-semibold">{formatCurrency(balanceAvailableDev, currency as "MZN" | "ZAR")}</p>
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
         <Label htmlFor="amount">Valor a levantar</Label>
         <Input
           id="amount"
           type="number"
           min={minimumAmount}
-          max={balanceAvailable}
+          max={currentBalance}
           step="0.01"
           required
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
         <p className="text-xs text-muted-foreground">
-          Saldo disponível: {formatCurrency(balanceAvailable, currency as "MZN" | "ZAR")} · Mínimo:{" "}
+          Saldo disponível: {formatCurrency(currentBalance, currency as "MZN" | "ZAR")} · Mínimo:{" "}
           {formatCurrency(minimumAmount, currency as "MZN" | "ZAR")}
         </p>
       </div>
