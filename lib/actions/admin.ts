@@ -354,6 +354,57 @@ export async function adminResetUserPassword(userId: string, newPassword: string
   return { ok: true };
 }
 
+// Lets an admin grant a producer live-mode API access directly — for a
+// chosen period, or permanently — without them paying the 300 MT unlock
+// or using their one-time free 24h trial. durationHours=null means
+// permanent; a temporary grant only ever extends production_access_expires_at,
+// never touching production_unlocked_at (so it can't accidentally downgrade
+// someone who already has permanent access).
+export async function adminGrantProductionAccess(userId: string, durationHours: number | null) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const updates =
+    durationHours == null
+      ? { production_unlocked_at: new Date().toISOString(), production_access_expires_at: null }
+      : { production_access_expires_at: new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString() };
+
+  const { error } = await supabase.from("profiles").update(updates).eq("id", userId);
+  if (error) return { error: error.message };
+
+  await supabase.from("logs").insert({
+    actor_id: admin.user.id,
+    action: "admin_grant_production_access",
+    target_table: "profiles",
+    target_id: userId,
+    metadata: { duration_hours: durationHours },
+  });
+
+  return { ok: true };
+}
+
+export async function adminRevokeProductionAccess(userId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ production_unlocked_at: null, production_access_expires_at: null })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  await supabase.from("logs").insert({
+    actor_id: admin.user.id,
+    action: "admin_revoke_production_access",
+    target_table: "profiles",
+    target_id: userId,
+  });
+
+  return { ok: true };
+}
+
 export async function updateUserRole(userId: string, role: UserRole) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

@@ -7,7 +7,9 @@ import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { PrivateMessageForm } from "@/components/admin/private-message-form";
 import { ResetPasswordForm } from "@/components/admin/reset-password-form";
+import { ProductionAccessForm } from "@/components/admin/production-access-form";
 import { getUserDetail } from "@/lib/data/admin";
+import { hasActiveProductionAccess } from "@/lib/production-access";
 import { formatCurrency } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -28,6 +30,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
   const { profile, products, ordersAsProducer, purchasesAsBuyer, withdrawals } = detail;
   const currency = profile.currency as "MZN" | "ZAR";
+  const productionAccess = hasActiveProductionAccess(profile);
 
   return (
     <div className="space-y-6">
@@ -72,8 +75,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </div>
           <div>
             <p className="text-xs text-muted-foreground">API produção</p>
-            <Badge variant={profile.production_unlocked_at ? "success" : "secondary"}>
-              {profile.production_unlocked_at ? "Desbloqueada" : "Bloqueada"}
+            <Badge variant={productionAccess ? "success" : "secondary"}>
+              {profile.production_unlocked_at
+                ? "Desbloqueada (permanente)"
+                : productionAccess
+                  ? "Ativa (temporária)"
+                  : "Bloqueada"}
             </Badge>
           </div>
           <div>
@@ -97,6 +104,26 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <Card>
           <CardContent className="p-6">
             <ResetPasswordForm userId={profile.id} userName={profile.name} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="mb-3 font-semibold">Acesso de produção (API)</h2>
+        <Card>
+          <CardContent className="space-y-3 p-6">
+            <p className="text-sm text-muted-foreground">
+              {profile.production_unlocked_at ? (
+                <>Desbloqueado permanentemente em {new Date(profile.production_unlocked_at).toLocaleDateString("pt-MZ")}.</>
+              ) : productionAccess && profile.production_access_expires_at ? (
+                <>Acesso temporário ativo até {new Date(profile.production_access_expires_at).toLocaleString("pt-MZ")}.</>
+              ) : profile.production_access_expires_at ? (
+                <>Acesso temporário expirou em {new Date(profile.production_access_expires_at).toLocaleString("pt-MZ")}.</>
+              ) : (
+                <>Sem acesso de produção — ativa aqui um período, sem precisar de pagamento.</>
+              )}
+            </p>
+            <ProductionAccessForm userId={profile.id} hasAccess={productionAccess} />
           </CardContent>
         </Card>
       </div>
