@@ -319,7 +319,10 @@ export interface B2CAttempt {
   id: string;
   created_at: string;
   withdrawalId: string | null;
+  manual: boolean;
   producerName: string;
+  destination: string | null;
+  note: string | null;
   amount: number;
   netAmount: number;
   currency: string;
@@ -341,11 +344,15 @@ export async function getB2CHistory(limit = 100): Promise<B2CAttempt[]> {
 
   return ((data ?? []) as LogEntry[]).map((log) => {
     const m = (log.metadata ?? {}) as Record<string, unknown>;
+    const manual = Boolean(m.manual);
     return {
       id: log.id,
       created_at: log.created_at,
       withdrawalId: log.target_id,
-      producerName: (m.producer_name as string) ?? "—",
+      manual,
+      producerName: manual ? "Pagamento manual (admin)" : (m.producer_name as string) ?? "—",
+      destination: (m.destination as string | null) ?? null,
+      note: (m.note as string | null) ?? null,
       amount: (m.amount as number) ?? 0,
       netAmount: (m.net_amount as number) ?? 0,
       currency: (m.currency as string) ?? "MZN",

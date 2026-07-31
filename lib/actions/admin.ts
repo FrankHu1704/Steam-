@@ -144,9 +144,26 @@ export async function sendManualB2CPayout(input: {
   });
 
   const supabase = createAdminClient();
+  // Logged under the same action as payWithdrawalB2C's attempts so both
+  // show up together in the admin "Histórico de B2C" — the `manual` flag
+  // and `destination`/`note` fields distinguish this ad-hoc payout (no
+  // withdrawal request behind it) from a producer's own levantamento.
   await supabase.from("logs").insert({
-    action: "admin_manual_b2c",
-    metadata: { admin_id: admin.user.id, provider: providerName, ...input, result },
+    action: "b2c_payout_attempt",
+    metadata: {
+      admin_id: admin.user.id,
+      manual: true,
+      destination: input.destination,
+      note: input.note ?? null,
+      amount: input.amount,
+      net_amount: input.amount,
+      currency: "MZN",
+      payout_method: input.method,
+      provider: providerName,
+      success: result.success && result.status === "success",
+      error: result.success ? null : result.error ?? null,
+      reference: result.providerReference ?? result.reference ?? null,
+    },
   });
 
   if (!result.success || result.status !== "success") {

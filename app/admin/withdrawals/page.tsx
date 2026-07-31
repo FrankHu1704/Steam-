@@ -1,8 +1,9 @@
 import { Wallet, Zap, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/badge";
+import { Badge, StatusBadge } from "@/components/ui/badge";
 import { WithdrawalReviewActions } from "@/components/admin/withdrawal-review-actions";
 import { ManualB2CForm } from "@/components/admin/manual-b2c-form";
+import { ProcessorSelect } from "@/components/admin/processor-select";
 import { getAllWithdrawals, getB2CHistory } from "@/lib/data/admin";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider, type PaymentProviderName } from "@/lib/payments";
 import { formatCurrency } from "@/lib/utils";
@@ -13,12 +14,13 @@ const PROVIDER_LABEL: Record<PaymentProviderName, string> = {
   debito_pay: "Debito Pay",
   netshop: "NetShop",
 };
+const ALL_PROVIDERS: PaymentProviderName[] = ["debito_pay", "zumbopay", "netshop"];
 
 export default async function AdminWithdrawalsPage() {
   const providerName = await getActivePaymentProvider();
-  const [withdrawals, wallets, b2cHistory] = await Promise.all([
+  const [withdrawals, walletsByProvider, b2cHistory] = await Promise.all([
     getAllWithdrawals(),
-    providerModule(providerName).getWalletBalances().catch(() => []),
+    Promise.all(ALL_PROVIDERS.map((p) => providerModule(p).getWalletBalances().catch(() => []))),
     getB2CHistory(),
   ]);
 
@@ -30,33 +32,60 @@ export default async function AdminWithdrawalsPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 font-semibold">Saldo no {PROVIDER_LABEL[providerName]} (processador ativo)</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {wallets.length === 0 ? (
-            <Card className="sm:col-span-2">
-              <CardContent className="p-6 text-sm text-muted-foreground">
-                {providerName === "netshop"
-                  ? "O NetShop não disponibiliza consulta de saldo pela API pública — verifique o saldo diretamente no painel deles."
-                  : `Não foi possível obter o saldo do ${PROVIDER_LABEL[providerName]} agora — verifique se as chaves de API estão configuradas.`}
-              </CardContent>
-            </Card>
-          ) : (
-            wallets.map((w) => (
-              <Card key={w.walletId}>
-                <CardContent className="flex items-center gap-4 p-6">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white">
-                    <Wallet className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{METHOD_LABEL[w.method] ?? w.method}</p>
-                    <p className="text-xl font-bold">
-                      {w.balance != null ? formatCurrency(w.balance, (w.currency as "MZN" | "ZAR") ?? "MZN") : "Indisponível"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <h2 className="mb-3 font-semibold">Processador ativo</h2>
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-4 p-6">
+            <ProcessorSelect active={providerName} />
+            <p className="text-xs text-muted-foreground">
+              Define qual processador é usado no checkout e nos levantamentos automáticos (B2C) da PagaJá.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="mb-3 font-semibold">Saldos por processador</h2>
+        <div className="space-y-4">
+          {ALL_PROVIDERS.map((p, i) => {
+            const wallets = walletsByProvider[i];
+            return (
+              <div key={p}>
+                <div className="mb-2 flex items-center gap-2">
+                  <p className="text-sm font-medium">{PROVIDER_LABEL[p]}</p>
+                  {p === providerName && <Badge variant="success">Ativo</Badge>}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {wallets.length === 0 ? (
+                    <Card className="sm:col-span-2">
+                      <CardContent className="p-6 text-sm text-muted-foreground">
+                        {p === "netshop"
+                          ? "O NetShop não disponibiliza consulta de saldo pela API pública — verifique o saldo diretamente no painel deles."
+                          : `Não foi possível obter o saldo do ${PROVIDER_LABEL[p]} agora — verifique se as chaves de API estão configuradas.`}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    wallets.map((w) => (
+                      <Card key={w.walletId}>
+                        <CardContent className="flex items-center gap-4 p-6">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white">
+                            <Wallet className="h-5 w-5" />
+                          </span>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{METHOD_LABEL[w.method] ?? w.method}</p>
+                            <p className="text-xl font-bold">
+                              {w.balance != null
+                                ? formatCurrency(w.balance, (w.currency as "MZN" | "ZAR") ?? "MZN")
+                                : "Indisponível"}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -117,7 +146,8 @@ export default async function AdminWithdrawalsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
-                      <th className="p-4 font-medium">Produtor</th>
+                      <th className="p-4 font-medium">Tipo</th>
+                      <th className="p-4 font-medium">Produtor / Destino</th>
                       <th className="p-4 font-medium">Valor</th>
                       <th className="p-4 font-medium">Método</th>
                       <th className="p-4 font-medium">Processador</th>
@@ -128,7 +158,21 @@ export default async function AdminWithdrawalsPage() {
                   <tbody>
                     {b2cHistory.map((attempt) => (
                       <tr key={attempt.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
-                        <td className="p-4 font-medium">{attempt.producerName}</td>
+                        <td className="p-4">
+                          <Badge variant={attempt.manual ? "secondary" : "default"}>
+                            {attempt.manual ? "Manual" : "Levantamento"}
+                          </Badge>
+                        </td>
+                        <td className="p-4 font-medium">
+                          {attempt.manual ? (
+                            <>
+                              {attempt.destination ?? "—"}
+                              {attempt.note && <span className="block text-xs font-normal text-muted-foreground">{attempt.note}</span>}
+                            </>
+                          ) : (
+                            attempt.producerName
+                          )}
+                        </td>
                         <td className="p-4">{formatCurrency(attempt.netAmount, attempt.currency as "MZN" | "ZAR")}</td>
                         <td className="p-4 capitalize text-muted-foreground">
                           {METHOD_LABEL[attempt.payoutMethod] ?? attempt.payoutMethod}

@@ -414,6 +414,73 @@ export async function sendBuyerReceiptEmail(input: { buyerEmail: string; product
   });
 }
 
+function emailBreakdownTable(rows: { label: string; count?: number; total: string }[], emptyText: string): string {
+  if (rows.length === 0) {
+    return emailParagraph(`<span style="color:#9ca3af;font-size:13px;">${emptyText}</span>`);
+  }
+  const rowsHtml = rows
+    .map(
+      (r) => `
+        <tr>
+          <td style="padding:7px 0;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;">${r.label}${r.count != null ? ` <span style="color:#9ca3af;">× ${r.count}</span>` : ""}</td>
+          <td style="padding:7px 0;font-size:13px;font-weight:600;color:#111827;text-align:right;border-bottom:1px solid #f3f4f6;">${r.total}</td>
+        </tr>
+      `
+    )
+    .join("");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">${rowsHtml}</table>`;
+}
+
+export async function sendDailySalesReportEmail(input: {
+  producerEmail: string;
+  producerName: string;
+  dateLabel: string;
+  currency: "MZN" | "ZAR";
+  salesCount: number;
+  totalSold: number;
+  sellerRevenue: number;
+  totalWithdrawn: number;
+  salesByProduct: { title: string; count: number; total: number }[];
+  salesByMethod: { method: string; count: number; total: number }[];
+  withdrawalsToday: { method: string; netAmount: number }[];
+}) {
+  const money = (n: number) => `${n.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+
+  await sendEmail({
+    to: input.producerEmail,
+    subject: `O seu relatório diário — ${input.dateLabel}`,
+    html: emailShell(
+      `Relatório de hoje, ${input.dateLabel}`,
+      emailParagraph(`Olá, <strong>${input.producerName}</strong>! Aqui está o seu resumo de vendas e levantamentos de hoje.`) +
+        emailInfoBox([
+          { label: "Vendas totais", value: String(input.salesCount) },
+          { label: "Total vendido", value: money(input.totalSold) },
+          { label: "Receita do vendedor", value: money(input.sellerRevenue), emphasize: true },
+          { label: "Total de levantamentos de hoje", value: money(input.totalWithdrawn) },
+        ]) +
+        `<p style="margin:20px 0 8px;font-size:13px;font-weight:700;color:#111827;">Vendas por produto</p>` +
+        emailBreakdownTable(
+          input.salesByProduct.map((p) => ({ label: p.title, count: p.count, total: money(p.total) })),
+          "Não houve vendas neste período."
+        ) +
+        `<p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#111827;">Vendas por método</p>` +
+        emailBreakdownTable(
+          input.salesByMethod.map((m) => ({ label: m.method, count: m.count, total: money(m.total) })),
+          "Não houve vendas neste período."
+        ) +
+        `<p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#111827;">Levantamentos de hoje</p>` +
+        emailBreakdownTable(
+          input.withdrawalsToday.map((w) => ({ label: w.method, total: money(w.netAmount) })),
+          "Não houve levantamentos neste período."
+        ) +
+        emailButton("Ver Painel", `${siteUrl()}/dashboard`) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Recebe este relatório automaticamente todos os dias às 17h30, enquanto tiver uma conta de produtor ativa na PagaJá.</span>`
+        )
+    ),
+  });
+}
+
 export async function sendAdminMessageEmail(input: { to: string; subject: string; message: string }) {
   await sendEmail({
     to: input.to,

@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/abandoned-carts",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/daily-report",
+      "schedule": "30 15 * * *"
     }
   ]
 }
