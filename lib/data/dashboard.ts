@@ -76,7 +76,10 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
       profitMonth += order.total_amount - (order.affiliate_commission_amount ?? 0);
     }
 
+    // Manual API charges (no product_id) aren't ranked here — there's no
+    // product to attribute the sale to.
     const productId = order.products?.id ?? order.product_id;
+    if (!productId) continue;
     const entry = productMap.get(productId) ?? {
       id: productId,
       title: order.products?.title ?? "Produto",

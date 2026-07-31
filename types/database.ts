@@ -69,6 +69,7 @@ export interface Profile {
   balance_pending: number;
   currency: string;
   production_unlocked_at: string | null;
+  production_access_expires_at: string | null;
   recruited_by_employee_id: string | null;
   lifetime_sales_count: number;
   balance_available_dev: number;
@@ -210,7 +211,7 @@ export interface Coupon {
 
 export interface Order {
   id: string;
-  product_id: string;
+  product_id: string | null;
   producer_id: string;
   buyer_id: string | null;
   buyer_name: string;
@@ -237,6 +238,9 @@ export interface Order {
   upsell_of_order_id: string | null;
   abandoned_notified_at: string | null;
   source: "marketplace" | "api";
+  // Only set for "manual" API charges (no product_id) — what the charge
+  // was for, shown in place of a product title in emails/notifications.
+  description: string | null;
 }
 
 export interface OrderBump {

@@ -248,6 +248,99 @@ export async function createOrder(input: CreateOrderInput) {
   };
 }
 
+interface CreateManualOrderInput {
+  producerId: string;
+  amount: number;
+  currency: "MZN" | "ZAR";
+  description?: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone?: string;
+  paymentMethod: PaymentMethod;
+  returnUrl?: string;
+}
+
+// Used only by the developer API when a charge is created without a
+// product_id (an "amount" is given instead) — no product record backs
+// this order, so there's no digital delivery, order bump, or affiliate
+// commission; it's a plain charge for an arbitrary amount, same as most
+// external payment-gateway APIs work.
+export async function createManualOrder(input: CreateManualOrderInput) {
+  const supabase = createAdminClient();
+
+  const providerName = await getActivePaymentProvider();
+  if (!methodsForProvider(providerName, input.currency).includes(input.paymentMethod)) {
+    return { error: "Método de pagamento indisponível." };
+  }
+
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      product_id: null,
+      producer_id: input.producerId,
+      buyer_id: null,
+      buyer_name: input.buyerName,
+      buyer_email: input.buyerEmail,
+      buyer_phone: input.buyerPhone ?? null,
+      amount: input.amount,
+      discount_amount: 0,
+      coupon_id: null,
+      total_amount: input.amount,
+      currency: input.currency,
+      status: "pending",
+      payment_method: input.paymentMethod,
+      affiliate_id: null,
+      affiliate_commission_amount: 0,
+      description: input.description ?? null,
+      source: "api",
+    })
+    .select("id")
+    .single();
+
+  if (orderError || !order) return { error: orderError?.message ?? "Falha ao criar o pedido." };
+
+  let charge;
+  try {
+    charge = await providerModule(providerName).createCharge({
+      paymentMethod: input.paymentMethod,
+      amount: input.amount,
+      currency: input.currency,
+      sourceId: order.id,
+      customerName: input.buyerName,
+      customerEmail: input.buyerEmail,
+      customerPhone: input.buyerPhone,
+      returnUrl: input.returnUrl,
+    });
+  } catch (err) {
+    await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
+    await notifyProducerOfFailedPayment(order.id);
+    return { error: (err as Error).message };
+  }
+
+  const paymentStatus = charge.status === "success" ? "paid" : (charge.status ?? "pending");
+
+  await supabase.from("payments").insert({
+    order_id: order.id,
+    provider: providerName,
+    provider_payment_id: charge.payment_id,
+    reference: charge.reference,
+    checkout_url: charge.checkout_url,
+    status: paymentStatus,
+    raw_response: charge,
+  });
+
+  if (charge.status === "success") {
+    await supabase.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", order.id);
+    await creditOrder(order.id);
+  }
+
+  return {
+    orderId: order.id as string,
+    status: charge.status,
+    checkoutUrl: charge.checkout_url ?? null,
+  };
+}
+
 export async function getOrderStatus(orderId: string) {
   const supabase = createAdminClient();
   const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();

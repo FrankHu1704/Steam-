@@ -9,7 +9,7 @@ import type { Order } from "@/types/database";
 // break order crediting.
 export async function dispatchPaymentCompletedWebhook(
   order: Order,
-  product: { id: string; title: string }
+  product: { id: string | null; title: string }
 ): Promise<void> {
   const supabase = createAdminClient();
 

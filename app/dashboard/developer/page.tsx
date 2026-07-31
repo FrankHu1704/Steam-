@@ -33,6 +33,10 @@ export default async function DeveloperPage() {
         baseUrl={baseUrl}
         productionUnlocked={unlockStatus.unlocked}
         pendingUnlockId={unlockStatus.pendingOrderId}
+        trialActive={unlockStatus.trialActive}
+        trialExpiresAt={unlockStatus.trialExpiresAt}
+        trialExpired={unlockStatus.trialExpired}
+        canStartTrial={unlockStatus.canStartTrial}
       />
     </div>
   );

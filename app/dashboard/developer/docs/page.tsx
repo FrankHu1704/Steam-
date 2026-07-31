@@ -94,11 +94,12 @@ export default function DeveloperDocsPage() {
             testar a sua integração.
           </li>
           <li>
-            <strong>Chave live:</strong> cobranças reais. Requer um pagamento único de 300 MT para desbloquear (em{" "}
+            <strong>Chave live:</strong> cobranças reais. Requer um pagamento único de 300 MT para desbloquear, ou um
+            teste grátis de 24h primeiro (em{" "}
             <Link href="/dashboard/developer" className="text-primary hover:underline">
               Programador
             </Link>
-            ).
+            ) — só pode usar o teste grátis uma vez.
           </li>
         </ul>
       </Section>
@@ -138,7 +139,7 @@ export default function DeveloperDocsPage() {
           venda real — as mesmas taxas, notificações e webhook de <code>payment.completed</code> aplicam-se como no
           checkout normal da PagaJá.
         </p>
-        <p className="text-xs font-semibold text-muted-foreground">Corpo do pedido</p>
+        <p className="text-xs font-semibold text-muted-foreground">Corpo do pedido — com um produto seu</p>
         <Code>{`{
   "product_id": "uuid do seu produto",
   "customer_name": "Nome do cliente",
@@ -146,9 +147,24 @@ export default function DeveloperDocsPage() {
   "customer_phone": "84xxxxxxx",
   "payment_method": "mpesa"
 }`}</Code>
+        <p className="text-xs font-semibold text-muted-foreground">
+          Corpo do pedido — cobrança sem produto (valor livre)
+        </p>
+        <Code>{`{
+  "amount": 500,
+  "currency": "MZN",
+  "description": "Assinatura mensal do meu app",
+  "customer_name": "Nome do cliente",
+  "customer_email": "cliente@exemplo.com",
+  "customer_phone": "84xxxxxxx",
+  "payment_method": "mpesa"
+}`}</Code>
         <p className="text-xs text-muted-foreground">
-          <code>product_id</code>, <code>customer_name</code> e <code>customer_email</code> são obrigatórios.{" "}
-          <code>payment_method</code> aceita <code>mpesa</code>, <code>emola</code>, <code>mkesh</code> ou{" "}
+          <code>customer_name</code> e <code>customer_email</code> são sempre obrigatórios. Indique{" "}
+          <code>product_id</code> para cobrar um produto já criado na sua conta, <strong>ou</strong>{" "}
+          <code>amount</code> para uma cobrança sem produto associado (valor mínimo 50) — <code>description</code>{" "}
+          e <code>currency</code> (<code>MZN</code> ou <code>ZAR</code>, padrão <code>MZN</code>) são opcionais nesse
+          caso. <code>payment_method</code> aceita <code>mpesa</code>, <code>emola</code>, <code>mkesh</code> ou{" "}
           <code>visa_mastercard</code> (nem todos disponíveis em todo o momento — depende do processador ativo da
           PagaJá); o padrão é <code>mpesa</code>.
         </p>
@@ -353,7 +369,9 @@ function verify(rawBody, signatureHeader, secret) {
             </tr>
             <tr className="border-b border-border/60">
               <td className="py-2 pr-4 font-mono">403</td>
-              <td className="py-2">Modo produção não desbloqueado (chave live sem os 300 MT pagos).</td>
+              <td className="py-2">
+                Modo produção não desbloqueado (chave live sem os 300 MT pagos, e sem teste grátis de 24h ativo).
+              </td>
             </tr>
             <tr>
               <td className="py-2 pr-4 font-mono">404</td>

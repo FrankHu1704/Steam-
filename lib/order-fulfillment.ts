@@ -83,9 +83,17 @@ export async function creditOrder(orderId: string): Promise<void> {
     }
   }
 
-  const { data: product } = await supabase.from("products").select("title").eq("id", order.product_id).single();
+  // "Manual" API charges (no product_id) have nothing to look up here —
+  // order.description stands in for the product title in every message
+  // below.
+  const product = order.product_id
+    ? (await supabase.from("products").select("title").eq("id", order.product_id).single()).data
+    : null;
+  const productLabel = product?.title ?? order.description ?? "o seu produto";
 
-  await supabase.rpc("increment_product_sales", { p_id: order.product_id });
+  if (order.product_id) {
+    await supabase.rpc("increment_product_sales", { p_id: order.product_id });
+  }
 
   if (order.affiliate_id && commission > 0) {
     const { data: affiliate } = await supabase.from("affiliates").select("*").eq("id", order.affiliate_id).single();
@@ -113,12 +121,17 @@ export async function creditOrder(orderId: string): Promise<void> {
   }
 
   // Grant downloads for every file on the purchased product (and any
-  // order-bump products), each with its own signed-access token.
+  // order-bump products), each with its own signed-access token. Manual
+  // API charges have no product_id at all, so there's nothing to grant.
   const { data: bumpRows } = await supabase.from("order_bumps").select("bump_product_id").eq("order_id", order.id);
-  const productIds = [order.product_id, ...(bumpRows ?? []).map((b) => b.bump_product_id)];
-  const { data: files } = await supabase.from("product_files").select("*").in("product_id", productIds);
-  if (files?.length) {
-    await supabase.from("downloads").insert(files.map((f) => ({ order_id: order.id, product_file_id: f.id })));
+  const productIds = [order.product_id, ...(bumpRows ?? []).map((b) => b.bump_product_id)].filter(
+    (id): id is string => !!id
+  );
+  if (productIds.length > 0) {
+    const { data: files } = await supabase.from("product_files").select("*").in("product_id", productIds);
+    if (files?.length) {
+      await supabase.from("downloads").insert(files.map((f) => ({ order_id: order.id, product_file_id: f.id })));
+    }
   }
 
   await supabase.from("notifications").insert({
@@ -130,7 +143,7 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   await sendPushToUser(order.producer_id, {
     title: "Nova venda! 🎉",
-    body: `Vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
+    body: `Vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
     url: "/dashboard",
   });
 
@@ -142,11 +155,11 @@ export async function creditOrder(orderId: string): Promise<void> {
       user_id: adminProfile.id,
       type: "sale",
       title: "Nova venda",
-      message: `${producer?.name ?? "Um produtor"} vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
+      message: `${producer?.name ?? "Um produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
     });
     await sendPushToUser(adminProfile.id, {
       title: "Nova venda 🎉",
-      body: `${producer?.name ?? "Produtor"} vendeu ${product?.title ?? "um produto"} por ${order.total_amount} ${order.currency}.`,
+      body: `${producer?.name ?? "Produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
       url: "/admin/orders",
     });
   }
@@ -154,7 +167,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   if (producer?.email) {
     await sendSaleNotificationEmail({
       producerEmail: producer.email,
-      productTitle: product?.title ?? "o seu produto",
+      productTitle: productLabel,
       amount: order.total_amount,
       netAmount: ownerNet,
       currency: order.currency,
@@ -164,7 +177,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   if (producer?.phone) {
     await sendSaleSms({
       phone: producer.phone,
-      productTitle: product?.title ?? "o seu produto",
+      productTitle: productLabel,
       amount: order.total_amount,
       currency: order.currency,
     });
@@ -175,7 +188,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   if (order.buyer_email) {
     await sendBuyerReceiptEmail({
       buyerEmail: order.buyer_email,
-      productTitle: product?.title ?? "o seu produto",
+      productTitle: productLabel,
       accessUrl,
     });
   }
@@ -183,12 +196,12 @@ export async function creditOrder(orderId: string): Promise<void> {
   if (order.buyer_phone) {
     await sendBuyerWhatsappReceipt({
       phone: order.buyer_phone,
-      productTitle: product?.title ?? "o seu produto",
+      productTitle: productLabel,
       accessUrl,
     });
   }
 
-  await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: product?.title ?? "Produto" });
+  await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: productLabel });
 
   await supabase
     .from("orders")
@@ -264,7 +277,9 @@ export async function refundOrder(orderId: string): Promise<void> {
     .update({ status: "refunded", refunded_at: new Date().toISOString() })
     .eq("id", order.id);
 
-  const { data: product } = await supabase.from("products").select("title").eq("id", order.product_id).single();
+  const product = order.product_id
+    ? (await supabase.from("products").select("title").eq("id", order.product_id).single()).data
+    : null;
 
   await supabase.from("notifications").insert({
     user_id: order.producer_id,
@@ -278,7 +293,7 @@ export async function refundOrder(orderId: string): Promise<void> {
       producerEmail: producer.email,
       producerName: producer.name,
       buyerName: order.buyer_name,
-      productTitle: product?.title ?? "o seu produto",
+      productTitle: product?.title ?? order.description ?? "o seu produto",
       amount: order.total_amount,
       currency: order.currency,
       newBalance,

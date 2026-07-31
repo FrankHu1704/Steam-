@@ -18,6 +18,7 @@ import {
   deleteDeveloperWebhook,
   requestProductionUnlock,
   checkProductionUnlockStatus,
+  startProductionTrial,
 } from "@/lib/actions/developer";
 import type { ApiKey, ApiKeyMode, DeveloperWebhook } from "@/types/database";
 
@@ -61,12 +62,20 @@ export function DeveloperApiPanel({
   baseUrl,
   productionUnlocked,
   pendingUnlockId,
+  trialActive,
+  trialExpiresAt,
+  trialExpired,
+  canStartTrial,
 }: {
   apiKeys: ApiKey[];
   webhook: DeveloperWebhook | null;
   baseUrl: string;
   productionUnlocked: boolean;
   pendingUnlockId?: string;
+  trialActive: boolean;
+  trialExpiresAt?: string;
+  trialExpired: boolean;
+  canStartTrial: boolean;
 }) {
   const [keys, setKeys] = useState(apiKeys);
 
@@ -92,8 +101,28 @@ export function DeveloperApiPanel({
   const [unlockPhone, setUnlockPhone] = useState("");
   const [unlocking, setUnlocking] = useState(!!pendingUnlockId);
 
+  const [trialIsActive, setTrialIsActive] = useState(trialActive);
+  const [trialExpiry, setTrialExpiry] = useState(trialExpiresAt);
+  const [trialCanStart, setTrialCanStart] = useState(canStartTrial);
+  const [startingTrial, setStartingTrial] = useState(false);
+
   const hasTestKey = keys.some((k) => k.mode === "test" && !k.revoked_at);
   const step2Unlocked = hasTestKey || unlocked;
+  const canCreateLiveKeys = unlocked || trialIsActive;
+
+  async function handleStartTrial() {
+    setStartingTrial(true);
+    const res = await startProductionTrial();
+    setStartingTrial(false);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    setTrialIsActive(true);
+    setTrialCanStart(false);
+    setTrialExpiry(res.expiresAt);
+    toast.success("Teste grátis de 24h ativado!");
+  }
 
   async function createKey(
     mode: ApiKeyMode,
@@ -266,9 +295,17 @@ export function DeveloperApiPanel({
               Crie e confirme uma chave de teste no passo 1 primeiro. Depois disso pode desbloquear cobranças reais
               com um pagamento único de 300 MT.
             </p>
-          ) : unlocked ? (
+          ) : canCreateLiveKeys ? (
             <>
               <p className="mt-1 text-sm text-muted-foreground">Crie uma chave live para cobrar de verdade.</p>
+
+              {trialIsActive && !unlocked && trialExpiry && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-600">
+                  <Unlock className="h-3.5 w-3.5" /> Teste grátis ativo até{" "}
+                  {new Date(trialExpiry).toLocaleString("pt-MZ")} — depois disso precisa desbloquear o acesso
+                  permanente (300 MT) para continuar a usar chaves live.
+                </p>
+              )}
 
               {revealedLiveSecret && <RevealedSecret {...revealedLiveSecret} />}
 
@@ -292,9 +329,37 @@ export function DeveloperApiPanel({
             </>
           ) : (
             <>
+              {trialExpired && (
+                <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-destructive">
+                  <Lock className="h-3.5 w-3.5" /> O seu teste grátis de 24h expirou. Desbloqueie o acesso permanente
+                  para continuar a usar chaves live.
+                </p>
+              )}
               <p className="mt-1 text-sm text-muted-foreground">
-                Tudo a funcionar no teste? Desbloqueie cobranças reais com um pagamento único.
+                Tudo a funcionar no teste? Desbloqueie cobranças reais com um pagamento único, ou experimente grátis
+                primeiro.
               </p>
+
+              {trialCanStart && (
+                <div className="mt-4 max-w-sm rounded-2xl border border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950">
+                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                    Teste grátis de 24h
+                  </p>
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                    Crie chaves live e experimente cobranças reais durante 24 horas, sem pagar nada. Ao fim do prazo,
+                    perde o acesso até desbloquear o modo produção permanente.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleStartTrial}
+                    disabled={startingTrial}
+                    className="mt-3 gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Unlock className="h-4 w-4" /> {startingTrial ? "A ativar…" : "Ativar teste grátis de 24h"}
+                  </Button>
+                </div>
+              )}
+
               <div className="mt-4 max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-md">
                 <div className="bg-brand-gradient px-5 py-4 text-white">
                   <p className="flex items-center gap-1.5 text-xs font-semibold uppercase text-white/80">

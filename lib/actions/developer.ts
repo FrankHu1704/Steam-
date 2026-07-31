@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashSecret, generateClientCredentials, generateWebhookSecret, issueAccessToken } from "@/lib/api-auth";
 import { getActivePaymentProvider, providerModule, type PaymentProviderName } from "@/lib/payments";
+import { hasActiveProductionAccess, canStartProductionTrial, PRODUCTION_TRIAL_HOURS } from "@/lib/production-access";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { ApiKey, DeveloperWebhook, ApiKeyMode } from "@/types/database";
 
@@ -30,11 +31,11 @@ export async function createApiKey(
   if (mode === "live") {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("production_unlocked_at")
+      .select("production_unlocked_at, production_access_expires_at")
       .eq("id", user.id)
       .single();
-    if (!profile?.production_unlocked_at) {
-      return { error: "Desbloqueie o modo produção primeiro (300 MT, pagamento único)." };
+    if (!profile || !hasActiveProductionAccess(profile)) {
+      return { error: "Desbloqueie o modo produção primeiro (300 MT, pagamento único, ou teste grátis de 24h)." };
     }
   }
 
@@ -59,19 +60,30 @@ export async function createApiKey(
 export async function getProductionUnlockStatus(): Promise<{
   unlocked: boolean;
   pendingOrderId?: string;
+  trialActive: boolean;
+  trialExpiresAt?: string;
+  trialExpired: boolean;
+  canStartTrial: boolean;
 }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { unlocked: false };
+  if (!user) return { unlocked: false, trialActive: false, trialExpired: false, canStartTrial: false };
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("production_unlocked_at")
+    .select("production_unlocked_at, production_access_expires_at")
     .eq("id", user.id)
     .single();
-  if (profile?.production_unlocked_at) return { unlocked: true };
+
+  if (profile?.production_unlocked_at) {
+    return { unlocked: true, trialActive: false, trialExpired: false, canStartTrial: false };
+  }
+
+  const trialActive = !!profile?.production_access_expires_at && hasActiveProductionAccess(profile);
+  const trialExpired =
+    !!profile?.production_access_expires_at && !trialActive && !profile?.production_unlocked_at;
 
   const { data: pending } = await supabase
     .from("production_unlocks")
@@ -82,7 +94,41 @@ export async function getProductionUnlockStatus(): Promise<{
     .limit(1)
     .maybeSingle();
 
-  return { unlocked: false, pendingOrderId: pending?.id };
+  return {
+    unlocked: false,
+    pendingOrderId: pending?.id,
+    trialActive,
+    trialExpiresAt: profile?.production_access_expires_at ?? undefined,
+    trialExpired,
+    canStartTrial: profile ? canStartProductionTrial(profile) : false,
+  };
+}
+
+// Free, one-time, 24h window to try live-mode API charges before
+// committing to the permanent 300 MT unlock — no payment involved.
+export async function startProductionTrial(): Promise<ActionResult & { expiresAt?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("production_unlocked_at, production_access_expires_at")
+    .eq("id", user.id)
+    .single();
+  if (!profile) return { error: "Perfil não encontrado." };
+  if (!canStartProductionTrial(profile)) {
+    return { error: "O teste grátis já foi usado ou o modo produção já está desbloqueado." };
+  }
+
+  const expiresAt = new Date(Date.now() + PRODUCTION_TRIAL_HOURS * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("profiles").update({ production_access_expires_at: expiresAt }).eq("id", user.id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/developer");
+  return { expiresAt };
 }
 
 export async function requestProductionUnlock(

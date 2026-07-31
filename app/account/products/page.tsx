@@ -11,15 +11,16 @@ import { getCurrentUserAndProfile } from "@/lib/data/profile";
 export default async function MyProductsPage() {
   const { user } = await getCurrentUserAndProfile();
   const orders = await getMyOrders();
-  const paid = orders.filter((o) => o.status === "paid");
+  // Manual API charges (no product_id) have nothing to show here.
+  const paid = orders.filter((o) => o.status === "paid" && o.product_id);
 
   const byProduct = new Map<string, (typeof paid)[number]>();
   for (const order of paid) {
-    if (!byProduct.has(order.product_id)) byProduct.set(order.product_id, order);
+    if (!byProduct.has(order.product_id!)) byProduct.set(order.product_id!, order);
   }
   const products = Array.from(byProduct.values());
   const [courseFlags, reviewedOrderIds] = await Promise.all([
-    Promise.all(products.map((p) => productHasCourseContent(p.product_id))),
+    Promise.all(products.map((p) => productHasCourseContent(p.product_id!))),
     user ? getReviewedOrderIds(user.id) : Promise.resolve(new Set<string>()),
   ]);
 
