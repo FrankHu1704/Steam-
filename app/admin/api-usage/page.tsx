@@ -1,4 +1,5 @@
-import { KeyRound, Activity, Store } from "lucide-react";
+import Link from "next/link";
+import { KeyRound, Activity, Store, Terminal } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { getApiUsageSummary } from "@/lib/data/admin";
@@ -64,6 +65,7 @@ export default async function AdminApiUsagePage() {
                     <th className="p-4 font-medium">Chaves de teste</th>
                     <th className="p-4 font-medium">Chaves live</th>
                     <th className="p-4 font-medium">Chamadas (30 dias)</th>
+                    <th className="p-4 font-medium"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -76,6 +78,14 @@ export default async function AdminApiUsagePage() {
                       <td className="p-4">{p.testKeys}</td>
                       <td className="p-4">{p.liveKeys}</td>
                       <td className="p-4">{p.callsLast30Days}</td>
+                      <td className="p-4">
+                        <Link
+                          href={`/admin/api-usage/${p.producerId}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                        >
+                          <Terminal className="h-3.5 w-3.5" /> Ver logs
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

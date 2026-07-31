@@ -253,6 +253,30 @@ export async function getApiUsageSummary(): Promise<{
   };
 }
 
+export async function getProducerApiLogs(
+  producerId: string,
+  limit = 300
+): Promise<{ producerName: string; producerEmail: string; logs: ApiCallLog[] } | null> {
+  const supabase = await createClient();
+
+  const [{ data: profile }, { data: logs }] = await Promise.all([
+    supabase.from("profiles").select("name, email").eq("id", producerId).single(),
+    supabase
+      .from("api_call_logs")
+      .select("*")
+      .eq("producer_id", producerId)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+  ]);
+  if (!profile) return null;
+
+  return {
+    producerName: profile.name,
+    producerEmail: profile.email,
+    logs: (logs as ApiCallLog[]) ?? [],
+  };
+}
+
 export interface AdminUserDetail {
   profile: Profile;
   products: Product[];
