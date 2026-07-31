@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { TokenTester } from "@/components/developer/token-tester";
 import {
   createApiKey,
   revokeApiKey,
@@ -416,6 +417,22 @@ export function DeveloperApiPanel({
                 )}
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-primary" />
+            <h2 className="font-semibold">Obter token de acesso</h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cole o <code>client_id</code> e <code>client_secret</code> de uma das suas chaves (guardados quando a
+            criou) para obter um <code>access_token</code> diretamente aqui — sem precisar de correr um comando.
+          </p>
+          <div className="mt-4">
+            <TokenTester />
           </div>
         </CardContent>
       </Card>

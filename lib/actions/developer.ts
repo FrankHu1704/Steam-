@@ -1,9 +1,10 @@
 "use server";
 
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { hashSecret, generateClientCredentials, generateWebhookSecret } from "@/lib/api-auth";
+import { hashSecret, generateClientCredentials, generateWebhookSecret, issueAccessToken } from "@/lib/api-auth";
 import { getActivePaymentProvider, providerModule, type PaymentProviderName } from "@/lib/payments";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { ApiKey, DeveloperWebhook, ApiKeyMode } from "@/types/database";
@@ -157,6 +158,40 @@ export async function checkProductionUnlockStatus(unlockId: string): Promise<{ s
     }
   }
   return { status: "pending" };
+}
+
+// Lets a producer get an access_token straight from the dashboard, without
+// needing to run a curl command themselves — same credential exchange as
+// POST /api/v1/oauth/token, just called directly instead of over HTTP.
+export async function getAccessToken(
+  clientId: string,
+  clientSecret: string
+): Promise<ActionResult & { accessToken?: string; expiresIn?: number }> {
+  if (!clientId.trim() || !clientSecret.trim()) {
+    return { error: "client_id e client_secret são obrigatórios." };
+  }
+
+  const admin = createAdminClient();
+  const { data: apiKey } = await admin
+    .from("api_keys")
+    .select("*")
+    .eq("client_id", clientId.trim())
+    .is("revoked_at", null)
+    .single();
+
+  if (!apiKey) return { error: "Credenciais inválidas." };
+
+  const providedHash = hashSecret(clientSecret.trim());
+  let matches = false;
+  try {
+    matches = crypto.timingSafeEqual(Buffer.from(apiKey.client_secret_hash), Buffer.from(providedHash));
+  } catch {
+    matches = false;
+  }
+  if (!matches) return { error: "Credenciais inválidas." };
+
+  const { token, expiresIn } = await issueAccessToken(apiKey.id, apiKey.producer_id);
+  return { accessToken: token, expiresIn };
 }
 
 export async function revokeApiKey(id: string): Promise<ActionResult> {
