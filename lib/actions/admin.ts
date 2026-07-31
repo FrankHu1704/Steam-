@@ -302,6 +302,40 @@ export async function sendPrivateMessage(userId: string, subject: string, messag
   return { ok: true };
 }
 
+// Passwords are hashed by Supabase Auth and never recoverable — this is the
+// only legitimate way for an admin to help a locked-out user: set a brand
+// new password directly, without ever seeing/needing the old one.
+export async function adminResetUserPassword(userId: string, newPassword: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (newPassword.length < 8) return { error: "A nova senha deve ter pelo menos 8 caracteres." };
+
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase.from("profiles").select("email, name").eq("id", userId).single();
+  if (!profile) return { error: "Utilizador não encontrado." };
+
+  const { error } = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
+  if (error) return { error: error.message };
+
+  await supabase.from("logs").insert({
+    actor_id: admin.user.id,
+    action: "admin_reset_password",
+    target_table: "profiles",
+    target_id: userId,
+  });
+
+  if (profile.email) {
+    await sendAdminMessageEmail({
+      to: profile.email,
+      subject: "A sua senha foi redefinida",
+      message:
+        "A sua senha na PagaJá foi redefinida por um administrador.\n\nSe pediu esta alteração, já pode entrar com a nova senha. Se não pediu, contacte-nos imediatamente respondendo a este email.",
+    });
+  }
+
+  return { ok: true };
+}
+
 export async function updateUserRole(userId: string, role: UserRole) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

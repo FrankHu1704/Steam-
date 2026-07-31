@@ -6,6 +6,7 @@ import { Badge, StatusBadge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { PrivateMessageForm } from "@/components/admin/private-message-form";
+import { ResetPasswordForm } from "@/components/admin/reset-password-form";
 import { getUserDetail } from "@/lib/data/admin";
 import { formatCurrency } from "@/lib/utils";
 
@@ -87,6 +88,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <Card>
           <CardContent className="p-6">
             <PrivateMessageForm userId={profile.id} userName={profile.name} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="mb-3 font-semibold">Redefinir senha</h2>
+        <Card>
+          <CardContent className="p-6">
+            <ResetPasswordForm userId={profile.id} userName={profile.name} />
           </CardContent>
         </Card>
       </div>
