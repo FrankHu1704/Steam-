@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { CheckCircle2, Copy, KeyRound, Lock, Plus, ReceiptText, ShieldCheck, Trash2, Unlock, Webhook } from "lucide-react";
@@ -470,7 +471,12 @@ export function DeveloperApiPanel({
 
       <Card>
         <CardContent className="space-y-3 p-6">
-          <h2 className="font-semibold">Referência rápida</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold">Referência rápida</h2>
+            <Link href="/dashboard/developer/docs" className="text-xs font-medium text-primary hover:underline">
+              Ver documentação completa →
+            </Link>
+          </div>
           <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">
 {`# 1. Obter o token
 curl -X POST ${baseUrl}/api/v1/oauth/token \\
