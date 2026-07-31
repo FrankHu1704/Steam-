@@ -68,24 +68,26 @@ export function SiteFooter() {
       </div>
       <div className="container mt-10 border-t border-border pt-8">
         <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Parceiros</p>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-          {PARTNERS.map((p) => (
-            <div
-              key={p.name}
-              className={cn(
-                "flex shrink-0 items-center justify-center rounded-xl bg-zinc-950 p-3",
-                p.wide ? "h-16 w-40" : "h-16 w-16"
-              )}
-            >
-              <Image
-                src={p.logo}
-                alt={p.name}
-                width={p.wide ? 160 : 64}
-                height={64}
-                className="h-full w-full object-contain"
-              />
-            </div>
-          ))}
+        <div className="relative mt-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <div className="flex w-max animate-marquee gap-4">
+            {[...PARTNERS, ...PARTNERS].map((p, i) => (
+              <div
+                key={`${p.name}-${i}`}
+                className={cn(
+                  "flex shrink-0 items-center justify-center rounded-xl bg-zinc-950 p-3",
+                  p.wide ? "h-16 w-40" : "h-16 w-16"
+                )}
+              >
+                <Image
+                  src={p.logo}
+                  alt={p.name}
+                  width={p.wide ? 160 : 64}
+                  height={64}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
