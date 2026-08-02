@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -450,6 +450,51 @@ export async function sendBroadcastEmail(subject: string, message: string) {
   if (sent === 0) return { error: "Falha ao enviar — verifique se RESEND_API_KEY está configurada." };
 
   return { ok: true, sent, total: recipients.length };
+}
+
+// "Contas sem produtos ou vendas" — lifetime_sales_count already tracks
+// every paid sale a producer has ever had (incremented in creditOrder), so
+// zero there covers both "never created a product" and "created one but
+// never sold" in a single check.
+export async function getInactiveProducersCount(): Promise<number> {
+  const admin = await requireAdminUser();
+  if (!admin) return 0;
+
+  const supabase = createAdminClient();
+  const { count } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "producer")
+    .eq("lifetime_sales_count", 0);
+
+  return count ?? 0;
+}
+
+export async function sendInstantWithdrawalAnnouncementToInactiveProducers(): Promise<{
+  ok?: boolean;
+  error?: string;
+  sent?: number;
+}> {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: producers } = await supabase
+    .from("profiles")
+    .select("email, name")
+    .eq("role", "producer")
+    .eq("lifetime_sales_count", 0);
+
+  if (!producers || producers.length === 0) return { error: "Nenhuma conta sem vendas encontrada." };
+
+  let sent = 0;
+  for (const producer of producers) {
+    if (!producer.email) continue;
+    await sendInstantWithdrawalAnnouncementEmail({ producerEmail: producer.email, producerName: producer.name });
+    sent += 1;
+  }
+
+  return { ok: true, sent };
 }
 
 export async function updateSetting(key: string, value: unknown) {

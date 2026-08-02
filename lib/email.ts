@@ -294,6 +294,29 @@ export async function sendEmployeeWelcomeEmail(input: {
   });
 }
 
+export async function sendInstantWithdrawalAnnouncementEmail(input: { producerEmail: string; producerName: string }) {
+  await sendEmail({
+    to: input.producerEmail,
+    subject: "🎉 Novidade: Saques instantâneos na PagaJá!",
+    html: emailBannerCard({
+      bannerColor: "#2563EB",
+      icon: "🎉",
+      title: "Saques instantâneos na PagaJá!",
+      bodyHtml:
+        emailParagraph(`Olá, <strong>${input.producerName}</strong>!`) +
+        emailParagraph(
+          `A partir de agora, os teus levantamentos são pagos automaticamente e na hora — sem esperar aprovação do admin. O dinheiro cai na tua conta M-Pesa/e-Mola em até 5 minutos.`
+        ) +
+        emailParagraph(`<strong>Queres testar? É simples:</strong>`) +
+        emailParagraph(
+          `1️⃣ Cria um produto de teste (ex: 20 MT)<br/>2️⃣ Compra o teu próprio produto<br/>3️⃣ Faz o levantamento e vê o dinheiro a cair na hora 🚀`
+        ) +
+        emailButton("Criar produto de teste", `${siteUrl()}/dashboard/products/new`) +
+        emailParagraph(`Qualquer dúvida, fala connosco!`),
+    }),
+  });
+}
+
 export async function sendSaleNotificationEmail(input: {
   producerEmail: string;
   productTitle: string;

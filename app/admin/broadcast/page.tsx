@@ -1,10 +1,12 @@
-import { Megaphone, Users2 } from "lucide-react";
+import { Megaphone, Users2, Rocket } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BroadcastForm } from "@/components/admin/broadcast-form";
+import { InactiveProducersAnnouncement } from "@/components/admin/inactive-producers-announcement";
 import { getAllUsers } from "@/lib/data/admin";
+import { getInactiveProducersCount } from "@/lib/actions/admin";
 
 export default async function AdminBroadcastPage() {
-  const users = await getAllUsers();
+  const [users, inactiveProducersCount] = await Promise.all([getAllUsers(), getInactiveProducersCount()]);
 
   return (
     <div className="space-y-6">
@@ -33,6 +35,17 @@ export default async function AdminBroadcastPage() {
         </CardHeader>
         <CardContent>
           <BroadcastForm userCount={users.length} />
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Rocket className="h-4 w-4" /> Novidade: Saques instantâneos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <InactiveProducersAnnouncement count={inactiveProducersCount} />
         </CardContent>
       </Card>
     </div>
