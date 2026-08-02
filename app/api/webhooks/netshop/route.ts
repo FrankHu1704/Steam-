@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyWebhookSignature, getAuthoritativeStatus } from "@/lib/netshop";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
+import type { PaymentMethod } from "@/lib/debito-pay";
 
 interface WebhookBody {
   event?: string;
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
   // NetShop's own docs call GET /charges/{id} "the source of truth".
   let authoritative;
   try {
-    authoritative = await getAuthoritativeStatus(providerId ?? orderId);
+    authoritative = await getAuthoritativeStatus(providerId ?? orderId, order.payment_method as PaymentMethod);
   } catch (err) {
     await supabase.from("logs").insert({
       action: "netshop_status_check_error",

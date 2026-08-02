@@ -84,7 +84,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
   return json;
 }
 
-export async function checkChargeStatus(paymentId: string) {
+export async function checkChargeStatus(paymentId: string, _paymentMethod?: PaymentMethod) {
   const res = await fetch(`${baseUrl()}/payment-orchestrator`, {
     method: "POST",
     headers: {

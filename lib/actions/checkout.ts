@@ -359,7 +359,10 @@ export async function getOrderStatus(orderId: string) {
       try {
         const providerName: PaymentProviderName =
           payment.provider === "zumbopay" || payment.provider === "netshop" ? payment.provider : "debito_pay";
-        const remote = await providerModule(providerName).checkChargeStatus(payment.provider_payment_id);
+        const remote = await providerModule(providerName).checkChargeStatus(
+          payment.provider_payment_id,
+          order.payment_method as PaymentMethod
+        );
         // remote.status is the provider's vocabulary ("success"/"pending"/
         // "failed"/"expired") — orders.status is the order_status enum,
         // which uses "paid" instead of "success".

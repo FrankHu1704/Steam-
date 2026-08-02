@@ -4,11 +4,17 @@ import type { PaymentMethod } from "@/lib/debito-pay";
 // Server-only module — third payment processor alongside Debito Pay and
 // ZumboPay, selectable via settings.payment_provider. Mirrors the NetShop
 // Gateway API (https://www.netshop.co.mz/api/v1):
-//   - Auth: Authorization: Bearer <api key> + X-Wallet-ID: <6-digit wallet id>
+//   - Auth: Authorization: Bearer <api key> + X-Wallet-ID: <6-digit wallet id>.
+//     The merchant's dashboard (Negócio → Carteiras) shows this isn't one
+//     blanket ID — NetShop creates a SEPARATE wallet per payment method
+//     (each with its own 6-digit id), same model as ZumboPay. Every request
+//     must send the wallet id matching the method actually being charged.
 //   - Charges: POST /charges (mpesa/emola/mkesh confirm in real time; card
 //     returns a hosted_url the customer must be redirected to).
 //   - GET /charges/{id} (id or reference) is the authoritative source of
-//     truth — NetShop itself reconciles anything stuck "pending" >5min.
+//     truth — NetShop itself reconciles anything stuck "pending" >5min. It
+//     must be called with the SAME wallet id the charge was created under,
+//     or NetShop returns 404 charge_not_found.
 //   - Payouts: POST /payouts supports BOTH mpesa and emola B2C (unlike
 //     Debito Pay/ZumboPay, which only automate M-Pesa) — no minimum.
 //   - Webhook signature: hex(hmac_sha256(rawBody, secret)) — no timestamp
@@ -18,9 +24,20 @@ function baseUrl() {
   return process.env.NETSHOP_API_URL || "https://www.netshop.co.mz/api/v1";
 }
 
-async function request(method: string, path: string, body?: unknown) {
+function walletIdForMethod(method: PaymentMethod | "mpesa" | "emola"): string {
+  const byMethod: Partial<Record<string, string | undefined>> = {
+    mpesa: process.env.NETSHOP_WALLET_MPESA,
+    emola: process.env.NETSHOP_WALLET_EMOLA,
+    mkesh: process.env.NETSHOP_WALLET_MKESH,
+    visa_mastercard: process.env.NETSHOP_WALLET_CARD,
+  };
+  const id = byMethod[method];
+  if (!id) throw new Error(`Nenhuma carteira NetShop configurada para "${method}".`);
+  return id;
+}
+
+async function request(method: string, path: string, walletId: string, body?: unknown) {
   const apiKey = process.env.NETSHOP_API_KEY?.trim();
-  const walletId = process.env.NETSHOP_WALLET_ID?.trim();
   if (!apiKey || !walletId) throw new Error("Processador de pagamento não configurado.");
 
   const res = await fetch(`${baseUrl()}${path}`, {
@@ -89,7 +106,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     body.msisdn = toMsisdn(input.customerPhone);
   }
 
-  const { status, json } = await request("POST", "/charges", body);
+  const { status, json } = await request("POST", "/charges", walletIdForMethod(input.paymentMethod), body);
   if (!json?.id) {
     throw new Error(json?.error?.message || json?.error || `Falha no pagamento (HTTP ${status})`);
   }
@@ -110,11 +127,17 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
 
 /** GET /charges/{id} (accepts our id OR reference) — NetShop's own docs call
  * this "the source of truth"; anything stuck pending >5min is reconciled
- * with the provider before this responds. */
+ * with the provider before this responds. Must be called with the wallet id
+ * matching the ORIGINAL charge's method, or NetShop returns 404. */
 export async function getAuthoritativeStatus(
-  chargeIdOrReference: string
+  chargeIdOrReference: string,
+  paymentMethod?: PaymentMethod
 ): Promise<{ status: "success" | "pending" | "failed"; amount?: number; currency?: string }> {
-  const { json } = await request("GET", `/charges/${encodeURIComponent(chargeIdOrReference)}`);
+  const { json } = await request(
+    "GET",
+    `/charges/${encodeURIComponent(chargeIdOrReference)}`,
+    walletIdForMethod(paymentMethod ?? "mpesa")
+  );
   return {
     status: mapStatus(String(json?.status ?? "pending")),
     amount: typeof json?.amount === "number" ? json.amount : undefined,
@@ -122,8 +145,8 @@ export async function getAuthoritativeStatus(
   };
 }
 
-export async function checkChargeStatus(paymentId: string) {
-  const result = await getAuthoritativeStatus(paymentId);
+export async function checkChargeStatus(paymentId: string, paymentMethod?: PaymentMethod) {
+  const result = await getAuthoritativeStatus(paymentId, paymentMethod);
   return { status: result.status };
 }
 
@@ -152,14 +175,19 @@ interface PayoutResult {
  * 422 insufficient_balance. */
 export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
   const reference = `PAYOUT-${Date.now()}`;
-  const { status, json } = await request("POST", "/payouts", {
-    amount: input.amount,
-    currency: "MZN",
-    method: input.method,
-    msisdn: toMsisdn(input.destination),
-    reference,
-    ...(input.notes ? { metadata: { notes: input.notes } } : {}),
-  });
+  const { status, json } = await request(
+    "POST",
+    "/payouts",
+    walletIdForMethod(input.method),
+    {
+      amount: input.amount,
+      currency: "MZN",
+      method: input.method,
+      msisdn: toMsisdn(input.destination),
+      reference,
+      ...(input.notes ? { metadata: { notes: input.notes } } : {}),
+    }
+  );
 
   if (!json?.id) {
     return { success: false, error: json?.error?.message || json?.error || `Falha no pagamento (HTTP ${status})` };

@@ -177,7 +177,7 @@ export async function getAuthoritativeStatus(
   };
 }
 
-export async function checkChargeStatus(paymentId: string) {
+export async function checkChargeStatus(paymentId: string, _paymentMethod?: PaymentMethod) {
   const result = await getAuthoritativeStatus(paymentId);
   return { status: result.status };
 }
