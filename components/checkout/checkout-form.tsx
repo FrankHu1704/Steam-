@@ -70,7 +70,7 @@ export function UpsellOfferCard({ orderId }: { orderId: string }) {
     if (!offer) return;
     setStatus("accepting");
     const result = await acceptUpsellOffer(orderId, offer.productId);
-    if (result.error || !result.orderId) {
+    if ("error" in result || !result.orderId) {
       setStatus("failed");
       return;
     }
@@ -353,17 +353,29 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
         <p className="text-sm text-muted-foreground">
           {requiresPhone
             ? "Verifique o seu telemóvel e aprove a transação."
-            : "Conclua o pagamento na página aberta e volte aqui."}
+            : checkoutUrl
+              ? "Complete o pagamento seguro abaixo."
+              : "Conclua o pagamento na página aberta e volte aqui."}
         </p>
         {checkoutUrl && (
-          <a
-            href={checkoutUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-          >
-            Abrir página de pagamento <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+          <div className="mt-4 space-y-2 text-left">
+            <div className="overflow-hidden rounded-xl border border-border bg-white">
+              <iframe
+                src={checkoutUrl}
+                title="Pagamento seguro"
+                className="h-[560px] w-full"
+                allow="payment"
+              />
+            </div>
+            <a
+              href={checkoutUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            >
+              A página não carrega? Abrir numa nova aba <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
         )}
         {orderId && (
           <Button
