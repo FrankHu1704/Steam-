@@ -6,9 +6,15 @@ import type { PaymentMethod } from "@/lib/debito-pay";
 
 export type PaymentProviderName = "debito_pay" | "zumbopay" | "netshop";
 
+// ZumboPay's Visa/Mastercard flow only offers a hosted checkout page with
+// their own "ZumboPay" branding clearly visible (confirmed live — even
+// embedded in an iframe, the logo still shows) and there is no whitelabel/
+// branding option in their API. Since that name must never be shown to a
+// customer, card payments are left out of this list while ZumboPay is
+// active — only mpesa/emola stay (both a direct STK push, no page at all).
 const PROVIDER_METHODS: Record<PaymentProviderName, PaymentMethod[]> = {
   debito_pay: ["mpesa", "emola", "mkesh", "visa_mastercard", "payfast"],
-  zumbopay: ["mpesa", "emola", "visa_mastercard"],
+  zumbopay: ["mpesa", "emola"],
   netshop: ["mpesa", "emola", "mkesh", "visa_mastercard"],
 };
 
