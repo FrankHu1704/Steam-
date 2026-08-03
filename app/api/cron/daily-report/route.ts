@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendDailySalesReportEmail } from "@/lib/email";
+import { sendDailySalesReportEmail, sendAdminDailySummaryEmail } from "@/lib/email";
 
 // Sends every producer an end-of-day summary of today's sales and
 // withdrawals — runs daily at 17:30 Maputo time (see vercel.json; Maputo is
@@ -39,8 +39,9 @@ export async function GET(request: Request) {
   const startUTC = new Date(localMidnight.getTime() - MAPUTO_OFFSET_MS);
   const dateLabel = localNow.toLocaleDateString("pt-MZ", { timeZone: "UTC" });
 
-  const [{ data: producers }, { data: orders }, { data: withdrawals }] = await Promise.all([
+  const [{ data: producers }, { data: admins }, { data: orders }, { data: withdrawals }] = await Promise.all([
     supabase.from("profiles").select("id, name, email, currency").eq("role", "producer"),
+    supabase.from("profiles").select("id, name, email, currency").eq("role", "admin"),
     supabase
       .from("orders")
       .select("producer_id, total_amount, platform_fee_amount, affiliate_commission_amount, payment_method, currency, products(title)")
@@ -85,6 +86,7 @@ export async function GET(request: Request) {
     const producerWithdrawals = withdrawalsByProducer.get(producer.id) ?? [];
 
     const totalSold = producerOrders.reduce((sum, o) => sum + o.total_amount, 0);
+    const commissions = producerOrders.reduce((sum, o) => sum + (o.platform_fee_amount ?? 0), 0);
     const sellerRevenue = producerOrders.reduce(
       (sum, o) => sum + (o.total_amount - (o.platform_fee_amount ?? 0) - (o.affiliate_commission_amount ?? 0)),
       0
@@ -114,6 +116,7 @@ export async function GET(request: Request) {
       currency,
       salesCount: producerOrders.length,
       totalSold,
+      commissions,
       sellerRevenue,
       totalWithdrawn,
       salesByProduct: Array.from(byProduct.entries()).map(([title, v]) => ({ title, ...v })),
@@ -126,5 +129,31 @@ export async function GET(request: Request) {
     sent += 1;
   }
 
-  return NextResponse.json({ ok: true, sent });
+  // Platform-wide totals — same 4 metrics as each producer's summary, just
+  // aggregated across every order today instead of grouped by producer.
+  const allOrders = orders ?? [];
+  const platformTransactions = allOrders.length;
+  const platformGrossVolume = allOrders.reduce((sum, o) => sum + o.total_amount, 0);
+  const platformCommissions = allOrders.reduce((sum, o) => sum + (o.platform_fee_amount ?? 0), 0);
+  const platformNetToProducers = allOrders.reduce(
+    (sum, o) => sum + (o.total_amount - (o.platform_fee_amount ?? 0) - (o.affiliate_commission_amount ?? 0)),
+    0
+  );
+
+  let adminsSent = 0;
+  for (const admin of admins ?? []) {
+    if (!admin.email) continue;
+    await sendAdminDailySummaryEmail({
+      adminEmail: admin.email,
+      dateLabel,
+      currency: (admin.currency as "MZN" | "ZAR") ?? "MZN",
+      transactionsCount: platformTransactions,
+      grossVolume: platformGrossVolume,
+      commissions: platformCommissions,
+      netToProducers: platformNetToProducers,
+    });
+    adminsSent += 1;
+  }
+
+  return NextResponse.json({ ok: true, sent, adminsSent });
 }

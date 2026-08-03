@@ -461,6 +461,7 @@ export async function sendDailySalesReportEmail(input: {
   currency: "MZN" | "ZAR";
   salesCount: number;
   totalSold: number;
+  commissions: number;
   sellerRevenue: number;
   totalWithdrawn: number;
   salesByProduct: { title: string; count: number; total: number }[];
@@ -476,10 +477,11 @@ export async function sendDailySalesReportEmail(input: {
       `Relatório de hoje, ${input.dateLabel}`,
       emailParagraph(`Olá, <strong>${input.producerName}</strong>! Aqui está o seu resumo de vendas e levantamentos de hoje.`) +
         emailInfoBox([
-          { label: "Vendas totais", value: String(input.salesCount) },
-          { label: "Total vendido", value: money(input.totalSold) },
-          { label: "Receita do vendedor", value: money(input.sellerRevenue), emphasize: true },
-          { label: "Total de levantamentos de hoje", value: money(input.totalWithdrawn) },
+          { label: "Transações", value: String(input.salesCount) },
+          { label: "Volume bruto", value: money(input.totalSold) },
+          { label: "Comissões", value: money(input.commissions) },
+          { label: "Líquido", value: money(input.sellerRevenue), emphasize: true },
+          { label: "Levantamentos de hoje", value: money(input.totalWithdrawn) },
         ]) +
         `<p style="margin:20px 0 8px;font-size:13px;font-weight:700;color:#111827;">Vendas por produto</p>` +
         emailBreakdownTable(
@@ -499,6 +501,37 @@ export async function sendDailySalesReportEmail(input: {
         emailButton("Ver Painel", `${siteUrl()}/dashboard`) +
         emailParagraph(
           `<span style="color:#9ca3af;font-size:12px;">Recebe este relatório automaticamente todos os dias às 17h30, enquanto tiver uma conta de produtor ativa na PagaJá.</span>`
+        )
+    ),
+  });
+}
+
+export async function sendAdminDailySummaryEmail(input: {
+  adminEmail: string;
+  dateLabel: string;
+  currency: "MZN" | "ZAR";
+  transactionsCount: number;
+  grossVolume: number;
+  commissions: number;
+  netToProducers: number;
+}) {
+  const money = (n: number) => `${n.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+
+  await sendEmail({
+    to: input.adminEmail,
+    subject: `Resumo diário da plataforma — ${input.dateLabel}`,
+    html: emailShell(
+      `Resumo de hoje, ${input.dateLabel}`,
+      emailParagraph(`Resumo de toda a plataforma PagaJá hoje.`) +
+        emailInfoBox([
+          { label: "Transações", value: String(input.transactionsCount) },
+          { label: "Volume bruto", value: money(input.grossVolume) },
+          { label: "Comissões (receita PagaJá)", value: money(input.commissions), emphasize: true },
+          { label: "Líquido pago aos produtores", value: money(input.netToProducers) },
+        ]) +
+        emailButton("Ver Painel Admin", `${siteUrl()}/admin`) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Recebe este resumo automaticamente todos os dias às 17h30, enquanto tiver uma conta de admin ativa na PagaJá.</span>`
         )
     ),
   });
