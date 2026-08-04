@@ -1,15 +1,20 @@
-import { Users2, MousePointerClick, TrendingUp, Coins } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Users2, MousePointerClick, TrendingUp, Coins, UserPlus, Wallet } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getProducerAffiliates } from "@/lib/data/affiliates";
+import { getProducerAffiliates, getProducerAffiliateReferralOverview } from "@/lib/data/affiliates";
+import { ReferralLinkCard } from "@/components/employees/referral-link-card";
 import { cn, formatCurrency } from "@/lib/utils";
 
 export default async function DashboardAffiliatesPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const affiliates = await getProducerAffiliates(user.id);
+  const [affiliates, referralOverview] = await Promise.all([
+    getProducerAffiliates(user.id),
+    getProducerAffiliateReferralOverview(user.id),
+  ]);
   const currency = profile.currency as "MZN" | "ZAR";
+  const referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://pagaja.site"}/signup?pref=${user.id}`;
 
   const totalClicks = affiliates.reduce((sum, a) => sum + a.clicks, 0);
   const totalSales = affiliates.reduce((sum, a) => sum + a.sales, 0);
@@ -47,6 +52,80 @@ export default async function DashboardAffiliatesPage() {
         </div>
       )}
 
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Traga afiliados</h2>
+          <p className="text-sm text-muted-foreground">
+            Partilhe o seu link e ganhe 3% de cada venda que a pessoa fizer como afiliado na PagaJá — de qualquer
+            produto, de qualquer produtor — durante o primeiro mês depois de se registar.
+          </p>
+        </div>
+
+        <ReferralLinkCard
+          link={referralLink}
+          title="O seu link para recrutar afiliados"
+          description="Partilhe com futuros afiliados. Cada registo através deste link fica associado a si."
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Afiliados recrutados</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <UserPlus className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-3 text-2xl font-bold">{referralOverview.recruitedCount}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Ganho com afiliados trazidos</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                  <Wallet className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-3 text-2xl font-bold">{formatCurrency(referralOverview.totalEarned, currency)}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {referralOverview.recentCommissions.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Comissões recentes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="p-4 font-medium">Afiliado</th>
+                      <th className="p-4 font-medium">Comissão</th>
+                      <th className="p-4 font-medium">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {referralOverview.recentCommissions.map((c) => (
+                      <tr key={c.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+                        <td className="p-4 font-medium">{c.affiliateName}</td>
+                        <td className="p-4">{formatCurrency(c.amount, currency)}</td>
+                        <td className="p-4 text-muted-foreground">
+                          {new Date(c.createdAt).toLocaleDateString("pt-MZ")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <h2 className="text-lg font-semibold">Afiliados dos seus produtos</h2>
       <Card>
         <CardContent className="p-0">
           {affiliates.length === 0 ? (

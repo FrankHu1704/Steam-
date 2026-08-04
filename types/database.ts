@@ -71,8 +71,18 @@ export interface Profile {
   production_unlocked_at: string | null;
   production_access_expires_at: string | null;
   recruited_by_employee_id: string | null;
+  recruited_by_producer_id: string | null;
   lifetime_sales_count: number;
   balance_available_dev: number;
+  created_at: string;
+}
+
+export interface ProducerAffiliateCommission {
+  id: string;
+  producer_id: string;
+  affiliate_id: string;
+  order_id: string;
+  amount: number;
   created_at: string;
 }
 
@@ -477,6 +487,7 @@ export interface Database {
       employee_commissions: Row<EmployeeCommission>;
       employee_payouts: Row<EmployeePayout>;
       employee_applications: Row<EmployeeApplication>;
+      producer_affiliate_commissions: Row<ProducerAffiliateCommission>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

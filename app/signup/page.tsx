@@ -25,6 +25,7 @@ function SignupPageInner() {
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const ref = searchParams.get("ref") ?? "";
+  const pref = searchParams.get("pref") ?? "";
 
   useEffect(() => {
     if (ref) void trackEmployeeClick(ref);
@@ -54,6 +55,7 @@ function SignupPageInner() {
     >
       <form action={handleSubmit} className="space-y-4">
         {ref && <input type="hidden" name="ref" value={ref} />}
+        {pref && <input type="hidden" name="pref" value={pref} />}
         <div className="space-y-1.5">
           <Label htmlFor="name">Nome</Label>
           <div className="flex items-center overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">

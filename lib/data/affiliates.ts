@@ -1,6 +1,58 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Affiliate, Product } from "@/types/database";
 
+export interface ReferredAffiliateCommission {
+  id: string;
+  affiliateName: string;
+  amount: number;
+  createdAt: string;
+}
+
+export interface ProducerAffiliateReferralOverview {
+  recruitedCount: number;
+  totalEarned: number;
+  recentCommissions: ReferredAffiliateCommission[];
+}
+
+// Producers can recruit affiliates via their own referral link (see
+// ReferralLinkCard on /dashboard/affiliates) and earn 3% of that
+// affiliate's sales for 1 month — mirrors the employee-recruits-producer
+// program, applied in lib/order-fulfillment.ts.
+export async function getProducerAffiliateReferralOverview(
+  producerId: string
+): Promise<ProducerAffiliateReferralOverview> {
+  const supabase = await createClient();
+
+  const [{ count: recruitedCount }, { data: allCommissions }, { data: recentCommissions }] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("recruited_by_producer_id", producerId),
+    supabase.from("producer_affiliate_commissions").select("amount").eq("producer_id", producerId),
+    supabase
+      .from("producer_affiliate_commissions")
+      .select("id, amount, created_at, profiles!affiliate_id(name)")
+      .eq("producer_id", producerId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  const recentRows = (recentCommissions ?? []) as unknown as {
+    id: string;
+    amount: number;
+    created_at: string;
+    profiles: { name: string } | null;
+  }[];
+
+  return {
+    recruitedCount: recruitedCount ?? 0,
+    totalEarned: (allCommissions ?? []).reduce((sum, r) => sum + r.amount, 0),
+    recentCommissions: recentRows.map((r) => ({
+      id: r.id,
+      affiliateName: r.profiles?.name ?? "Afiliado",
+      amount: r.amount,
+      createdAt: r.created_at,
+    })),
+  };
+}
+
 export interface MarketplaceProduct extends Product {
   producer_name: string;
 }

@@ -27,6 +27,7 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   }
   const phone = normalizeMozambiquePhone(phoneRaw);
   const referralCode = String(formData.get("ref") ?? "").trim();
+  const producerReferralId = String(formData.get("pref") ?? "").trim();
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -50,6 +51,21 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
       .maybeSingle();
     if (employee) {
       await admin.from("profiles").update({ recruited_by_employee_id: employee.id }).eq("id", data.user.id);
+    }
+  }
+
+  // Producers can also recruit affiliates via their own /signup?pref=<id>
+  // link — see lib/order-fulfillment.ts for the resulting 3%/1-month payout.
+  if (producerReferralId && data.user) {
+    const admin = createAdminClient();
+    const { data: producer } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", producerReferralId)
+      .eq("role", "producer")
+      .maybeSingle();
+    if (producer) {
+      await admin.from("profiles").update({ recruited_by_producer_id: producer.id }).eq("id", data.user.id);
     }
   }
 

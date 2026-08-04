@@ -100,7 +100,7 @@ export async function creditOrder(orderId: string): Promise<void> {
     if (affiliate) {
       const { data: affiliateProfile } = await supabase
         .from("profiles")
-        .select("balance_available")
+        .select("balance_available, recruited_by_producer_id, created_at")
         .eq("id", affiliate.affiliate_id)
         .single();
       await supabase
@@ -117,6 +117,38 @@ export async function creditOrder(orderId: string): Promise<void> {
         amount: commission,
         status: "pending",
       });
+
+      // Producer/affiliate-recruiter reward — 3% of the sale for the first
+      // month after this affiliate signed up via a producer's referral
+      // link, capped at what PagaJá earned as its own platform fee on this
+      // order (same safety cap as the employee recruiter commission above),
+      // so it's always funded by the platform's own take, never by the
+      // affiliate or the selling producer.
+      if (affiliateProfile?.recruited_by_producer_id) {
+        const recruitedUntil = new Date(affiliateProfile.created_at);
+        recruitedUntil.setMonth(recruitedUntil.getMonth() + 1);
+        if (new Date() <= recruitedUntil) {
+          const rawReferralCommission = Math.round(order.total_amount * 0.03 * 100) / 100;
+          const referralCommission = Math.min(rawReferralCommission, platformFeeAmount);
+          if (referralCommission > 0) {
+            const { data: recruitingProducer } = await supabase
+              .from("profiles")
+              .select("balance_available")
+              .eq("id", affiliateProfile.recruited_by_producer_id)
+              .single();
+            await supabase
+              .from("profiles")
+              .update({ balance_available: (recruitingProducer?.balance_available ?? 0) + referralCommission })
+              .eq("id", affiliateProfile.recruited_by_producer_id);
+            await supabase.from("producer_affiliate_commissions").insert({
+              producer_id: affiliateProfile.recruited_by_producer_id,
+              affiliate_id: affiliate.affiliate_id,
+              order_id: order.id,
+              amount: referralCommission,
+            });
+          }
+        }
+      }
     }
   }
 
