@@ -10,6 +10,30 @@ import { normalizeMozambiquePhone } from "@/lib/phone";
 const EASYHOST_BASE_URL =
   process.env.EASYHOST_API_URL || "https://iiywyqfapgqkggvxyvfd.supabase.co/functions/v1/api";
 
+export interface EasyhostBalance {
+  balanceCredits: number;
+  currency: string;
+}
+
+/** Powers the "Easyhost (SMS)" card on /admin/notifications. */
+export async function getEasyhostBalance(): Promise<EasyhostBalance | null> {
+  const apiKey = process.env.EASYHOST_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const res = await fetch(`${EASYHOST_BASE_URL}/wallet`, {
+      headers: { "X-API-Key": apiKey },
+    });
+    if (!res.ok) return null;
+    const json = await res.json().catch(() => null);
+    if (!json || typeof json.balance_credits !== "number") return null;
+
+    return { balanceCredits: json.balance_credits, currency: json.currency ?? "MZN" };
+  } catch {
+    return null;
+  }
+}
+
 async function sendEasyhostSms(to: string, body: string): Promise<void> {
   const apiKey = process.env.EASYHOST_API_KEY;
   const supabase = createAdminClient();
