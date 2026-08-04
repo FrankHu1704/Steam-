@@ -6,7 +6,7 @@ import {
   sendRefundNotificationEmail,
   siteUrl,
 } from "@/lib/email";
-import { sendSaleSms } from "@/lib/sms";
+import { sendPaymentConfirmedSms, sendPurchaseConfirmedSms } from "@/lib/easyhost-sms";
 import { sendBuyerWhatsappReceipt } from "@/lib/whatsapp";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
 import { sendPushToUser } from "@/lib/push";
@@ -207,7 +207,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   }
 
   if (producer?.phone) {
-    await sendSaleSms({
+    await sendPaymentConfirmedSms({
       phone: producer.phone,
       productTitle: productLabel,
       amount: order.total_amount,
@@ -227,6 +227,11 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   if (order.buyer_phone) {
     await sendBuyerWhatsappReceipt({
+      phone: order.buyer_phone,
+      productTitle: productLabel,
+      accessUrl,
+    });
+    await sendPurchaseConfirmedSms({
       phone: order.buyer_phone,
       productTitle: productLabel,
       accessUrl,

@@ -1,0 +1,84 @@
+// Easyhost (bulk SMS API) — sends "pagamento confirmado" to the producer
+// and "compra confirmada" to the buyer on every paid order. Best-effort,
+// fire-and-forget: a failure here must never break the webhook that
+// credits a sale — the email/WhatsApp receipts already cover the same
+// event for both sides.
+
+import { createAdminClient } from "@/lib/supabase/admin";
+import { normalizeMozambiquePhone } from "@/lib/phone";
+
+const EASYHOST_BASE_URL =
+  process.env.EASYHOST_API_URL || "https://iiywyqfapgqkggvxyvfd.supabase.co/functions/v1/api";
+
+async function sendEasyhostSms(to: string, body: string): Promise<void> {
+  const apiKey = process.env.EASYHOST_API_KEY;
+  const supabase = createAdminClient();
+
+  if (!apiKey || !to) {
+    await supabase.from("logs").insert({
+      action: "easyhost_sms_debug",
+      metadata: { skipped: true, reason: !apiKey ? "no EASYHOST_API_KEY" : "no phone", to },
+    });
+    return;
+  }
+
+  const normalizedTo = normalizeMozambiquePhone(to);
+  try {
+    const res = await fetch(`${EASYHOST_BASE_URL}/sms/send`, {
+      method: "POST",
+      headers: { "X-API-Key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: normalizedTo,
+        body,
+        ...(process.env.EASYHOST_SENDER_ID ? { sender: process.env.EASYHOST_SENDER_ID } : {}),
+      }),
+    });
+    const responseBody = await res.text();
+    await supabase.from("logs").insert({
+      action: "easyhost_sms_debug",
+      metadata: { to: normalizedTo, status: res.status, ok: res.ok, response: responseBody },
+    });
+  } catch (err) {
+    await supabase.from("logs").insert({
+      action: "easyhost_sms_debug",
+      metadata: { to: normalizedTo, error: (err as Error).message },
+    });
+  }
+}
+
+// Kept free of accented characters on purpose: a single non-GSM-7 char
+// (á, ã, ç, ...) forces UCS-2 encoding, which drops the per-segment limit
+// from 160 to 70 — this stays a true single-segment SMS.
+const SMS_MAX_LENGTH = 160;
+
+export async function sendPaymentConfirmedSms(input: {
+  phone: string;
+  productTitle: string;
+  amount: number;
+  currency: string;
+}) {
+  const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
+  const prefix = `CONFIRMADO\n+${amountLabel} adicionado a sua conta referente a venda de `;
+  const suffix = " na PagaJa.";
+
+  const maxTitleLength = SMS_MAX_LENGTH - prefix.length - suffix.length;
+  const title =
+    input.productTitle.length > maxTitleLength
+      ? `${input.productTitle.slice(0, Math.max(0, maxTitleLength - 3))}...`
+      : input.productTitle;
+
+  await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
+}
+
+export async function sendPurchaseConfirmedSms(input: { phone: string; productTitle: string; accessUrl: string }) {
+  const prefix = "COMPRA CONFIRMADA\nCompra de ";
+  const suffix = ` confirmada. Acesse: ${input.accessUrl}`;
+
+  const maxTitleLength = SMS_MAX_LENGTH - prefix.length - suffix.length;
+  const title =
+    input.productTitle.length > maxTitleLength
+      ? `${input.productTitle.slice(0, Math.max(0, maxTitleLength - 3))}...`
+      : input.productTitle;
+
+  await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
+}
