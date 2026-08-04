@@ -60,19 +60,39 @@ export async function getAllUsers(): Promise<Profile[]> {
 
 export interface AdminProduct extends Product {
   producer_name: string;
+  producer_created_at: string | null;
+  producer_rejected_count: number;
 }
 
 export async function getAllProducts(status?: string): Promise<AdminProduct[]> {
   const supabase = await createClient();
   let query = supabase
     .from("products")
-    .select("*, profiles!producer_id(name)")
+    .select("*, profiles!producer_id(name, created_at)")
     .order("created_at", { ascending: false });
   if (status) query = query.eq("status", status);
   const { data } = await query;
-  return ((data ?? []) as (Product & { profiles: { name: string } | null })[]).map((p) => ({
+  const products = (data ?? []) as (Product & { profiles: { name: string; created_at: string } | null })[];
+
+  // Fraud-review signal for the moderation page: how many of this
+  // producer's other products have already been rejected — a brand new
+  // account with a history of rejections is the pattern worth a closer
+  // look before approving a pending product.
+  const producerIds = Array.from(new Set(products.map((p) => p.producer_id)));
+  const { data: rejectedRows } =
+    producerIds.length > 0
+      ? await supabase.from("products").select("producer_id").eq("status", "rejected").in("producer_id", producerIds)
+      : { data: [] as { producer_id: string }[] };
+  const rejectedCounts = new Map<string, number>();
+  for (const r of rejectedRows ?? []) {
+    rejectedCounts.set(r.producer_id, (rejectedCounts.get(r.producer_id) ?? 0) + 1);
+  }
+
+  return products.map((p) => ({
     ...p,
     producer_name: p.profiles?.name ?? "—",
+    producer_created_at: p.profiles?.created_at ?? null,
+    producer_rejected_count: rejectedCounts.get(p.producer_id) ?? 0,
   }));
 }
 
@@ -152,6 +172,10 @@ export interface PlatformRevenue {
   withdrawalFeesMonth: number;
   totalRevenue: number;
   monthRevenue: number;
+  employeeCommissionsTotal: number;
+  employeeCommissionsMonth: number;
+  netProfitTotal: number;
+  netProfitMonth: number;
 }
 
 export async function getPlatformRevenue(): Promise<PlatformRevenue> {
@@ -161,9 +185,10 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [{ data: orders }, { data: withdrawals }] = await Promise.all([
+  const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }] = await Promise.all([
     supabase.from("orders").select("platform_fee_amount, paid_at").eq("status", "paid").not("platform_fee_amount", "is", null),
     supabase.from("withdrawals").select("fee_amount, paid_at").in("status", ["paid", "confirmed"]),
+    supabase.from("employee_commissions").select("amount, created_at"),
   ]);
 
   let salesFeesTotal = 0;
@@ -181,13 +206,31 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
     if (w.paid_at && new Date(w.paid_at) >= startOfMonth) withdrawalFeesMonth += w.fee_amount;
   }
 
+  // Recruiter commission paid to collaborators — accrued the moment the
+  // sale is credited (see lib/order-fulfillment.ts), always <= the platform
+  // fee already counted above, so it's a real cost against that revenue,
+  // not additional spend.
+  let employeeCommissionsTotal = 0;
+  let employeeCommissionsMonth = 0;
+  for (const c of employeeCommissions ?? []) {
+    employeeCommissionsTotal += c.amount;
+    if (c.created_at && new Date(c.created_at) >= startOfMonth) employeeCommissionsMonth += c.amount;
+  }
+
+  const totalRevenue = salesFeesTotal + withdrawalFeesTotal;
+  const monthRevenue = salesFeesMonth + withdrawalFeesMonth;
+
   return {
     salesFeesTotal,
     salesFeesMonth,
     withdrawalFeesTotal,
     withdrawalFeesMonth,
-    totalRevenue: salesFeesTotal + withdrawalFeesTotal,
-    monthRevenue: salesFeesMonth + withdrawalFeesMonth,
+    totalRevenue,
+    monthRevenue,
+    employeeCommissionsTotal,
+    employeeCommissionsMonth,
+    netProfitTotal: totalRevenue - employeeCommissionsTotal,
+    netProfitMonth: monthRevenue - employeeCommissionsMonth,
   };
 }
 

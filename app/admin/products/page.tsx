@@ -1,11 +1,22 @@
 import Link from "next/link";
-import { ExternalLink, Clock, CheckCircle2, XCircle, LayoutGrid, ImageOff, ShieldAlert } from "lucide-react";
+import { ExternalLink, Clock, CheckCircle2, XCircle, LayoutGrid, ImageOff, ShieldAlert, UserSearch } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { ProductReviewActions } from "@/components/admin/product-review-actions";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { getAllProducts } from "@/lib/data/admin";
 import { cn, formatCurrency } from "@/lib/utils";
+
+const NEW_ACCOUNT_DAYS = 7;
+
+function accountAgeLabel(createdAt: string | null): { label: string; isNew: boolean } {
+  if (!createdAt) return { label: "conta desconhecida", isNew: false };
+  const days = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000));
+  const isNew = days < NEW_ACCOUNT_DAYS;
+  if (days === 0) return { label: "conta criada hoje", isNew };
+  if (days === 1) return { label: "conta criada há 1 dia", isNew };
+  return { label: `conta criada há ${days} dias`, isNew };
+}
 
 export default async function AdminProductsPage({
   searchParams,
@@ -57,7 +68,10 @@ export default async function AdminProductsPage({
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {products.map((product) => (
+              {products.map((product) => {
+                const age = accountAgeLabel(product.producer_created_at);
+                const flagged = product.status === "pending" && (age.isNew || product.producer_rejected_count > 0);
+                return (
                 <div key={product.id} className="flex flex-wrap items-center gap-4 p-4">
                   {product.cover_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -77,6 +91,28 @@ export default async function AdminProductsPage({
                       por {product.producer_name} · {formatCurrency(product.price, product.currency as "MZN" | "ZAR")} ·{" "}
                       {product.sales_count} venda{product.sales_count === 1 ? "" : "s"}
                     </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                      <Link
+                        href={`/admin/users/${product.producer_id}`}
+                        className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                      >
+                        <UserSearch className="h-3 w-3" /> Rever produtor
+                      </Link>
+                      <span className={cn(age.isNew ? "font-medium text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
+                        {age.label}
+                      </span>
+                      {product.producer_rejected_count > 0 && (
+                        <span className="font-medium text-destructive">
+                          {product.producer_rejected_count} produto{product.producer_rejected_count === 1 ? "" : "s"}{" "}
+                          rejeitado{product.producer_rejected_count === 1 ? "" : "s"} antes
+                        </span>
+                      )}
+                    </div>
+                    {flagged && (
+                      <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        <ShieldAlert className="h-3.5 w-3.5" /> Reveja o perfil do produtor antes de aprovar.
+                      </p>
+                    )}
                     {product.rejection_reason && (
                       <p className="mt-1 text-xs text-destructive">Motivo: {product.rejection_reason}</p>
                     )}
@@ -106,7 +142,8 @@ export default async function AdminProductsPage({
                     <AdminDeleteProductButton productId={product.id} salesCount={product.sales_count} />
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

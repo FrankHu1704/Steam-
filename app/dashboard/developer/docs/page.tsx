@@ -419,16 +419,41 @@ export default function DeveloperDocsPage() {
       <Section id="orders" title="Vendas">
         <Endpoint method="GET" path="/api/v1/orders" />
         <p className="text-sm text-muted-foreground">
-          Lista as vendas <strong>confirmadas (pagas)</strong> da sua conta, mais recentes primeiro.
+          Lista as vendas <strong>confirmadas (pagas)</strong> da sua conta, mais recentes primeiro. Vendas
+          pendentes, falhadas ou reembolsadas não aparecem aqui; para acompanhar o estado de uma venda específica em
+          tempo real use o webhook <code>payment.completed</code> ou guarde o <code>reference</code> devolvido por{" "}
+          <code>POST /api/v1/charges</code> no seu próprio sistema.
         </p>
-        <Note>
-          Este endpoint <strong>não suporta paginação nem parâmetros de filtro</strong> (sem <code>?page=</code>,{" "}
-          <code>?since=</code>, <code>?status=</code> etc. no momento) — devolve sempre no máximo as últimas{" "}
-          <strong>200</strong> vendas pagas. Vendas pendentes, falhadas ou reembolsadas não aparecem aqui; para
-          acompanhar o estado de uma venda específica em tempo real use o webhook <code>payment.completed</code> ou
-          guarde o <code>reference</code> devolvido por <code>POST /api/v1/charges</code> no seu próprio sistema.
-        </Note>
-        <Code>{`curl ${baseUrl}/api/v1/orders \\
+        <p className="text-xs font-semibold text-muted-foreground">Parâmetros de query (todos opcionais)</p>
+        <FieldsTable
+          rows={[
+            {
+              field: "since",
+              type: "string (ISO 8601)",
+              required: "Não",
+              note: "Só vendas criadas a partir desta data/hora (inclusive).",
+            },
+            {
+              field: "until",
+              type: "string (ISO 8601)",
+              required: "Não",
+              note: "Só vendas criadas até esta data/hora (inclusive).",
+            },
+            {
+              field: "limit",
+              type: "número",
+              required: "Não",
+              note: "Vendas por página. Padrão 100, máximo 200.",
+            },
+            {
+              field: "cursor",
+              type: "string (uuid)",
+              required: "Não",
+              note: "Id da última venda da página anterior — use o next_cursor da resposta para avançar.",
+            },
+          ]}
+        />
+        <Code>{`curl "${baseUrl}/api/v1/orders?limit=50&since=2026-08-01T00:00:00Z" \\
   -H "Authorization: Bearer SEU_ACCESS_TOKEN"`}</Code>
         <p className="text-xs font-semibold text-muted-foreground">Resposta (200)</p>
         <Code>{`{
@@ -443,12 +468,16 @@ export default function DeveloperDocsPage() {
       "status": "paid",
       "created_at": "2026-07-01T10:00:00Z"
     }
-  ]
+  ],
+  "has_more": true,
+  "next_cursor": "id da última venda desta página"
 }`}</Code>
         <p className="text-xs text-muted-foreground">
           <code>product</code> é <code>&#123; "id": null, "name": "Produto" &#125;</code> para cobranças manuais
           (criadas com <code>amount</code> em vez de <code>product_id</code>), já que não têm um produto associado.{" "}
-          <code>status</code> é sempre <code>"paid"</code> nesta lista.
+          <code>status</code> é sempre <code>"paid"</code> nesta lista. Para percorrer todas as vendas, chame o
+          endpoint outra vez passando <code>cursor=next_cursor</code> até <code>has_more</code> vir{" "}
+          <code>false</code>.
         </p>
       </Section>
 
@@ -628,9 +657,9 @@ function verify(rawBody, signatureHeader, secret) {
             apertado; abuso pode levar à revogação manual da chave.
           </li>
           <li>
-            <strong>Sem paginação</strong> em nenhum endpoint de listagem (<code>products</code>, <code>offers</code>
-            , <code>orders</code>) — todos devolvem a lista inteira (ou os últimos 200, no caso de vendas) numa só
-            resposta.
+            <strong>Sem paginação</strong> em <code>products</code> e <code>offers</code> — devolvem sempre a lista
+            inteira numa só resposta. Só <code>orders</code> suporta paginação (<code>cursor</code>/<code>limit</code>
+            /<code>since</code>/<code>until</code> — ver secção Vendas).
           </li>
           <li>
             <strong>Sem suporte a idempotência</strong> em <code>POST /api/v1/charges</code> — trate falhas de rede
