@@ -25,11 +25,24 @@ export interface PushPayload {
 
 export async function sendPushToUser(userId: string, payload: PushPayload): Promise<void> {
   ensureConfigured();
-  if (!configured) return;
-
   const supabase = createAdminClient();
+
+  if (!configured) {
+    await supabase.from("logs").insert({
+      action: "push_debug",
+      metadata: { skipped: true, reason: "VAPID not configured", userId },
+    });
+    return;
+  }
+
   const { data: subscriptions } = await supabase.from("push_subscriptions").select("*").eq("user_id", userId);
-  if (!subscriptions?.length) return;
+  if (!subscriptions?.length) {
+    await supabase.from("logs").insert({
+      action: "push_debug",
+      metadata: { skipped: true, reason: "no subscriptions for user", userId },
+    });
+    return;
+  }
 
   await Promise.all(
     subscriptions.map(async (sub) => {
@@ -40,11 +53,17 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
         );
       } catch (err) {
         // 410/404 means the subscription is gone (browser data cleared,
-        // uninstalled, etc) — remove it so we stop trying.
+        // uninstalled, etc) — remove it so we stop trying. Every failure
+        // (this or any other status) gets logged — previously silent, so a
+        // misconfigured key or a malformed subscription had no trace at all.
         const status = (err as { statusCode?: number }).statusCode;
         if (status === 404 || status === 410) {
           await supabase.from("push_subscriptions").delete().eq("id", sub.id);
         }
+        await supabase.from("logs").insert({
+          action: "push_send_error",
+          metadata: { userId, subscriptionId: sub.id, status: status ?? null, error: (err as Error).message },
+        });
       }
     })
   );
