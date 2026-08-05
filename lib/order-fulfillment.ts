@@ -181,17 +181,22 @@ export async function creditOrder(orderId: string): Promise<void> {
 
   // Every sale on the platform also notifies every admin — not just the
   // producer — so the admin can keep track of all activity from one place.
+  // This runs from the same creditOrder() shared by every crediting path
+  // (checkout success, every payment webhook), so it already covers sales
+  // made through a producer's own API integration (order.source === "api"),
+  // not just marketplace checkout — tagged below so admins can tell them apart.
+  const channelLabel = order.source === "api" ? " (via API)" : "";
   const { data: admins } = await supabase.from("profiles").select("id").eq("role", "admin");
   for (const adminProfile of admins ?? []) {
     await supabase.from("notifications").insert({
       user_id: adminProfile.id,
       type: "sale",
       title: "Nova venda",
-      message: `${producer?.name ?? "Um produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
+      message: `${producer?.name ?? "Um produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}${channelLabel}.`,
     });
     await sendPushToUser(adminProfile.id, {
       title: "Nova venda 🎉",
-      body: `${producer?.name ?? "Produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
+      body: `${producer?.name ?? "Produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}${channelLabel}.`,
       url: "/admin/orders",
     });
   }
