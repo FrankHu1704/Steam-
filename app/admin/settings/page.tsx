@@ -1,9 +1,13 @@
+import { Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SettingsForm } from "@/components/admin/settings-form";
+import { ToolCard } from "@/components/dashboard/tool-card";
+import { PushNotificationToggle } from "@/components/dashboard/push-notification-toggle";
 import { getAllSettings } from "@/lib/data/admin";
+import { hasPushSubscription } from "@/lib/actions/push";
 
 export default async function AdminSettingsPage() {
-  const settings = await getAllSettings();
+  const [settings, pushSubscribed] = await Promise.all([getAllSettings(), hasPushSubscription()]);
   const withdrawalFeePercent = Number(settings.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
   const platformFeePercent = Number(settings.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
   const platformFixedFeeAmount = Number(settings.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
@@ -33,6 +37,16 @@ export default async function AdminSettingsPage() {
           />
         </CardContent>
       </Card>
+
+      <div className="max-w-lg">
+        <ToolCard
+          icon={Bell}
+          title="Notificações Push"
+          description="Receba um alerta em tempo real no navegador a cada nova venda na plataforma, incluindo vendas via API."
+        >
+          <PushNotificationToggle initiallySubscribed={pushSubscribed} />
+        </ToolCard>
+      </div>
     </div>
   );
 }
