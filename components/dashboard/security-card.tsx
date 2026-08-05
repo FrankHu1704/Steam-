@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { TwoFactorSettings } from "@/components/settings/two-factor-settings";
 import { changePassword } from "@/lib/actions/auth";
 
 export function SecurityCard() {
@@ -43,26 +43,12 @@ export function SecurityCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-3 opacity-60">
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div>
-              <p className="text-sm font-medium">2FA via E-mail</p>
-              <p className="text-xs text-muted-foreground">Receba um código de segurança a cada novo início de sessão.</p>
-            </div>
-            <Switch disabled />
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div className="flex items-center gap-2">
-              <div>
-                <p className="text-sm font-medium">2FA via SMS</p>
-                <p className="text-xs text-muted-foreground">Código de verificação enviado ao seu contacto.</p>
-              </div>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-                Em breve
-              </span>
-            </div>
-            <Switch disabled />
-          </div>
+        <div className="rounded-lg border border-border p-3">
+          <p className="text-sm font-medium">Autenticação de dois fatores (2FA)</p>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Peça um código de uma app de autenticação (Google Authenticator, Authy, etc.) a cada início de sessão.
+          </p>
+          <TwoFactorSettings />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3 border-t border-border pt-4">

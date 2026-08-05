@@ -47,6 +47,19 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }
+
+    // Session exists but hasn't completed a required 2FA step-up yet (the
+    // account has a verified TOTP factor enrolled) — hold it at /verify-2fa
+    // before letting it into any protected area.
+    if (match && user && pathname !== "/verify-2fa") {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/verify-2fa";
+        url.searchParams.set("next", pathname);
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   return response;
