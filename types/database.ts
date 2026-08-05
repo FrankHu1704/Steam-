@@ -253,6 +253,20 @@ export interface Order {
   description: string | null;
 }
 
+export interface WebhookDelivery {
+  id: string;
+  producer_id: string;
+  order_id: string;
+  event: string;
+  payload: Record<string, unknown>;
+  attempt_count: number;
+  status: "pending" | "delivered" | "failed";
+  last_error: string | null;
+  next_attempt_at: string;
+  created_at: string;
+  delivered_at: string | null;
+}
+
 export interface OrderBump {
   id: string;
   order_id: string;
@@ -488,6 +502,7 @@ export interface Database {
       employee_payouts: Row<EmployeePayout>;
       employee_applications: Row<EmployeeApplication>;
       producer_affiliate_commissions: Row<ProducerAffiliateCommission>;
+      webhook_deliveries: Row<WebhookDelivery>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
