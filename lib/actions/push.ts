@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { ActionResult } from "@/lib/actions/auth";
 
 interface PushSubscriptionInput {
@@ -15,7 +16,15 @@ export async function saveSubscription(subscription: PushSubscriptionInput): Pro
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
 
-  const { error } = await supabase.from("push_subscriptions").upsert(
+  // A push endpoint belongs to this browser/device, not to one PagaJá
+  // account — if the same device previously enabled notifications under a
+  // different account (e.g. tested as producer, now enabling as admin),
+  // the row already exists owned by that other user_id, and RLS's USING
+  // clause blocks upsert() from reassigning someone else's row via the
+  // session-scoped client. The admin client bypasses that, safe here
+  // because we already confirmed the real signed-in user above.
+  const admin = createAdminClient();
+  const { error } = await admin.from("push_subscriptions").upsert(
     {
       user_id: user.id,
       endpoint: subscription.endpoint,
