@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { ShoppingCart, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/badge";
+import { StatusBadge, Badge } from "@/components/ui/badge";
 import { MarkPaidButton } from "@/components/admin/mark-paid-button";
 import { MarkFailedButton } from "@/components/admin/mark-failed-button";
 import { MarkRefundedButton } from "@/components/admin/mark-refunded-button";
@@ -57,6 +58,7 @@ export default async function AdminOrdersPage() {
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
                     <th className="p-4 font-medium">Produto</th>
+                    <th className="p-4 font-medium">Origem</th>
                     <th className="p-4 font-medium">Cliente</th>
                     <th className="p-4 font-medium">Valor</th>
                     <th className="p-4 font-medium">Método</th>
@@ -68,7 +70,14 @@ export default async function AdminOrdersPage() {
                 <tbody>
                   {orders.map((order) => (
                     <tr key={order.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
-                      <td className="p-4 font-medium">{order.product_title}</td>
+                      <td className="p-4 font-medium">
+                        <Link href={`/admin/orders/${order.id}`} className="hover:underline">
+                          {order.product_title}
+                        </Link>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant="secondary">{order.source === "api" ? "via API" : "Marketplace"}</Badge>
+                      </td>
                       <td className="p-4 text-muted-foreground">{order.buyer_name}</td>
                       <td className="p-4 font-semibold">
                         {formatCurrency(order.total_amount, order.currency as "MZN" | "ZAR")}
@@ -83,17 +92,21 @@ export default async function AdminOrdersPage() {
                         {new Date(order.created_at).toLocaleDateString("pt-MZ")}
                       </td>
                       <td className="p-4">
-                        {order.status === "pending" && (
-                          <div className="flex justify-end gap-2">
-                            <MarkPaidButton orderId={order.id} />
-                            <MarkFailedButton orderId={order.id} />
-                          </div>
-                        )}
-                        {order.status === "paid" && (
-                          <div className="flex justify-end">
-                            <MarkRefundedButton orderId={order.id} />
-                          </div>
-                        )}
+                        <div className="flex justify-end gap-2">
+                          {order.status === "pending" && (
+                            <>
+                              <MarkPaidButton orderId={order.id} />
+                              <MarkFailedButton orderId={order.id} />
+                            </>
+                          )}
+                          {order.status === "paid" && <MarkRefundedButton orderId={order.id} />}
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="inline-flex items-center rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+                          >
+                            Detalhes
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

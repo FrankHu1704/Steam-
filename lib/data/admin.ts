@@ -6,6 +6,7 @@ import type {
   Category,
   LogEntry,
   Order,
+  Payment,
   Product,
   ProductionUnlock,
   Profile,
@@ -123,8 +124,44 @@ export async function getAllOrders(limit = 100): Promise<AdminOrder[]> {
 
   return orders.map((o) => ({
     ...o,
-    product_title: o.products?.title ?? "—",
+    // Manual/API charges (source "api") have no product_id at all — fall
+    // back to the free-text description given at charge time, same as the
+    // producer-facing labels in lib/order-fulfillment.ts, instead of a
+    // bare dash that looked like missing data.
+    product_title: o.products?.title ?? o.description ?? "—",
   }));
+}
+
+export interface AdminOrderDetail extends Order {
+  product_title: string;
+  product_slug: string | null;
+  producer_name: string;
+  producer_email: string;
+  payments: Payment[];
+}
+
+export async function getOrderDetail(orderId: string): Promise<AdminOrderDetail | null> {
+  const supabase = await createClient();
+
+  const [{ data: order }, { data: payments }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("*, products(title, slug), profiles!producer_id(name, email)")
+      .eq("id", orderId)
+      .single<Order & { products: { title: string; slug: string } | null; profiles: { name: string; email: string } | null }>(),
+    supabase.from("payments").select("*").eq("order_id", orderId).order("created_at", { ascending: false }),
+  ]);
+
+  if (!order) return null;
+
+  return {
+    ...order,
+    product_title: order.products?.title ?? order.description ?? "—",
+    product_slug: order.products?.slug ?? null,
+    producer_name: order.profiles?.name ?? "—",
+    producer_email: order.profiles?.email ?? "—",
+    payments: (payments as Payment[]) ?? [],
+  };
 }
 
 export interface AdminWithdrawal extends Withdrawal {
