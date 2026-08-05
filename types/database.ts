@@ -73,8 +73,18 @@ export interface Profile {
   recruited_by_employee_id: string | null;
   recruited_by_producer_id: string | null;
   lifetime_sales_count: number;
+  lifetime_revenue: number;
   balance_available_dev: number;
   created_at: string;
+}
+
+export interface ProducerPrizeDelivery {
+  id: string;
+  producer_id: string;
+  tier_key: string;
+  delivered_at: string;
+  delivered_by: string | null;
+  notes: string | null;
 }
 
 export interface ProducerAffiliateCommission {
@@ -503,6 +513,7 @@ export interface Database {
       employee_applications: Row<EmployeeApplication>;
       producer_affiliate_commissions: Row<ProducerAffiliateCommission>;
       webhook_deliveries: Row<WebhookDelivery>;
+      producer_prize_deliveries: Row<ProducerPrizeDelivery>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

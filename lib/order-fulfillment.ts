@@ -35,7 +35,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   const { data: producer } = await supabase
     .from("profiles")
     .select(
-      "name, balance_available, balance_available_dev, email, phone, recruited_by_employee_id, created_at, lifetime_sales_count"
+      "name, balance_available, balance_available_dev, email, phone, recruited_by_employee_id, created_at, lifetime_sales_count, lifetime_revenue"
     )
     .eq("id", order.producer_id)
     .single();
@@ -48,6 +48,9 @@ export async function creditOrder(orderId: string): Promise<void> {
     .update({
       [walletField]: (producer?.[walletField] ?? 0) + ownerNet,
       lifetime_sales_count: (producer?.lifetime_sales_count ?? 0) + 1,
+      // Gross sale value, both wallets combined — powers the revenue-based
+      // physical prize milestones in lib/data/prizes.ts (agenda/placas).
+      lifetime_revenue: (producer?.lifetime_revenue ?? 0) + order.total_amount,
     })
     .eq("id", order.producer_id);
 
@@ -285,7 +288,7 @@ export async function refundOrder(orderId: string): Promise<void> {
 
   const { data: producer } = await supabase
     .from("profiles")
-    .select("balance_available, balance_available_dev, email, name, lifetime_sales_count")
+    .select("balance_available, balance_available_dev, email, name, lifetime_sales_count, lifetime_revenue")
     .eq("id", order.producer_id)
     .single();
   const walletField = order.source === "api" ? "balance_available_dev" : "balance_available";
@@ -297,6 +300,7 @@ export async function refundOrder(orderId: string): Promise<void> {
     .update({
       [walletField]: newBalance,
       lifetime_sales_count: Math.max(0, (producer?.lifetime_sales_count ?? 0) - 1),
+      lifetime_revenue: Math.max(0, (producer?.lifetime_revenue ?? 0) - order.total_amount),
     })
     .eq("id", order.producer_id);
 

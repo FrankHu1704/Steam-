@@ -508,3 +508,18 @@ export async function updateSetting(key: string, value: unknown) {
   if (error) return { error: error.message };
   return { ok: true };
 }
+
+export async function markPrizeDelivered(producerId: string, tierKey: string, notes?: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("producer_prize_deliveries").insert({
+    producer_id: producerId,
+    tier_key: tierKey,
+    delivered_by: admin.user.id,
+    notes: notes?.trim() || null,
+  });
+  if (error) return { error: error.message };
+  return { ok: true };
+}
