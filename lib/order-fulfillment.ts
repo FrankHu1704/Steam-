@@ -185,18 +185,20 @@ export async function creditOrder(orderId: string): Promise<void> {
   // (checkout success, every payment webhook), so it already covers sales
   // made through a producer's own API integration (order.source === "api"),
   // not just marketplace checkout — tagged below so admins can tell them apart.
-  const channelLabel = order.source === "api" ? " (via API)" : "";
-  const { data: admins } = await supabase.from("profiles").select("id").eq("role", "admin");
+  const channelLabel = order.source === "api" ? " via API" : "";
+  const producerLabel = producer?.name ?? "produtor desconhecido";
+  const { data: admins } = await supabase.from("profiles").select("id, name").eq("role", "admin");
   for (const adminProfile of admins ?? []) {
+    const messageText = `${adminProfile.name}, nova venda feita! Valor ${order.total_amount} ${order.currency}${channelLabel} - ${producerLabel}.`;
     await supabase.from("notifications").insert({
       user_id: adminProfile.id,
       type: "sale",
       title: "Nova venda",
-      message: `${producer?.name ?? "Um produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}${channelLabel}.`,
+      message: messageText,
     });
     await sendPushToUser(adminProfile.id, {
       title: "Nova venda 🎉",
-      body: `${producer?.name ?? "Produtor"} vendeu ${productLabel} por ${order.total_amount} ${order.currency}${channelLabel}.`,
+      body: messageText,
       url: "/admin/orders",
     });
   }
