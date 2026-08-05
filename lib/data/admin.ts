@@ -401,6 +401,9 @@ export interface AdminUserDetail {
   ordersAsProducer: AdminOrder[];
   purchasesAsBuyer: AdminOrder[];
   withdrawals: Withdrawal[];
+  recruitedByEmployeeName: string | null;
+  recruitedByProducerName: string | null;
+  recruitedAffiliatesCount: number;
 }
 
 export async function getUserDetail(userId: string): Promise<AdminUserDetail | null> {
@@ -430,12 +433,26 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | n
   const mapOrders = (rows: (Order & { products: { title: string } | null })[] | null) =>
     (rows ?? []).map((o) => ({ ...o, product_title: o.products?.title ?? "—" }));
 
+  const [{ data: recruitingEmployee }, { data: recruitingProducer }, { count: recruitedAffiliatesCount }] =
+    await Promise.all([
+      profile.recruited_by_employee_id
+        ? supabase.from("employees").select("name").eq("id", profile.recruited_by_employee_id).single()
+        : Promise.resolve({ data: null }),
+      profile.recruited_by_producer_id
+        ? supabase.from("profiles").select("name").eq("id", profile.recruited_by_producer_id).single()
+        : Promise.resolve({ data: null }),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("recruited_by_producer_id", userId),
+    ]);
+
   return {
     profile: profile as Profile,
     products: (products as Product[]) ?? [],
     ordersAsProducer: mapOrders(ordersAsProducer as (Order & { products: { title: string } | null })[] | null),
     purchasesAsBuyer: mapOrders(purchasesAsBuyer as (Order & { products: { title: string } | null })[] | null),
     withdrawals: (withdrawals as Withdrawal[]) ?? [],
+    recruitedByEmployeeName: (recruitingEmployee as { name: string } | null)?.name ?? null,
+    recruitedByProducerName: (recruitingProducer as { name: string } | null)?.name ?? null,
+    recruitedAffiliatesCount: recruitedAffiliatesCount ?? 0,
   };
 }
 

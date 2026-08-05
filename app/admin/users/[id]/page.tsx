@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, UserPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge, StatusBadge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
@@ -10,6 +10,8 @@ import { ResetPasswordForm } from "@/components/admin/reset-password-form";
 import { ProductionAccessForm } from "@/components/admin/production-access-form";
 import { getUserDetail } from "@/lib/data/admin";
 import { hasActiveProductionAccess } from "@/lib/production-access";
+import { tierForSalesCount } from "@/lib/data/achievements";
+import { prizeProgressForRevenue, PRIZE_TIERS } from "@/lib/data/prizes";
 import { formatCurrency } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -28,9 +30,20 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const detail = await getUserDetail(id);
   if (!detail) notFound();
 
-  const { profile, products, ordersAsProducer, purchasesAsBuyer, withdrawals } = detail;
+  const {
+    profile,
+    products,
+    ordersAsProducer,
+    purchasesAsBuyer,
+    withdrawals,
+    recruitedByEmployeeName,
+    recruitedByProducerName,
+    recruitedAffiliatesCount,
+  } = detail;
   const currency = profile.currency as "MZN" | "ZAR";
   const productionAccess = hasActiveProductionAccess(profile);
+  const level = tierForSalesCount(profile.lifetime_sales_count);
+  const prizeProgress = prizeProgressForRevenue(profile.lifetime_revenue);
 
   return (
     <div className="space-y-6">
@@ -68,6 +81,20 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p className="font-medium">{new Date(profile.created_at).toLocaleDateString("pt-MZ")}</p>
           </div>
           <div>
+            <p className="text-xs text-muted-foreground">Vendas confirmadas</p>
+            <p className="font-medium">{profile.lifetime_sales_count}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Faturamento total</p>
+            <p className="font-medium">{formatCurrency(profile.lifetime_revenue, currency)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Nível</p>
+            <p className="font-medium">
+              {level.currentTier.icon} {level.currentTier.label}
+            </p>
+          </div>
+          <div>
             <p className="text-xs text-muted-foreground">Email verificado</p>
             <Badge variant={profile.email_verified ? "success" : "secondary"}>
               {profile.email_verified ? "Sim" : "Não"}
@@ -89,6 +116,64 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </div>
         </CardContent>
       </Card>
+
+      {(recruitedByEmployeeName || recruitedByProducerName || recruitedAffiliatesCount > 0) && (
+        <div>
+          <h2 className="mb-3 flex items-center gap-1.5 font-semibold">
+            <UserPlus className="h-4 w-4" /> Recrutamento
+          </h2>
+          <Card>
+            <CardContent className="space-y-1.5 p-6 text-sm">
+              {recruitedByEmployeeName && (
+                <p>
+                  Registado através do link de recrutamento do colaborador <strong>{recruitedByEmployeeName}</strong>.
+                </p>
+              )}
+              {recruitedByProducerName && (
+                <p>
+                  Registado através do link de afiliados do produtor <strong>{recruitedByProducerName}</strong>.
+                </p>
+              )}
+              {recruitedAffiliatesCount > 0 && (
+                <p>
+                  Já trouxe <strong>{recruitedAffiliatesCount}</strong> afiliado{recruitedAffiliatesCount === 1 ? "" : "s"}{" "}
+                  para a plataforma através do seu próprio link.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div>
+        <h2 className="mb-3 font-semibold">Prémios físicos (faturamento)</h2>
+        <Card>
+          <CardContent className="space-y-3 p-6">
+            <p className="text-sm text-muted-foreground">
+              {prizeProgress.earnedTiers.length} de {PRIZE_TIERS.length} prémios ganhos — faturamento total{" "}
+              {formatCurrency(prizeProgress.lifetimeRevenue, currency)}.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {PRIZE_TIERS.map((tier) => {
+                const earned = prizeProgress.earnedTiers.some((t) => t.key === tier.key);
+                return (
+                  <span
+                    key={tier.key}
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      earned ? "bg-brand-gradient text-white" : "bg-muted text-muted-foreground opacity-60"
+                    }`}
+                  >
+                    {tier.icon} {tier.prize} ({tier.label})
+                  </span>
+                );
+              })}
+            </div>
+            <Link href="/admin/prizes" className="inline-block text-xs font-medium text-primary hover:underline">
+              Gerir entregas de prémios →
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       <div>
         <h2 className="mb-3 font-semibold">Enviar mensagem privada</h2>
