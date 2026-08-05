@@ -222,6 +222,12 @@ export async function creditOrder(orderId: string): Promise<void> {
       buyerEmail: order.buyer_email,
       productTitle: productLabel,
       accessUrl,
+      orderId: order.id,
+      amount: order.total_amount,
+      currency: order.currency as "MZN" | "ZAR",
+      purchasedAt: order.paid_at ?? new Date().toISOString(),
+      supportName: producer?.name,
+      supportContact: producer?.phone,
     });
   }
 

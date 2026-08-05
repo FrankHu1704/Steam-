@@ -165,73 +165,111 @@ export async function getAllProductionUnlocks(): Promise<AdminProductionUnlock[]
   }));
 }
 
+export interface RevenuePeriod {
+  grossVolume: number;
+  salesFees: number;
+  withdrawalFees: number;
+  employeeCommissions: number;
+  netProfit: number;
+}
+
 export interface PlatformRevenue {
-  salesFeesTotal: number;
-  salesFeesMonth: number;
-  withdrawalFeesTotal: number;
-  withdrawalFeesMonth: number;
-  totalRevenue: number;
-  monthRevenue: number;
-  employeeCommissionsTotal: number;
-  employeeCommissionsMonth: number;
-  netProfitTotal: number;
-  netProfitMonth: number;
+  today: RevenuePeriod;
+  yesterday: RevenuePeriod;
+  last7Days: RevenuePeriod;
+  thisMonth: RevenuePeriod;
+  allTime: RevenuePeriod;
+}
+
+const MAPUTO_OFFSET_MS = 2 * 60 * 60 * 1000; // UTC+2 year-round, no DST
+
+function maputoDayStart(date: Date): Date {
+  const local = new Date(date.getTime() + MAPUTO_OFFSET_MS);
+  const localMidnight = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), 0, 0, 0));
+  return new Date(localMidnight.getTime() - MAPUTO_OFFSET_MS);
+}
+
+function emptyPeriod(): RevenuePeriod {
+  return { grossVolume: 0, salesFees: 0, withdrawalFees: 0, employeeCommissions: 0, netProfit: 0 };
 }
 
 export async function getPlatformRevenue(): Promise<PlatformRevenue> {
   const supabase = await createClient();
 
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const todayStart = maputoDayStart(now);
+  const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
+  const last7DaysStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const localNow = new Date(now.getTime() + MAPUTO_OFFSET_MS);
+  const monthStart = new Date(
+    Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), 1, 0, 0, 0) - MAPUTO_OFFSET_MS
+  );
 
   const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }] = await Promise.all([
-    supabase.from("orders").select("platform_fee_amount, paid_at").eq("status", "paid").not("platform_fee_amount", "is", null),
+    supabase
+      .from("orders")
+      .select("total_amount, platform_fee_amount, paid_at")
+      .eq("status", "paid")
+      .not("platform_fee_amount", "is", null),
     supabase.from("withdrawals").select("fee_amount, paid_at").in("status", ["paid", "confirmed"]),
     supabase.from("employee_commissions").select("amount, created_at"),
   ]);
 
-  let salesFeesTotal = 0;
-  let salesFeesMonth = 0;
-  for (const o of orders ?? []) {
-    const fee = o.platform_fee_amount ?? 0;
-    salesFeesTotal += fee;
-    if (o.paid_at && new Date(o.paid_at) >= startOfMonth) salesFeesMonth += fee;
+  const periods = {
+    today: emptyPeriod(),
+    yesterday: emptyPeriod(),
+    last7Days: emptyPeriod(),
+    thisMonth: emptyPeriod(),
+    allTime: emptyPeriod(),
+  };
+
+  // Every row is bucketed into every period it falls within (a sale from
+  // this morning counts toward "today", "last 7 days", "this month" and
+  // "all time" all at once) — one pass per table instead of one query per
+  // period x table.
+  function bucketsFor(at: Date | null): (keyof typeof periods)[] {
+    const keys: (keyof typeof periods)[] = ["allTime"];
+    if (!at) return keys;
+    if (at >= monthStart) keys.push("thisMonth");
+    if (at >= last7DaysStart) keys.push("last7Days");
+    if (at >= yesterdayStart && at < todayStart) keys.push("yesterday");
+    if (at >= todayStart) keys.push("today");
+    return keys;
   }
 
-  let withdrawalFeesTotal = 0;
-  let withdrawalFeesMonth = 0;
+  for (const o of orders ?? []) {
+    const at = o.paid_at ? new Date(o.paid_at) : null;
+    const fee = o.platform_fee_amount ?? 0;
+    for (const key of bucketsFor(at)) {
+      periods[key].grossVolume += o.total_amount;
+      periods[key].salesFees += fee;
+    }
+  }
+
   for (const w of withdrawals ?? []) {
-    withdrawalFeesTotal += w.fee_amount;
-    if (w.paid_at && new Date(w.paid_at) >= startOfMonth) withdrawalFeesMonth += w.fee_amount;
+    const at = w.paid_at ? new Date(w.paid_at) : null;
+    for (const key of bucketsFor(at)) {
+      periods[key].withdrawalFees += w.fee_amount;
+    }
   }
 
   // Recruiter commission paid to collaborators — accrued the moment the
   // sale is credited (see lib/order-fulfillment.ts), always <= the platform
   // fee already counted above, so it's a real cost against that revenue,
   // not additional spend.
-  let employeeCommissionsTotal = 0;
-  let employeeCommissionsMonth = 0;
   for (const c of employeeCommissions ?? []) {
-    employeeCommissionsTotal += c.amount;
-    if (c.created_at && new Date(c.created_at) >= startOfMonth) employeeCommissionsMonth += c.amount;
+    const at = new Date(c.created_at);
+    for (const key of bucketsFor(at)) {
+      periods[key].employeeCommissions += c.amount;
+    }
   }
 
-  const totalRevenue = salesFeesTotal + withdrawalFeesTotal;
-  const monthRevenue = salesFeesMonth + withdrawalFeesMonth;
+  for (const key of Object.keys(periods) as (keyof typeof periods)[]) {
+    const p = periods[key];
+    p.netProfit = p.salesFees + p.withdrawalFees - p.employeeCommissions;
+  }
 
-  return {
-    salesFeesTotal,
-    salesFeesMonth,
-    withdrawalFeesTotal,
-    withdrawalFeesMonth,
-    totalRevenue,
-    monthRevenue,
-    employeeCommissionsTotal,
-    employeeCommissionsMonth,
-    netProfitTotal: totalRevenue - employeeCommissionsTotal,
-    netProfitMonth: monthRevenue - employeeCommissionsMonth,
-  };
+  return periods;
 }
 
 export interface ApiUsageProducer {

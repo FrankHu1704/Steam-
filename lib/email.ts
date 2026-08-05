@@ -421,17 +421,47 @@ export async function sendAdminWithdrawalRequestedEmail(input: {
   });
 }
 
-export async function sendBuyerReceiptEmail(input: { buyerEmail: string; productTitle: string; accessUrl: string }) {
+export async function sendBuyerReceiptEmail(input: {
+  buyerEmail: string;
+  productTitle: string;
+  accessUrl: string;
+  orderId: string;
+  amount: number;
+  currency: "MZN" | "ZAR";
+  purchasedAt: string;
+  supportName?: string | null;
+  supportContact?: string | null;
+}) {
+  const money = `${input.amount.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+  const purchaseDateLabel = new Date(input.purchasedAt).toLocaleString("pt-MZ", {
+    timeZone: "Africa/Maputo",
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+  const supportLabel = input.supportName
+    ? `${input.supportName}${input.supportContact ? ` — ${input.supportContact}` : ""}`
+    : "Falar com o vendedor pelo painel PagaJá";
+
   await sendEmail({
     to: input.buyerEmail,
-    subject: `Pagamento confirmado — ${input.productTitle}`,
+    subject: `Compra confirmada — ${input.productTitle}`,
     html: emailShell(
-      "Pagamento confirmado ✅",
-      emailParagraph("Olá! O seu pagamento foi confirmado com sucesso.") +
-        emailInfoBox([{ label: "Produto", value: input.productTitle }]) +
+      "Compra confirmada 🎉",
+      emailParagraph(`Olá! A sua compra de <strong>"${input.productTitle}"</strong> foi confirmada.`) +
+        emailInfoBox([
+          { label: "ID do Pedido", value: input.orderId },
+          { label: "Produto", value: input.productTitle },
+          { label: "Valor Pago", value: money },
+          { label: "Data da Compra", value: purchaseDateLabel },
+          { label: "Suporte", value: supportLabel },
+        ]) +
         emailButton("Aceder ao Conteúdo", input.accessUrl) +
+        emailReasonBox(
+          "Importante",
+          "Guarde este email como comprovante da sua compra.<br/>O link de acesso é válido por tempo indeterminado.<br/>Em caso de dúvidas, contacte o suporte acima."
+        ) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Este email foi enviado automaticamente pela plataforma PagaJá. Caso tenha dúvidas, entre em contacto com o vendedor.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Este email foi enviado automaticamente pela plataforma PagaJá.</span>`
         )
     ),
   });
