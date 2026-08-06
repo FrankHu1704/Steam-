@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Loader2,
@@ -17,6 +17,9 @@ import {
   ReceiptText,
   XCircle,
   ImageOff,
+  Copy,
+  Check,
+  Users2,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -151,6 +154,14 @@ export function UpsellOfferCard({ orderId }: { orderId: string }) {
 }
 
 const MOBILE_MONEY_METHODS: PaymentMethod[] = ["mpesa", "emola", "mkesh"];
+// Matches pollOrderStatus below (20 attempts x 3s) — the countdown shown to
+// the buyer reflects the real window the system keeps checking, not a fake
+// timer.
+const POLL_WINDOW_SECONDS = 60;
+
+function shortReference(id: string): string {
+  return `PGJ-${id.slice(0, 8).toUpperCase()}`;
+}
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   mpesa: "M-Pesa",
@@ -227,8 +238,27 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   const [orderId, setOrderId] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [files, setFiles] = useState<{ name: string; url: string | null }[]>([]);
+  const [secondsLeft, setSecondsLeft] = useState(POLL_WINDOW_SECONDS);
+  const [copied, setCopied] = useState(false);
+  const cancelledRef = useRef(false);
 
   const requiresPhone = MOBILE_MONEY_METHODS.includes(paymentMethod);
+
+  useEffect(() => {
+    if (step !== "pending") return;
+    setSecondsLeft(POLL_WINDOW_SECONDS);
+    const interval = setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step, orderId]);
+
+  function handleCopyReference() {
+    if (!orderId) return;
+    void navigator.clipboard.writeText(shortReference(orderId));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   const baseAmount = product.promo_price ?? product.price;
   const bumpTotal = bumps
@@ -254,7 +284,9 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   async function pollOrderStatus(id: string) {
     for (let attempt = 0; attempt < 20; attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 3000));
+      if (cancelledRef.current) return;
       const result = await getOrderStatus(id);
+      if (cancelledRef.current) return;
       if (result.status === "paid") {
         setStep("paid");
         const dl = await getDownloadLinks(id);
@@ -268,10 +300,16 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
     }
   }
 
+  function handleCancelPayment() {
+    cancelledRef.current = true;
+    setStep("form");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setPending(true);
+    cancelledRef.current = false;
 
     const result = await createOrder({
       productSlug: product.slug,
@@ -346,6 +384,9 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   }
 
   if (step === "pending") {
+    const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
+    const seconds = String(secondsLeft % 60).padStart(2, "0");
+
     return (
       <div className="mt-6 rounded-xl border border-border bg-card p-5 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
@@ -357,6 +398,13 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
               ? "Complete o pagamento seguro abaixo."
               : "Conclua o pagamento na página aberta e volte aqui."}
         </p>
+
+        {!checkoutUrl && (
+          <p className="mt-3 font-mono text-2xl font-bold text-primary">
+            {minutes}:{seconds}
+          </p>
+        )}
+
         {checkoutUrl && (
           <div className="mt-4 space-y-2 text-left">
             <div className="overflow-hidden rounded-xl border border-border bg-white">
@@ -377,17 +425,28 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
             </a>
           </div>
         )}
+
         {orderId && (
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
-            className="mt-4"
-            onClick={() => void pollOrderStatus(orderId)}
+            onClick={handleCopyReference}
+            className="mx-auto mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground hover:border-primary/40"
           >
-            Já paguei, verificar novamente
-          </Button>
+            Código de suporte: <span className="font-mono font-semibold text-foreground">{shortReference(orderId)}</span>
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+          </button>
         )}
+
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          {orderId && (
+            <Button type="button" variant="outline" size="sm" onClick={() => void pollOrderStatus(orderId)}>
+              Já paguei, verificar novamente
+            </Button>
+          )}
+          <Button type="button" variant="ghost" size="sm" onClick={handleCancelPayment}>
+            Cancelar pagamento
+          </Button>
+        </div>
       </div>
     );
   }
@@ -409,6 +468,12 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+      {product.sales_count > 0 && (
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400">
+          <Users2 className="h-4 w-4 shrink-0" />
+          +{product.sales_count} pessoa{product.sales_count === 1 ? "" : "s"} já compr{product.sales_count === 1 ? "ou" : "aram"} este produto
+        </div>
+      )}
       {bumps.length > 0 && (
         <div className="space-y-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3">
           <p className="text-xs font-semibold uppercase text-primary">Adicione também</p>
