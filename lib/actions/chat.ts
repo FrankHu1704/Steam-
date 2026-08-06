@@ -44,19 +44,22 @@ export async function sendChatMessage(message: string): Promise<ActionResult> {
     trimmed.length > NOTIFICATION_PREVIEW_LENGTH ? `${trimmed.slice(0, NOTIFICATION_PREVIEW_LENGTH)}…` : trimmed;
   const { data: recipients } = await admin
     .from("profiles")
-    .select("id, role")
+    .select("id, name, role")
     .in("role", ["producer", "admin"])
     .neq("id", user.id);
 
   for (const recipient of recipients ?? []) {
+    // "@Full Name" in the message text — matched against the recipient's
+    // own name — gets a distinct, more attention-grabbing notification.
+    const mentioned = new RegExp(`@${recipient.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w)`).test(trimmed);
     await admin.from("notifications").insert({
       user_id: recipient.id,
-      type: "chat",
-      title: "Nova mensagem no chat",
+      type: mentioned ? "chat_mention" : "chat",
+      title: mentioned ? `${profile.name} mencionou-te no chat` : "Nova mensagem no chat",
       message: `${profile.name}: ${preview}`,
     });
     await sendPushToUser(recipient.id, {
-      title: `${profile.name} no chat`,
+      title: mentioned ? `${profile.name} mencionou-te` : `${profile.name} no chat`,
       body: preview,
       url: recipient.role === "admin" ? "/admin/chat" : "/dashboard/chat",
     });

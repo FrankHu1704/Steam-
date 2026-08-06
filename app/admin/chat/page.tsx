@@ -10,15 +10,11 @@ export default async function AdminChatPage() {
   const messages = await getRecentChatMessages();
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Chat da Comunidade</h1>
-        <p className="text-sm text-muted-foreground">
-          Espaço aberto para produtores e a equipa PagaJá. Como admin, pode apagar qualquer mensagem problemática —
-          passe o rato sobre ela para ver o ícone de apagar.
-        </p>
-      </div>
-      <CommunityChat initialMessages={messages} currentUserId={user.id} isAdmin={profile.role === "admin"} />
-    </div>
+    <CommunityChat
+      initialMessages={messages}
+      currentUserId={user.id}
+      currentUserName={profile.name}
+      isAdmin={profile.role === "admin"}
+    />
   );
 }
