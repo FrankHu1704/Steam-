@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Package, Download, History, UserRound, Share2 } from "lucide-react";
+import { Package, Download, History, UserRound, Share2, MessagesSquare } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
@@ -9,6 +9,7 @@ const NAV: ShellNavItem[] = [
   { href: "/account/downloads", label: "Downloads", icon: <Download className="h-4 w-4" /> },
   { href: "/account/affiliates", label: "Afiliados", icon: <Share2 className="h-4 w-4" /> },
   { href: "/account/history", label: "Histórico", icon: <History className="h-4 w-4" /> },
+  { href: "/account/chat", label: "Chat", icon: <MessagesSquare className="h-4 w-4" /> },
   { href: "/account/profile", label: "Perfil", icon: <UserRound className="h-4 w-4" /> },
 ];
 

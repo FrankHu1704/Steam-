@@ -78,6 +78,15 @@ export interface Profile {
   created_at: string;
 }
 
+export interface CommunityChatMessage {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_role: string;
+  message: string;
+  created_at: string;
+}
+
 export interface ProducerPrizeDelivery {
   id: string;
   producer_id: string;
@@ -514,6 +523,7 @@ export interface Database {
       producer_affiliate_commissions: Row<ProducerAffiliateCommission>;
       webhook_deliveries: Row<WebhookDelivery>;
       producer_prize_deliveries: Row<ProducerPrizeDelivery>;
+      community_chat_messages: Row<CommunityChatMessage>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
