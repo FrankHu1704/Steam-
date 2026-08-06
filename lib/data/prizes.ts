@@ -100,6 +100,70 @@ export async function getPendingPrizeDeliveries(): Promise<PendingPrizeDelivery[
   return pending;
 }
 
+export interface PrizeTierSummary {
+  tier: PrizeTier;
+  producersEarned: number;
+  delivered: number;
+  pending: number;
+}
+
+export interface PrizesSummary {
+  platformLifetimeRevenue: number;
+  producersWithAtLeastOnePrize: number;
+  totalPrizesEarned: number;
+  totalDelivered: number;
+  totalPending: number;
+  byTier: PrizeTierSummary[];
+}
+
+// Platform-wide totals for the top of /admin/prizes — "a soma de tudo já
+// feito na plataforma", not just the per-producer view.
+export async function getPrizesSummary(): Promise<PrizesSummary> {
+  const supabase = await createClient();
+  const lowestThreshold = PRIZE_TIERS[0].threshold;
+
+  const [{ data: allProducers }, { data: qualifyingProducers }, { data: deliveries }] = await Promise.all([
+    supabase.from("profiles").select("lifetime_revenue").eq("role", "producer"),
+    supabase.from("profiles").select("id, lifetime_revenue").eq("role", "producer").gte("lifetime_revenue", lowestThreshold),
+    supabase.from("producer_prize_deliveries").select("producer_id, tier_key"),
+  ]);
+
+  const platformLifetimeRevenue = (allProducers ?? []).reduce((sum, p) => sum + p.lifetime_revenue, 0);
+  const deliveredSet = new Set((deliveries ?? []).map((d) => `${d.producer_id}:${d.tier_key}`));
+  const deliveredCountByTier = new Map<string, number>();
+  for (const d of deliveries ?? []) {
+    deliveredCountByTier.set(d.tier_key, (deliveredCountByTier.get(d.tier_key) ?? 0) + 1);
+  }
+
+  let producersWithAtLeastOnePrize = 0;
+  let totalPrizesEarned = 0;
+  const earnedCountByTier = new Map<string, number>();
+
+  for (const producer of qualifyingProducers ?? []) {
+    const earned = PRIZE_TIERS.filter((t) => producer.lifetime_revenue >= t.threshold);
+    if (earned.length > 0) producersWithAtLeastOnePrize += 1;
+    totalPrizesEarned += earned.length;
+    for (const tier of earned) {
+      earnedCountByTier.set(tier.key, (earnedCountByTier.get(tier.key) ?? 0) + 1);
+    }
+  }
+
+  const byTier: PrizeTierSummary[] = PRIZE_TIERS.map((tier) => {
+    const producersEarned = earnedCountByTier.get(tier.key) ?? 0;
+    const delivered = deliveredCountByTier.get(tier.key) ?? 0;
+    return { tier, producersEarned, delivered, pending: Math.max(0, producersEarned - delivered) };
+  });
+
+  return {
+    platformLifetimeRevenue,
+    producersWithAtLeastOnePrize,
+    totalPrizesEarned,
+    totalDelivered: deliveredSet.size,
+    totalPending: Math.max(0, totalPrizesEarned - deliveredSet.size),
+    byTier,
+  };
+}
+
 export interface DeliveredPrize {
   id: string;
   producerName: string;

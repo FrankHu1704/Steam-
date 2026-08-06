@@ -1,23 +1,96 @@
 import Link from "next/link";
-import { Gift, PackageCheck } from "lucide-react";
+import { Gift, PackageCheck, TrendingUp, Users2, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MarkPrizeDeliveredButton } from "@/components/admin/mark-prize-delivered-button";
-import { getPendingPrizeDeliveries, getDeliveredPrizes } from "@/lib/data/prizes";
+import { getPendingPrizeDeliveries, getDeliveredPrizes, getPrizesSummary } from "@/lib/data/prizes";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdminPrizesPage() {
-  const [pending, delivered] = await Promise.all([getPendingPrizeDeliveries(), getDeliveredPrizes()]);
+  const [pending, delivered, summary] = await Promise.all([
+    getPendingPrizeDeliveries(),
+    getDeliveredPrizes(),
+    getPrizesSummary(),
+  ]);
+
+  const summaryTiles = [
+    {
+      label: "Faturamento de todos os produtores",
+      value: formatCurrency(summary.platformLifetimeRevenue, "MZN"),
+      icon: TrendingUp,
+      style: "bg-primary/10 text-primary",
+    },
+    {
+      label: "Produtores premiados",
+      value: String(summary.producersWithAtLeastOnePrize),
+      icon: Users2,
+      style: "bg-violet-500/10 text-violet-600",
+    },
+    {
+      label: "Prémios entregues",
+      value: String(summary.totalDelivered),
+      icon: PackageCheck,
+      style: "bg-emerald-500/10 text-emerald-600",
+    },
+    {
+      label: "Prémios por entregar",
+      value: String(summary.totalPending),
+      icon: Gift,
+      style: "bg-amber-500/10 text-amber-600",
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Premiações</h1>
         <p className="text-sm text-muted-foreground">
-          Produtores que atingiram um valor de faturamento e ainda aguardam o prémio físico (agenda ou placa
-          PagaJá).
+          Resumo de tudo já conquistado na plataforma, e produtores que ainda aguardam o prémio físico (agenda ou
+          placa PagaJá).
         </p>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {summaryTiles.map((tile) => (
+          <Card key={tile.label}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">{tile.label}</p>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tile.style}`}>
+                  <tile.icon className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-3 text-2xl font-bold">{tile.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div>
+        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+          <Award className="h-4 w-4" /> Por patamar
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {summary.byTier.map((t) => (
+            <Card key={t.tier.key}>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium">
+                  {t.tier.icon} {t.tier.prize}
+                </p>
+                <p className="text-xs text-muted-foreground">A partir de {t.tier.label}</p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <p className="text-2xl font-bold">{t.producersEarned}</p>
+                  <p className="text-xs text-muted-foreground">produtor{t.producersEarned === 1 ? "" : "es"}</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.delivered} entregue{t.delivered === 1 ? "" : "s"} · {t.pending} por entregar
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <h2 className="text-sm font-semibold text-muted-foreground">Por entregar</h2>
       <Card>
         <CardContent className="p-0">
           {pending.length === 0 ? (
