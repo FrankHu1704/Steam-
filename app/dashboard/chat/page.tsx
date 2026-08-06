@@ -14,8 +14,8 @@ export default async function DashboardChatPage() {
       <div>
         <h1 className="text-2xl font-bold">Chat da Comunidade</h1>
         <p className="text-sm text-muted-foreground">
-          Espaço aberto para produtores, compradores e a equipa PagaJá conversarem e trocarem contactos. Seja
-          respeitoso — mensagens que violem as regras podem ser removidas.
+          Espaço aberto para produtores e a equipa PagaJá conversarem e trocarem contactos. Seja respeitoso —
+          mensagens que violem as regras podem ser removidas.
         </p>
       </div>
       <CommunityChat initialMessages={messages} currentUserId={user.id} isAdmin={profile.role === "admin"} />

@@ -22,6 +22,9 @@ export async function sendChatMessage(message: string): Promise<ActionResult> {
 
   const { data: profile } = await supabase.from("profiles").select("name, role").eq("id", user.id).single();
   if (!profile) return { error: "Perfil não encontrado." };
+  if (profile.role !== "producer" && profile.role !== "admin") {
+    return { error: "O chat é exclusivo para produtores." };
+  }
 
   const { error } = await supabase.from("community_chat_messages").insert({
     user_id: user.id,
