@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrderStatus } from "@/lib/actions/checkout";
 import type {
   ApiCallLog,
@@ -8,11 +9,14 @@ import type {
   Order,
   Payment,
   Product,
+  ProductFile,
   ProductionUnlock,
   Profile,
   Setting,
   Withdrawal,
 } from "@/types/database";
+
+const PRODUCT_FILE_SIGNED_URL_TTL_SECONDS = 60 * 60; // 1h — reviewed on the spot, no need to keep the link alive longer
 
 export async function requireAdminUser() {
   const supabase = await createClient();
@@ -63,6 +67,54 @@ export interface AdminProduct extends Product {
   producer_name: string;
   producer_created_at: string | null;
   producer_rejected_count: number;
+  files: AdminProductFileLink[];
+}
+
+export interface AdminProductFileLink {
+  id: string;
+  name: string;
+  url: string | null;
+  isExternal: boolean;
+}
+
+// Lets the admin open the producer's actual uploaded file (or external
+// link) during moderation, so an approval isn't based on the listing text
+// alone — a common way scams slip through review. Uses the service-role
+// client because the storage bucket's RLS only allows the owning producer
+// to read their own files; the admin has no folder-level access otherwise.
+async function getAdminProductFiles(productIds: string[]): Promise<Map<string, AdminProductFileLink[]>> {
+  const result = new Map<string, AdminProductFileLink[]>();
+  if (productIds.length === 0) return result;
+
+  const admin = createAdminClient();
+  const { data: files } = await admin
+    .from("product_files")
+    .select("*")
+    .in("product_id", productIds)
+    .order("sort_order");
+  const rows = (files as ProductFile[]) ?? [];
+  if (rows.length === 0) return result;
+
+  const storagePaths = rows.filter((f) => f.storage_path).map((f) => f.storage_path as string);
+  const signedUrlByPath = new Map<string, string>();
+  if (storagePaths.length > 0) {
+    const { data: signed } = await admin.storage
+      .from("product-files")
+      .createSignedUrls(storagePaths, PRODUCT_FILE_SIGNED_URL_TTL_SECONDS);
+    for (const s of signed ?? []) {
+      if (s.signedUrl && !s.error) signedUrlByPath.set(s.path ?? "", s.signedUrl);
+    }
+  }
+
+  for (const f of rows) {
+    const link: AdminProductFileLink = f.external_url
+      ? { id: f.id, name: f.name, url: f.external_url, isExternal: true }
+      : { id: f.id, name: f.name, url: f.storage_path ? (signedUrlByPath.get(f.storage_path) ?? null) : null, isExternal: false };
+    const list = result.get(f.product_id) ?? [];
+    list.push(link);
+    result.set(f.product_id, list);
+  }
+  return result;
 }
 
 export async function getAllProducts(status?: string): Promise<AdminProduct[]> {
@@ -89,10 +141,13 @@ export async function getAllProducts(status?: string): Promise<AdminProduct[]> {
     rejectedCounts.set(r.producer_id, (rejectedCounts.get(r.producer_id) ?? 0) + 1);
   }
 
+  const filesByProduct = await getAdminProductFiles(products.map((p) => p.id));
+
   return products.map((p) => ({
     ...p,
     producer_name: p.profiles?.name ?? "—",
     producer_created_at: p.profiles?.created_at ?? null,
+    files: filesByProduct.get(p.id) ?? [],
     producer_rejected_count: rejectedCounts.get(p.producer_id) ?? 0,
   }));
 }

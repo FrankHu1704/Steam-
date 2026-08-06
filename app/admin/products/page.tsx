@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { ExternalLink, Clock, CheckCircle2, XCircle, LayoutGrid, ImageOff, ShieldAlert, UserSearch } from "lucide-react";
+import {
+  ExternalLink,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  LayoutGrid,
+  ImageOff,
+  ShieldAlert,
+  UserSearch,
+  FileSearch,
+  FileWarning,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { ProductReviewActions } from "@/components/admin/product-review-actions";
@@ -125,6 +136,36 @@ export default async function AdminProductsPage({
                         Ver produto <ExternalLink className="h-3 w-3" />
                       </Link>
                     )}
+                    <div className="mt-2 rounded-lg border border-border bg-muted/40 p-2 text-xs">
+                      <p className="mb-1 flex items-center gap-1.5 font-semibold text-muted-foreground">
+                        <FileSearch className="h-3.5 w-3.5" /> Ficheiro/link entregue ao comprador
+                      </p>
+                      {product.files.length === 0 ? (
+                        <p className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                          <FileWarning className="h-3.5 w-3.5" /> Nenhum ficheiro ou link submetido ainda.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1">
+                          {product.files.map((file) => (
+                            <li key={file.id} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-muted-foreground">{file.name}</span>
+                              {file.url ? (
+                                <a
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex shrink-0 items-center gap-1 font-medium text-primary hover:underline"
+                                >
+                                  {file.isExternal ? "Abrir link" : "Ver ficheiro"} <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                <span className="shrink-0 text-destructive">indisponível</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     {product.tracking_script && (
                       <details className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs dark:border-amber-900 dark:bg-amber-950">
                         <summary className="flex cursor-pointer items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
