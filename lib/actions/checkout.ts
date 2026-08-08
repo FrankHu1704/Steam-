@@ -3,7 +3,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PaymentMethod } from "@/lib/debito-pay";
-import { getActivePaymentProvider, providerModule, methodsForProvider, type PaymentProviderName } from "@/lib/payments";
+import {
+  getActivePaymentProvider,
+  resolveChargeProvider,
+  chargeProviderModule,
+  methodsForProvider,
+  type ChargeProviderName,
+} from "@/lib/payments";
 import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import type { Product } from "@/types/database";
 
@@ -99,10 +105,11 @@ export async function createOrder(input: CreateOrderInput) {
 
   if (!product) return { error: "Produto não encontrado ou indisponível." };
 
-  const providerName = await getActivePaymentProvider();
-  if (!methodsForProvider(providerName, product.currency).includes(input.paymentMethod)) {
+  const activeProviderName = await getActivePaymentProvider();
+  if (!methodsForProvider(activeProviderName, product.currency).includes(input.paymentMethod)) {
     return { error: "Método de pagamento indisponível." };
   }
+  const providerName = await resolveChargeProvider(input.paymentMethod, product.currency);
 
   const baseAmount = input.customPrice ?? product.promo_price ?? product.price;
 
@@ -191,7 +198,7 @@ export async function createOrder(input: CreateOrderInput) {
 
   let charge;
   try {
-    charge = await providerModule(providerName).createCharge({
+    charge = await chargeProviderModule(providerName).createCharge({
       paymentMethod: input.paymentMethod,
       amount: totalAmount,
       currency: product.currency as "MZN" | "ZAR",
@@ -200,6 +207,7 @@ export async function createOrder(input: CreateOrderInput) {
       customerEmail: input.buyerEmail,
       customerPhone: input.buyerPhone,
       returnUrl: input.returnUrl,
+      title: product.title,
     });
   } catch (err) {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
@@ -268,10 +276,11 @@ interface CreateManualOrderInput {
 export async function createManualOrder(input: CreateManualOrderInput) {
   const supabase = createAdminClient();
 
-  const providerName = await getActivePaymentProvider();
-  if (!methodsForProvider(providerName, input.currency).includes(input.paymentMethod)) {
+  const activeProviderName = await getActivePaymentProvider();
+  if (!methodsForProvider(activeProviderName, input.currency).includes(input.paymentMethod)) {
     return { error: "Método de pagamento indisponível." };
   }
+  const providerName = await resolveChargeProvider(input.paymentMethod, input.currency);
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -301,7 +310,7 @@ export async function createManualOrder(input: CreateManualOrderInput) {
 
   let charge;
   try {
-    charge = await providerModule(providerName).createCharge({
+    charge = await chargeProviderModule(providerName).createCharge({
       paymentMethod: input.paymentMethod,
       amount: input.amount,
       currency: input.currency,
@@ -310,6 +319,7 @@ export async function createManualOrder(input: CreateManualOrderInput) {
       customerEmail: input.buyerEmail,
       customerPhone: input.buyerPhone,
       returnUrl: input.returnUrl,
+      title: input.description,
     });
   } catch (err) {
     await supabase.from("orders").update({ status: "failed" }).eq("id", order.id);
@@ -357,9 +367,11 @@ export async function getOrderStatus(orderId: string) {
 
     if (payment?.provider_payment_id) {
       try {
-        const providerName: PaymentProviderName =
-          payment.provider === "zumbopay" || payment.provider === "netshop" ? payment.provider : "debito_pay";
-        const remote = await providerModule(providerName).checkChargeStatus(
+        const providerName: ChargeProviderName =
+          payment.provider === "zumbopay" || payment.provider === "netshop" || payment.provider === "pagar"
+            ? payment.provider
+            : "debito_pay";
+        const remote = await chargeProviderModule(providerName).checkChargeStatus(
           payment.provider_payment_id,
           order.payment_method as PaymentMethod
         );

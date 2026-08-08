@@ -75,6 +75,7 @@ interface ChargeInput {
   customerEmail: string;
   customerPhone?: string;
   returnUrl?: string;
+  title?: string;
 }
 
 interface ChargeResult {

@@ -2,9 +2,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import * as debitoPay from "@/lib/debito-pay";
 import * as zumboPay from "@/lib/zumbopay";
 import * as netShop from "@/lib/netshop";
+import * as pagar from "@/lib/pagar";
 import type { PaymentMethod } from "@/lib/debito-pay";
 
 export type PaymentProviderName = "debito_pay" | "zumbopay" | "netshop";
+
+// Pagar is NOT a selectable "active processor" like the three above — it's
+// only ever used for e-Mola charges specifically (see
+// resolveChargeProvider below), while everything else keeps going through
+// whichever processor is set as active. This keeps payments.provider (and
+// getOrderStatus's reconciliation) able to name it without widening every
+// admin-settings/B2C-payout code path that deals with PaymentProviderName.
+export type ChargeProviderName = PaymentProviderName | "pagar";
 
 // ZumboPay's Visa/Mastercard flow only offers a hosted checkout page with
 // their own "ZumboPay" branding clearly visible (confirmed live — even
@@ -49,4 +58,22 @@ export function methodsForProvider(name: PaymentProviderName, currency: string):
 
 export function b2cMethodsForProvider(name: PaymentProviderName): ("mpesa" | "emola")[] {
   return B2C_METHODS[name];
+}
+
+function isPagarConfigured(): boolean {
+  return Boolean(process.env.PAGAR_API_KEY?.trim() && process.env.PAGAR_SIGNING_SECRET?.trim());
+}
+
+// e-Mola charges route through Pagar specifically (per admin's choice —
+// everything else keeps using the globally active processor). Falls back
+// to the active processor if Pagar's credentials aren't set, so checkout
+// never breaks just because that one integration is mid-setup.
+export async function resolveChargeProvider(method: PaymentMethod, currency: string): Promise<ChargeProviderName> {
+  if (method === "emola" && currency === "MZN" && isPagarConfigured()) return "pagar";
+  return getActivePaymentProvider();
+}
+
+export function chargeProviderModule(name: ChargeProviderName) {
+  if (name === "pagar") return pagar;
+  return providerModule(name);
 }
