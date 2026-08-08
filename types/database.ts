@@ -161,6 +161,7 @@ export interface EmployeePayout {
   period_month: string;
   created_at: string;
   paid_at: string | null;
+  provider_fee_amount: number;
 }
 
 export interface EmployeeApplication {
@@ -383,6 +384,7 @@ export interface Withdrawal {
   reviewed_by: string | null;
   paid_at: string | null;
   confirmed_at: string | null;
+  provider_fee_amount: number;
 }
 
 export interface PayoutWallet {

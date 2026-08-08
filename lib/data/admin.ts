@@ -310,15 +310,17 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
     Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), 1, 0, 0, 0) - MAPUTO_OFFSET_MS
   );
 
-  const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }] = await Promise.all([
-    supabase
-      .from("orders")
-      .select("total_amount, platform_fee_amount, paid_at")
-      .eq("status", "paid")
-      .not("platform_fee_amount", "is", null),
-    supabase.from("withdrawals").select("fee_amount, paid_at").in("status", ["paid", "confirmed"]),
-    supabase.from("employee_commissions").select("amount, created_at"),
-  ]);
+  const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }, { data: employeePayouts }] =
+    await Promise.all([
+      supabase
+        .from("orders")
+        .select("total_amount, platform_fee_amount, paid_at")
+        .eq("status", "paid")
+        .not("platform_fee_amount", "is", null),
+      supabase.from("withdrawals").select("fee_amount, provider_fee_amount, paid_at").in("status", ["paid", "confirmed"]),
+      supabase.from("employee_commissions").select("amount, created_at"),
+      supabase.from("employee_payouts").select("provider_fee_amount, paid_at").eq("status", "paid"),
+    ]);
 
   const periods = {
     today: emptyPeriod(),
@@ -354,7 +356,19 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
   for (const w of withdrawals ?? []) {
     const at = w.paid_at ? new Date(w.paid_at) : null;
     for (const key of bucketsFor(at)) {
-      periods[key].withdrawalFees += w.fee_amount;
+      periods[key].withdrawalFees += w.fee_amount + (w.provider_fee_amount ?? 0);
+    }
+  }
+
+  // Extra cut a payout processor takes on top (currently only Pagar's 8%
+  // e-Mola B2C fee) — PagaJá absorbed it already so the recipient wasn't
+  // shorted, so it belongs here as a real cost, same bucket as the
+  // withdrawal fees above.
+  for (const ep of employeePayouts ?? []) {
+    if (!ep.provider_fee_amount) continue;
+    const at = ep.paid_at ? new Date(ep.paid_at) : null;
+    for (const key of bucketsFor(at)) {
+      periods[key].withdrawalFees += ep.provider_fee_amount;
     }
   }
 

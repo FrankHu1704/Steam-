@@ -190,6 +190,7 @@ interface PayoutInput {
   notes?: string;
   /** Only supported for method="mpesa" — instant B2C, synchronous result. */
   autoDispatch?: boolean;
+  recipientName?: string;
 }
 
 interface PayoutResult {

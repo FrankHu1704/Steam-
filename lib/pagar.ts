@@ -20,8 +20,10 @@ import type { PaymentMethod } from "@/lib/debito-pay";
 //     hex = hmac_sha256(webhookSecret, `${timestamp}.${rawBody}`), timestamp
 //     must be within 300s of now. `Pagar-Event-Id` is required and must be
 //     deduped (webhooks can be redelivered).
-//   - No B2C payout support here — producer/CTO withdrawals stay on
-//     whichever processor is set as the platform's active one.
+//   - Payouts (B2C): POST /payouts. Pagar deducts its own fee (documented
+//     example: 8%) from the GROSS amount before the recipient gets it — see
+//     createPayout() below for how PagaJá absorbs that instead of shorting
+//     the recipient.
 
 function baseUrl() {
   return process.env.PAGAR_API_URL || "https://api.pagar.co.mz/api/v1";
@@ -211,4 +213,74 @@ export function verifyPagarWebhookSignature(rawBody: string, signatureHeader: st
   } catch {
     return false;
   }
+}
+
+// Documented example rate ("Taxa de 8%: 80 MZN" on a 1000 MZN payout) — the
+// response's own feeAmountMzn/netAmountMzn are the source of truth for what
+// actually happened; this is only used to gross up the REQUEST amount.
+export const PAGAR_PAYOUT_FEE_RATE = 0.08;
+
+interface PayoutInput {
+  method: "mpesa" | "emola";
+  amount: number;
+  destination: string;
+  notes?: string;
+  autoDispatch?: boolean;
+  recipientName?: string;
+}
+
+interface PayoutResult {
+  success: boolean;
+  status?: "pending" | "success" | "failed";
+  reference?: string;
+  providerReference?: string;
+  feeAmount?: number;
+  netAmount?: number;
+  error?: string;
+}
+
+/** Sends money OUT from PagaJá's Pagar wallet. Unlike the other providers'
+ * createPayout(), `input.amount` here is treated as the amount the
+ * RECIPIENT should net (matching what producers/employees/the CTO are
+ * already promised elsewhere in the app) — this grosses the request up so
+ * Pagar's own 8% cut comes out of PagaJá's margin, not the recipient's
+ * payout. Pagar rounds its fee up to the nearest MZN, so the actual net can
+ * land up to ~1 MZN above target; that small slack is absorbed too rather
+ * than corrected with a second payout. */
+export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
+  if (input.method !== "mpesa" && input.method !== "emola") {
+    return { success: false, error: `A Pagar só suporta M-Pesa e e-Mola diretamente (pedido: ${input.method}).` };
+  }
+
+  const grossAmountMzn = Math.ceil(input.amount / (1 - PAGAR_PAYOUT_FEE_RATE));
+  if (grossAmountMzn < 20 || grossAmountMzn > 40_000) {
+    return { success: false, error: `Valor fora do limite da Pagar (20–40 000 MZN): ${grossAmountMzn} MZN.` };
+  }
+
+  const reference = `payout-${input.notes ? input.notes.replace(/\s+/g, "-").slice(0, 40) : "pagaja"}-${Date.now()}`;
+  const { status, json } = await pagarPost(
+    "/payouts",
+    {
+      reference,
+      description: input.notes || "Levantamento PagaJá",
+      amountMzn: grossAmountMzn,
+      method: input.method.toUpperCase(),
+      recipient: { phone: toLocalPhone(input.destination), name: input.recipientName || "Destinatário PagaJá" },
+    },
+    `payout:${reference}`
+  );
+
+  const payout = json?.payout;
+  if (!payout?.id) {
+    return { success: false, error: json?.message || json?.error || `Falha no pagamento (HTTP ${status})` };
+  }
+
+  return {
+    success: true,
+    status: mapStatus(String(payout.status ?? "PENDING")),
+    reference: payout.id,
+    providerReference: payout.id,
+    feeAmount: typeof payout.feeAmountMzn === "number" ? payout.feeAmountMzn : undefined,
+    netAmount: typeof payout.netAmountMzn === "number" ? payout.netAmountMzn : undefined,
+  };
 }

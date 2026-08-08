@@ -22,31 +22,39 @@ export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<n
   const supabase = createAdminClient();
   const { start, end } = maputoMonthBounds(monthsAgo);
 
-  const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }] = await Promise.all([
-    supabase
-      .from("orders")
-      .select("platform_fee_amount, paid_at")
-      .eq("status", "paid")
-      .not("platform_fee_amount", "is", null)
-      .gte("paid_at", start.toISOString())
-      .lt("paid_at", end.toISOString()),
-    supabase
-      .from("withdrawals")
-      .select("fee_amount, paid_at")
-      .in("status", ["paid", "confirmed"])
-      .gte("paid_at", start.toISOString())
-      .lt("paid_at", end.toISOString()),
-    supabase
-      .from("employee_commissions")
-      .select("amount, created_at")
-      .gte("created_at", start.toISOString())
-      .lt("created_at", end.toISOString()),
-  ]);
+  const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }, { data: employeePayouts }] =
+    await Promise.all([
+      supabase
+        .from("orders")
+        .select("platform_fee_amount, paid_at")
+        .eq("status", "paid")
+        .not("platform_fee_amount", "is", null)
+        .gte("paid_at", start.toISOString())
+        .lt("paid_at", end.toISOString()),
+      supabase
+        .from("withdrawals")
+        .select("fee_amount, provider_fee_amount, paid_at")
+        .in("status", ["paid", "confirmed"])
+        .gte("paid_at", start.toISOString())
+        .lt("paid_at", end.toISOString()),
+      supabase
+        .from("employee_commissions")
+        .select("amount, created_at")
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString()),
+      supabase
+        .from("employee_payouts")
+        .select("provider_fee_amount, paid_at")
+        .eq("status", "paid")
+        .gte("paid_at", start.toISOString())
+        .lt("paid_at", end.toISOString()),
+    ]);
 
   const salesFees = (orders ?? []).reduce((sum, o) => sum + (o.platform_fee_amount ?? 0), 0);
-  const withdrawalFees = (withdrawals ?? []).reduce((sum, w) => sum + w.fee_amount, 0);
+  const withdrawalFees = (withdrawals ?? []).reduce((sum, w) => sum + w.fee_amount + (w.provider_fee_amount ?? 0), 0);
+  const payoutProviderFees = (employeePayouts ?? []).reduce((sum, ep) => sum + (ep.provider_fee_amount ?? 0), 0);
   const commissions = (employeeCommissions ?? []).reduce((sum, c) => sum + c.amount, 0);
-  return salesFees + withdrawalFees - commissions;
+  return salesFees + withdrawalFees + payoutProviderFees - commissions;
 }
 
 export interface CtoDashboardData {

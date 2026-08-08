@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getActivePaymentProvider, providerModule } from "@/lib/payments";
+import { resolveB2CProvider, chargeProviderModule } from "@/lib/payments";
 import { creditMonthlyCtoShare } from "@/lib/cto";
 
 // Runs on day 1 of every month (see vercel.json) — pays out every active
-// employee's accrued recruiter commission automatically via B2C. Only
-// M-Pesa payouts can be automated (same provider limitation as producer
-// withdrawals); e-Mola employees get a "failed" record so an admin can pay
-// them manually and the balance stays untouched for a retry.
+// employee's accrued recruiter commission automatically via B2C. M-Pesa is
+// preferred (auto-dispatchable on every processor); e-Mola-only employees
+// route through Pagar specifically, which absorbs its own payout fee into
+// PagaJá's margin (see PAGAR_PAYOUT_FEE_RATE in lib/pagar.ts) so the
+// employee still gets their full accrued balance. An employee with neither
+// number set gets a "failed" record so an admin can pay them manually.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
@@ -20,7 +22,7 @@ export async function GET(request: Request) {
 
   const { data: employees } = await supabase
     .from("employees")
-    .select("id, name, mpesa_number, balance_available")
+    .select("id, name, mpesa_number, emola_number, balance_available")
     .eq("active", true)
     .gt("balance_available", 0);
 
@@ -39,13 +41,15 @@ export async function GET(request: Request) {
     }
 
     const amount = employee.balance_available;
+    const method: "mpesa" | "emola" | null = employee.mpesa_number ? "mpesa" : employee.emola_number ? "emola" : null;
+    const destination = method === "mpesa" ? employee.mpesa_number : method === "emola" ? employee.emola_number : null;
 
-    if (!employee.mpesa_number) {
+    if (!method || !destination) {
       await supabase.from("employee_payouts").insert({
         employee_id: employee.id,
         amount,
         status: "failed",
-        failure_reason: "Sem número M-Pesa registado — o B2C automático não suporta e-Mola. Pague manualmente.",
+        failure_reason: "Sem número M-Pesa nem e-Mola registado — pague manualmente.",
         period_month: periodMonth,
       });
       results.push({ employeeId: employee.id, status: "failed", amount });
@@ -53,12 +57,13 @@ export async function GET(request: Request) {
     }
 
     try {
-      const providerName = await getActivePaymentProvider();
-      const result = await providerModule(providerName).createPayout({
-        method: "mpesa",
+      const providerName = await resolveB2CProvider(method, "MZN");
+      const result = await chargeProviderModule(providerName).createPayout({
+        method,
         amount,
-        destination: employee.mpesa_number,
+        destination,
         notes: `Comissão PagaJá — colaborador ${employee.name}`,
+        recipientName: employee.name,
         autoDispatch: true,
       });
 
@@ -74,6 +79,8 @@ export async function GET(request: Request) {
         continue;
       }
 
+      const providerFeeAmount = providerName === "pagar" && typeof result.feeAmount === "number" ? result.feeAmount : 0;
+
       await supabase.from("employee_payouts").insert({
         employee_id: employee.id,
         amount,
@@ -81,6 +88,7 @@ export async function GET(request: Request) {
         payout_reference: result.providerReference ?? result.reference ?? null,
         period_month: periodMonth,
         paid_at: new Date().toISOString(),
+        provider_fee_amount: providerFeeAmount,
       });
       await supabase
         .from("employees")

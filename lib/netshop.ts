@@ -157,6 +157,7 @@ interface PayoutInput {
   destination: string;
   notes?: string;
   autoDispatch?: boolean;
+  recipientName?: string;
 }
 
 interface PayoutResult {

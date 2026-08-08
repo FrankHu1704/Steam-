@@ -108,6 +108,7 @@ interface PayoutInput {
   notes?: string;
   /** No-op here — Debito Pay's M-Pesa B2C payout is always synchronous. */
   autoDispatch?: boolean;
+  recipientName?: string;
 }
 
 interface PayoutResult {

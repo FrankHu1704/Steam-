@@ -77,3 +77,11 @@ export function chargeProviderModule(name: ChargeProviderName) {
   if (name === "pagar") return pagar;
   return providerModule(name);
 }
+
+// Same routing rule as resolveChargeProvider, applied to B2C payouts
+// (producer/CTO/employee withdrawals) instead of incoming charges — Pagar
+// absorbs its own payout fee into PagaJá's margin (see PAGAR_PAYOUT_FEE_RATE
+// in lib/pagar.ts), so this never reduces what the recipient actually gets.
+export async function resolveB2CProvider(method: "mpesa" | "emola", currency: string): Promise<ChargeProviderName> {
+  return resolveChargeProvider(method, currency);
+}
