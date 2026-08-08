@@ -75,6 +75,17 @@ export interface Profile {
   lifetime_sales_count: number;
   lifetime_revenue: number;
   balance_available_dev: number;
+  is_cto: boolean;
+  balance_available_cto: number;
+  created_at: string;
+}
+
+export interface CtoMonthlyCredit {
+  id: string;
+  cto_id: string;
+  amount: number;
+  net_profit: number;
+  period_month: string;
   created_at: string;
 }
 
@@ -363,7 +374,7 @@ export interface Withdrawal {
   currency: string;
   payout_method: PayoutMethod;
   destination: string;
-  wallet_source: "producer" | "dev";
+  wallet_source: "producer" | "dev" | "cto";
   status: WithdrawalStatus;
   rejection_reason: string | null;
   payout_reference: string | null;
@@ -524,6 +535,7 @@ export interface Database {
       webhook_deliveries: Row<WebhookDelivery>;
       producer_prize_deliveries: Row<ProducerPrizeDelivery>;
       community_chat_messages: Row<CommunityChatMessage>;
+      cto_monthly_credits: Row<CtoMonthlyCredit>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

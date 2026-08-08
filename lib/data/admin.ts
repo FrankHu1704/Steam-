@@ -29,6 +29,19 @@ export async function requireAdminUser() {
   return { user, profile: profile as Profile };
 }
 
+// Admin, or a producer flagged is_cto=true — the CTO's product-approval
+// power, nothing broader (no access to other admin-only actions).
+export async function requireProductModerator() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  if (!profile || (profile.role !== "admin" && !profile.is_cto)) return null;
+  return { user, profile: profile as Profile };
+}
+
 export interface AdminOverview {
   usersCount: number;
   productsPendingCount: number;

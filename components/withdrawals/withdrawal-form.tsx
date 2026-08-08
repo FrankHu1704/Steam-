@@ -28,6 +28,7 @@ const WALLET_LOGO: Record<"mpesa" | "emola", string> = {
 export function WithdrawalForm({
   balanceAvailable,
   balanceAvailableDev,
+  balanceAvailableCto,
   currency,
   feePercent,
   minimumAmount,
@@ -35,6 +36,7 @@ export function WithdrawalForm({
 }: {
   balanceAvailable: number;
   balanceAvailableDev: number;
+  balanceAvailableCto?: number;
   currency: string;
   feePercent: number;
   minimumAmount: number;
@@ -42,8 +44,9 @@ export function WithdrawalForm({
 }) {
   const router = useRouter();
   const defaultWallet = wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
+  const showCtoWallet = balanceAvailableCto !== undefined;
 
-  const [walletSource, setWalletSource] = useState<"producer" | "dev">("producer");
+  const [walletSource, setWalletSource] = useState<"producer" | "dev" | "cto">("producer");
   const [amount, setAmount] = useState("");
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(defaultWallet?.id ?? null);
   const [useOther, setUseOther] = useState(wallets.length === 0);
@@ -52,9 +55,13 @@ export function WithdrawalForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const currentBalance = walletSource === "dev" ? balanceAvailableDev : balanceAvailable;
+  const currentBalance =
+    walletSource === "dev" ? balanceAvailableDev : walletSource === "cto" ? (balanceAvailableCto ?? 0) : balanceAvailable;
   const numericAmount = Number(amount) || 0;
-  const feeAmount = Math.round(numericAmount * (feePercent / 100) * 100) / 100;
+  // The CTO wallet never carries the standard withdrawal fee — see
+  // requestWithdrawal() in lib/actions/withdrawals.ts.
+  const effectiveFeePercent = walletSource === "cto" ? 0 : feePercent;
+  const feeAmount = Math.round(numericAmount * (effectiveFeePercent / 100) * 100) / 100;
   const netAmount = Math.max(0, numericAmount - feeAmount);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,7 +108,7 @@ export function WithdrawalForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <Label>Carteira</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className={cn("grid gap-2", showCtoWallet ? "grid-cols-3" : "grid-cols-2")}>
           <button
             type="button"
             onClick={() => setWalletSource("producer")}
@@ -124,6 +131,19 @@ export function WithdrawalForm({
             <p className="text-xs text-muted-foreground">Programador (API)</p>
             <p className="font-semibold">{formatCurrency(balanceAvailableDev, currency as "MZN" | "ZAR")}</p>
           </button>
+          {showCtoWallet && (
+            <button
+              type="button"
+              onClick={() => setWalletSource("cto")}
+              className={cn(
+                "rounded-xl border-2 px-3 py-2.5 text-left transition-colors",
+                walletSource === "cto" ? "border-primary bg-primary/5" : "border-border"
+              )}
+            >
+              <p className="text-xs text-muted-foreground">CTO</p>
+              <p className="font-semibold">{formatCurrency(balanceAvailableCto ?? 0, currency as "MZN" | "ZAR")}</p>
+            </button>
+          )}
         </div>
       </div>
 
@@ -226,7 +246,7 @@ export function WithdrawalForm({
       {numericAmount > 0 && (
         <div className="space-y-1 rounded-lg bg-muted/60 p-3 text-sm">
           <div className="flex justify-between text-muted-foreground">
-            <span>Taxa ({feePercent}%)</span>
+            <span>Taxa ({effectiveFeePercent}%)</span>
             <span>-{formatCurrency(feeAmount, currency as "MZN" | "ZAR")}</span>
           </div>
           <div className="flex justify-between font-semibold">

@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, UserPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge, StatusBadge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
+import { UserCtoToggle } from "@/components/admin/user-cto-toggle";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { PrivateMessageForm } from "@/components/admin/private-message-form";
 import { ResetPasswordForm } from "@/components/admin/reset-password-form";
@@ -12,7 +13,7 @@ import { getUserDetail } from "@/lib/data/admin";
 import { hasActiveProductionAccess } from "@/lib/production-access";
 import { tierForSalesCount } from "@/lib/data/achievements";
 import { prizeProgressForRevenue, PRIZE_TIERS } from "@/lib/data/prizes";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, walletSourceLabel } from "@/lib/utils";
 
 function initials(name: string): string {
   return (
@@ -114,6 +115,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p className="text-xs text-muted-foreground">Papel</p>
             <UserRoleSelect userId={profile.id} role={profile.role} />
           </div>
+          {profile.role === "producer" && (
+            <div>
+              <p className="text-xs text-muted-foreground">CTO</p>
+              <UserCtoToggle userId={profile.id} isCto={profile.is_cto} />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -313,9 +320,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   <tbody>
                     {withdrawals.map((w) => (
                       <tr key={w.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
-                        <td className="p-3 text-muted-foreground">
-                          {w.wallet_source === "dev" ? "Programador" : "Produtor"}
-                        </td>
+                        <td className="p-3 text-muted-foreground">{walletSourceLabel(w.wallet_source)}</td>
                         <td className="p-3">{formatCurrency(w.amount, currency)}</td>
                         <td className="p-3">{formatCurrency(w.net_amount, currency)}</td>
                         <td className="p-3 text-muted-foreground">{w.payout_method}</td>

@@ -14,6 +14,7 @@ import {
   Star,
   Trophy,
   MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
@@ -52,8 +53,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const notifications = await getMyNotifications(user.id);
 
+  const navItems = profile?.is_cto
+    ? [NAV[0], { href: "/dashboard/cto", label: "Painel CTO", icon: <ShieldCheck className="h-4 w-4" /> }, ...NAV.slice(1)]
+    : NAV;
+
   return (
-    <Shell navItems={NAV} notifications={notifications}>
+    <Shell navItems={navItems} notifications={notifications}>
       {children}
     </Shell>
   );

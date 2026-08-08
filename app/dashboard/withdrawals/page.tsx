@@ -10,7 +10,7 @@ import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyWithdrawals, getWithdrawalFeePercent, getWithdrawalMinimumAmount } from "@/lib/data/withdrawals";
 import { getPayoutWallets } from "@/lib/data/payout-wallets";
 import { getActivePaymentProvider, b2cMethodsForProvider } from "@/lib/payments";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, walletSourceLabel } from "@/lib/utils";
 
 const METHOD_LABEL: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola" };
 
@@ -55,7 +55,7 @@ export default async function WithdrawalsPage() {
       {negativeBalanceBanner}
       {b2cBanner}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className={`grid gap-4 sm:grid-cols-2${profile.is_cto ? " lg:grid-cols-3" : ""}`}>
         <div className="relative overflow-hidden rounded-3xl bg-brand-gradient p-6 text-white shadow-lg">
           <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
@@ -76,6 +76,18 @@ export default async function WithdrawalsPage() {
           </p>
           <p className="relative mt-1 text-xs text-white/70">Cobranças feitas através da sua própria app via API.</p>
         </div>
+        {profile.is_cto && (
+          <div className="relative overflow-hidden rounded-3xl bg-amber-600 p-6 text-white shadow-lg">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+            <div className="relative flex items-center gap-2 text-sm font-medium text-white/80">
+              <Wallet className="h-4 w-4" /> Carteira CTO
+            </div>
+            <p className="relative mt-2 text-3xl font-bold sm:text-4xl">
+              {formatCurrency(profile.balance_available_cto, currency)}
+            </p>
+            <p className="relative mt-1 text-xs text-white/70">25% do lucro líquido da plataforma, creditado todo mês.</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-3 divide-x divide-border rounded-2xl border border-border p-4">
@@ -108,6 +120,7 @@ export default async function WithdrawalsPage() {
           <WithdrawalForm
             balanceAvailable={profile.balance_available}
             balanceAvailableDev={profile.balance_available_dev}
+            balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
             currency={profile.currency}
             feePercent={feePercent}
             minimumAmount={minimumAmount}
@@ -144,9 +157,7 @@ export default async function WithdrawalsPage() {
               <tbody>
                 {withdrawals.map((w) => (
                   <tr key={w.id} className="border-b border-border/60 last:border-0">
-                    <td className="p-4 text-muted-foreground">
-                      {w.wallet_source === "dev" ? "Programador" : "Produtor"}
-                    </td>
+                    <td className="p-4 text-muted-foreground">{walletSourceLabel(w.wallet_source)}</td>
                     <td className="p-4">{formatCurrency(w.amount, currency)}</td>
                     <td className="p-4 font-medium">{formatCurrency(w.net_amount, currency)}</td>
                     <td className="p-4 capitalize text-muted-foreground">{w.payout_method.replace(/_/g, " ")}</td>

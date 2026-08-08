@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getActivePaymentProvider, providerModule } from "@/lib/payments";
+import { creditMonthlyCtoShare } from "@/lib/cto";
 
 // Runs on day 1 of every month (see vercel.json) — pays out every active
 // employee's accrued recruiter commission automatically via B2C. Only
@@ -103,5 +104,13 @@ export async function GET(request: Request) {
     metadata: { periodMonth, results },
   });
 
-  return NextResponse.json({ ok: true, periodMonth, results });
+  // Same day-1-of-month slot also credits 25% of last month's platform
+  // net profit to every CTO's withdrawable balance — see lib/cto.ts.
+  const ctoResult = await creditMonthlyCtoShare(periodMonth);
+  await supabase.from("logs").insert({
+    action: "cto_payout_credit_cron",
+    metadata: { periodMonth, ...ctoResult },
+  });
+
+  return NextResponse.json({ ok: true, periodMonth, results, cto: ctoResult });
 }

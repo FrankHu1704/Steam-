@@ -6,7 +6,7 @@ import { ManualB2CForm } from "@/components/admin/manual-b2c-form";
 import { ProcessorSelect } from "@/components/admin/processor-select";
 import { getAllWithdrawals, getB2CHistory } from "@/lib/data/admin";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider, type PaymentProviderName } from "@/lib/payments";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, walletSourceLabel } from "@/lib/utils";
 
 const METHOD_LABEL: Record<string, string> = { mpesa: "M-Pesa", emola: "e-Mola" };
 const PROVIDER_LABEL: Record<PaymentProviderName, string> = {
@@ -117,7 +117,7 @@ export default async function AdminWithdrawalsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="secondary">{w.wallet_source === "dev" ? "Programador" : "Produtor"}</Badge>
+                    <Badge variant="secondary">{walletSourceLabel(w.wallet_source)}</Badge>
                     <StatusBadge status={w.status} />
                     <WithdrawalReviewActions withdrawalId={w.id} status={w.status} payoutMethod={w.payout_method} />
                   </div>

@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdminUser } from "@/lib/data/admin";
+import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
 import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
@@ -10,7 +10,7 @@ import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from 
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
-  const admin = await requireAdminUser();
+  const admin = await requireProductModerator();
   if (!admin) return { error: "Acesso negado." };
 
   const supabase = createAdminClient();
@@ -37,7 +37,7 @@ export async function approveProduct(productId: string) {
 }
 
 export async function rejectProduct(productId: string, reason: string) {
-  const admin = await requireAdminUser();
+  const admin = await requireProductModerator();
   if (!admin) return { error: "Acesso negado." };
 
   const supabase = createAdminClient();
@@ -77,10 +77,15 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
     updates.reviewed_at = new Date().toISOString();
     updates.rejection_reason = note ?? null;
 
-    const walletField = withdrawal.wallet_source === "dev" ? "balance_available_dev" : "balance_available";
+    const walletField =
+      withdrawal.wallet_source === "dev"
+        ? "balance_available_dev"
+        : withdrawal.wallet_source === "cto"
+          ? "balance_available_cto"
+          : "balance_available";
     const { data: producer } = await supabase
       .from("profiles")
-      .select("balance_available, balance_available_dev")
+      .select("balance_available, balance_available_dev, balance_available_cto")
       .eq("id", withdrawal.producer_id)
       .single();
     await supabase
@@ -411,6 +416,21 @@ export async function updateUserRole(userId: string, role: UserRole) {
 
   const supabase = createAdminClient();
   await supabase.from("profiles").update({ role }).eq("id", userId);
+  return { ok: true };
+}
+
+// CTO is an overlay on a producer account (they keep selling/earning as a
+// normal producer) — this just grants/revokes product-moderation access
+// and the monthly 25%-of-profit share, never touches profiles.role.
+export async function setCtoStatus(userId: string, isCto: boolean) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase.from("profiles").select("role").eq("id", userId).single();
+  if (!target || target.role !== "producer") return { error: "Só um produtor pode ser CTO." };
+
+  await supabase.from("profiles").update({ is_cto: isCto }).eq("id", userId);
   return { ok: true };
 }
 
