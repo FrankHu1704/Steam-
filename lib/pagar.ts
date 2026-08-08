@@ -252,8 +252,12 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
     return { success: false, error: `A Pagar só suporta M-Pesa e e-Mola diretamente (pedido: ${input.method}).` };
   }
 
-  const grossAmountMzn = Math.ceil(input.amount / (1 - PAGAR_PAYOUT_FEE_RATE));
-  if (grossAmountMzn < 20 || grossAmountMzn > 40_000) {
+  // For very small withdrawals, netting PagaJá's fee then grossing the 8%
+  // back up can land under Pagar's own 20 MZN payout floor — clamp up to
+  // that floor instead of failing outright, so the recipient gets slightly
+  // MORE than promised (never less) and the payout still auto-dispatches.
+  const grossAmountMzn = Math.max(20, Math.ceil(input.amount / (1 - PAGAR_PAYOUT_FEE_RATE)));
+  if (grossAmountMzn > 40_000) {
     return { success: false, error: `Valor fora do limite da Pagar (20–40 000 MZN): ${grossAmountMzn} MZN.` };
   }
 
