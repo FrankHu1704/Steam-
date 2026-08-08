@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { setCtoStatus } from "@/lib/actions/admin";
 
@@ -11,8 +12,12 @@ export function UserCtoToggle({ userId, isCto }: { userId: string; isCto: boolea
 
   async function handleToggle() {
     setPending(true);
-    await setCtoStatus(userId, !isCto);
+    const result = await setCtoStatus(userId, !isCto);
     setPending(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
     router.refresh();
   }
 

@@ -430,7 +430,8 @@ export async function setCtoStatus(userId: string, isCto: boolean) {
   const { data: target } = await supabase.from("profiles").select("role").eq("id", userId).single();
   if (!target || target.role !== "producer") return { error: "Só um produtor pode ser CTO." };
 
-  await supabase.from("profiles").update({ is_cto: isCto }).eq("id", userId);
+  const { error } = await supabase.from("profiles").update({ is_cto: isCto }).eq("id", userId);
+  if (error) return { error: error.message };
   return { ok: true };
 }
 
