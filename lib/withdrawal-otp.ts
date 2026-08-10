@@ -58,7 +58,17 @@ export async function sendWithdrawalOtp(
     code,
     expires_at: new Date(Date.now() + EXPIRES_AFTER_MS).toISOString(),
   });
-  if (error) return { ok: false, error: "Falha ao gerar o código. Tente novamente." };
+  if (error) {
+    // Almost always means the withdrawal_otp_codes table/migration is
+    // missing in this Supabase project — logged here so Admin -> Logs
+    // shows the real Postgres error instead of just the generic message
+    // below (what the producer sees has to stay non-technical).
+    await supabase.from("logs").insert({
+      action: "withdrawal_otp_generate_error",
+      metadata: { user_id: userId, error: error.message, code: error.code },
+    });
+    return { ok: false, error: "Falha ao gerar o código. Tente novamente." };
+  }
 
   await sendWithdrawalOtpEmail({ email, name, code });
 
