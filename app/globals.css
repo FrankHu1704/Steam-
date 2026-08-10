@@ -61,3 +61,27 @@
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+@keyframes otp-shake {
+  10%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  80% {
+    transform: translateX(4px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-8px);
+  }
+  40%,
+  60% {
+    transform: translateX(8px);
+  }
+}
+
+.animate-otp-shake {
+  animation: otp-shake 0.5s ease-in-out;
+}

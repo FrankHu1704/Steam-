@@ -111,3 +111,10 @@ export async function sendPurchaseConfirmedSms(input: {
 
   await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
 }
+
+// Plain GSM-7, no emoji/accents on purpose — this one is time-sensitive
+// (5-minute window) and must land as a single fast segment.
+export async function sendWithdrawalOtpSms(input: { phone: string; code: string }) {
+  const body = `PagaJa\nCodigo para confirmar o levantamento: ${input.code}\nValido por 5 minutos. Nao partilhe este codigo com ninguem.`;
+  await sendEasyhostSms(input.phone, body);
+}

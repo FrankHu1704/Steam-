@@ -5,7 +5,21 @@ import { createClient } from "@/lib/supabase/server";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import { sendWithdrawalRequestedEmail, sendAdminWithdrawalRequestedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
+import { sendWithdrawalOtp, verifyAndConsumeWithdrawalOtp } from "@/lib/withdrawal-otp";
 import type { PayoutMethod } from "@/types/database";
+
+export async function sendWithdrawalOtpCode() {
+  const authClient = await createClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+  if (!user) return { ok: false as const, error: "Precisa de iniciar sessão." };
+
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase.from("profiles").select("phone").eq("id", user.id).single();
+
+  return sendWithdrawalOtp(user.id, profile?.phone ?? null);
+}
 
 async function notifyAdminsOfWithdrawal(
   supabase: ReturnType<typeof createAdminClient>,
@@ -52,12 +66,16 @@ export async function requestWithdrawal(input: {
   payoutMethod: PayoutMethod;
   destination: string;
   walletSource?: "producer" | "dev" | "cto";
+  otpCode: string;
 }) {
   const authClient = await createClient();
   const {
     data: { user },
   } = await authClient.auth.getUser();
   if (!user) return { error: "Precisa de iniciar sessão." };
+
+  const otpResult = await verifyAndConsumeWithdrawalOtp(user.id, input.otpCode);
+  if (!otpResult.ok) return { error: otpResult.error };
 
   if (input.amount <= 0) return { error: "Indique um valor válido." };
   if (!input.destination.trim()) return { error: "Indique o destino do levantamento." };

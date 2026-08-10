@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { OtpInput } from "@/components/ui/otp-input";
 import { formatCurrency, cn } from "@/lib/utils";
-import { requestWithdrawal } from "@/lib/actions/withdrawals";
+import { requestWithdrawal, sendWithdrawalOtpCode } from "@/lib/actions/withdrawals";
 import type { PayoutMethod, PayoutWallet } from "@/types/database";
 
 const METHOD_LABELS: Record<PayoutMethod, string> = {
@@ -55,6 +56,21 @@ export function WithdrawalForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<{ method: PayoutMethod; destination: string } | null>(null);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpShakeKey, setOtpShakeKey] = useState(0);
+  const [phoneMasked, setPhoneMasked] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
   const currentBalance =
     walletSource === "dev" ? balanceAvailableDev : walletSource === "cto" ? (balanceAvailableCto ?? 0) : balanceAvailable;
   const numericAmount = Number(amount) || 0;
@@ -63,6 +79,20 @@ export function WithdrawalForm({
   const effectiveFeePercent = walletSource === "cto" ? 0 : feePercent;
   const feeAmount = Math.round(numericAmount * (effectiveFeePercent / 100) * 100) / 100;
   const netAmount = Math.max(0, numericAmount - feeAmount);
+
+  async function requestOtp() {
+    setSendingOtp(true);
+    const result = await sendWithdrawalOtpCode();
+    setSendingOtp(false);
+    if (!result.ok) {
+      setError(result.error);
+      if (result.retryAfterSeconds) setCooldown(result.retryAfterSeconds);
+      return false;
+    }
+    setPhoneMasked(result.phoneMasked);
+    setCooldown(45);
+    return true;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,16 +113,37 @@ export function WithdrawalForm({
       dest = wallet.phone;
     }
 
+    setPendingWithdrawal({ method, destination: dest });
+    setOtp("");
+    setOtpError(null);
+    setPending(true);
+    const sent = await requestOtp();
+    setPending(false);
+    if (sent) setStep("otp");
+  }
+
+  async function handleResendOtp() {
+    setOtpError(null);
+    await requestOtp();
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pendingWithdrawal) return;
+    setOtpError(null);
     setPending(true);
     const result = await requestWithdrawal({
       amount: numericAmount,
-      payoutMethod: method,
-      destination: dest,
+      payoutMethod: pendingWithdrawal.method,
+      destination: pendingWithdrawal.destination,
       walletSource,
+      otpCode: otp,
     });
     setPending(false);
     if (result.error) {
-      setError(result.error);
+      setOtpError(result.error);
+      setOtpShakeKey((k) => k + 1);
+      setOtp("");
       return;
     }
     if (result.instant) {
@@ -101,7 +152,56 @@ export function WithdrawalForm({
       toast.success("Levantamento pedido — a aguardar confirmação.");
     }
     setAmount("");
+    setStep("form");
+    setPendingWithdrawal(null);
     router.refresh();
+  }
+
+  if (step === "otp") {
+    return (
+      <form onSubmit={handleVerifyOtp} className="space-y-5">
+        <button
+          type="button"
+          onClick={() => {
+            setStep("form");
+            setError(null);
+          }}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Editar pedido
+        </button>
+
+        <div className="text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h3 className="mt-3 font-semibold">Confirme o levantamento</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enviámos um código de 4 dígitos por SMS para <span className="font-medium text-foreground">{phoneMasked}</span>
+          </p>
+        </div>
+
+        <div key={otpShakeKey}>
+          <OtpInput length={4} value={otp} onChange={setOtp} error={!!otpError} autoFocus disabled={pending} />
+        </div>
+
+        {otpError && <p className="text-center text-sm text-destructive">{otpError}</p>}
+
+        <Button type="submit" disabled={pending || otp.length < 4} className="w-full gap-2">
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+          {pending ? "A confirmar…" : "Confirmar levantamento"}
+        </Button>
+
+        <button
+          type="button"
+          onClick={handleResendOtp}
+          disabled={cooldown > 0 || sendingOtp}
+          className="w-full text-center text-xs font-medium text-primary hover:underline disabled:text-muted-foreground disabled:no-underline"
+        >
+          {cooldown > 0 ? `Reenviar código (${cooldown}s)` : sendingOtp ? "A enviar…" : "Reenviar código"}
+        </button>
+      </form>
+    );
   }
 
   return (
@@ -260,7 +360,7 @@ export function WithdrawalForm({
 
       <Button type="submit" className="w-full" disabled={pending || numericAmount < minimumAmount}>
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Pedir levantamento
+        {pending ? "A enviar código…" : "Pedir levantamento"}
       </Button>
     </form>
   );
