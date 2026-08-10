@@ -250,6 +250,8 @@ export async function creditOrder(orderId: string): Promise<void> {
     await sendPurchaseConfirmedSms({
       phone: order.buyer_phone,
       productTitle: productLabel,
+      amount: order.total_amount,
+      currency: order.currency,
       accessUrl,
     });
   }

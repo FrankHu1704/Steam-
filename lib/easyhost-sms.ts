@@ -96,9 +96,16 @@ export async function sendPaymentConfirmedSms(input: {
   await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
 }
 
-export async function sendPurchaseConfirmedSms(input: { phone: string; productTitle: string; accessUrl: string }) {
+export async function sendPurchaseConfirmedSms(input: {
+  phone: string;
+  productTitle: string;
+  amount: number;
+  currency: string;
+  accessUrl: string;
+}) {
+  const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
   const prefix = "COMPRA CONFIRMADA\n";
-  const suffix = `\nAcesse: ${input.accessUrl}`;
+  const suffix = ` - ${amountLabel}\nAcesse: ${input.accessUrl}`;
 
   const title = fitTitle(input.productTitle, prefix.length, suffix.length);
 
