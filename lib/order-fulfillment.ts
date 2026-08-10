@@ -39,52 +39,6 @@ export async function creditOrder(orderId: string): Promise<void> {
     )
     .eq("id", order.producer_id)
     .single();
-  // "api" orders come from a producer's own external app charging through
-  // the developer API (Pagar API) — kept in a separate wallet from regular
-  // marketplace product sales so the two revenue streams never mix.
-  const walletField = order.source === "api" ? "balance_available_dev" : "balance_available";
-  await supabase
-    .from("profiles")
-    .update({
-      [walletField]: (producer?.[walletField] ?? 0) + ownerNet,
-      lifetime_sales_count: (producer?.lifetime_sales_count ?? 0) + 1,
-      // Gross sale value, both wallets combined — powers the revenue-based
-      // physical prize milestones in lib/data/prizes.ts (agenda/placas).
-      lifetime_revenue: (producer?.lifetime_revenue ?? 0) + order.total_amount,
-    })
-    .eq("id", order.producer_id);
-
-  // Employee/collaborator recruiter commission — 5% of the sale for the
-  // first 3 months after the producer signed up via their link, capped at
-  // what PagaJá actually earned as its own platform fee on this order so
-  // this can never push the platform's own take on the sale negative.
-  if (producer?.recruited_by_employee_id) {
-    const recruitedUntil = new Date(producer.created_at);
-    recruitedUntil.setMonth(recruitedUntil.getMonth() + 3);
-    if (new Date() <= recruitedUntil) {
-      const { data: employee } = await supabase
-        .from("employees")
-        .select("id, commission_percent, balance_available, active")
-        .eq("id", producer.recruited_by_employee_id)
-        .single();
-      if (employee?.active) {
-        const rawCommission = Math.round(order.total_amount * (employee.commission_percent / 100) * 100) / 100;
-        const employeeCommission = Math.min(rawCommission, platformFeeAmount);
-        if (employeeCommission > 0) {
-          await supabase
-            .from("employees")
-            .update({ balance_available: employee.balance_available + employeeCommission })
-            .eq("id", employee.id);
-          await supabase.from("employee_commissions").insert({
-            employee_id: employee.id,
-            order_id: order.id,
-            producer_id: order.producer_id,
-            amount: employeeCommission,
-          });
-        }
-      }
-    }
-  }
 
   // "Manual" API charges (no product_id) have nothing to look up here —
   // order.description stands in for the product title in every message
@@ -94,88 +48,151 @@ export async function creditOrder(orderId: string): Promise<void> {
     : null;
   const productLabel = product?.title ?? order.description ?? "o seu produto";
 
-  if (order.product_id) {
-    await supabase.rpc("increment_product_sales", { p_id: order.product_id });
-  }
+  // Wallet credit, commissions, product-sales counter, and download grants —
+  // wrapped so a failure partway through (a bad row somewhere, a transient
+  // DB error) can never also take down the platform_fee_amount write right
+  // after this block. A failure here still needs a human to reconcile (see
+  // the "credit_order_money_error" log entry it leaves), but it must never
+  // also make the sale disappear from platform revenue.
+  try {
+    // "api" orders come from a producer's own external app charging through
+    // the developer API (Pagar API) — kept in a separate wallet from regular
+    // marketplace product sales so the two revenue streams never mix.
+    const walletField = order.source === "api" ? "balance_available_dev" : "balance_available";
+    await supabase
+      .from("profiles")
+      .update({
+        [walletField]: (producer?.[walletField] ?? 0) + ownerNet,
+        lifetime_sales_count: (producer?.lifetime_sales_count ?? 0) + 1,
+        // Gross sale value, both wallets combined — powers the revenue-based
+        // physical prize milestones in lib/data/prizes.ts (agenda/placas).
+        lifetime_revenue: (producer?.lifetime_revenue ?? 0) + order.total_amount,
+      })
+      .eq("id", order.producer_id);
 
-  if (order.affiliate_id && commission > 0) {
-    const { data: affiliate } = await supabase.from("affiliates").select("*").eq("id", order.affiliate_id).single();
-    if (affiliate) {
-      const { data: affiliateProfile } = await supabase
-        .from("profiles")
-        .select("balance_available, recruited_by_producer_id, created_at")
-        .eq("id", affiliate.affiliate_id)
-        .single();
-      await supabase
-        .from("profiles")
-        .update({ balance_available: (affiliateProfile?.balance_available ?? 0) + commission })
-        .eq("id", affiliate.affiliate_id);
-      await supabase
-        .from("affiliates")
-        .update({ sales: affiliate.sales + 1, commission_earned: affiliate.commission_earned + commission })
-        .eq("id", affiliate.id);
-      await supabase.from("commissions").insert({
-        affiliate_row_id: affiliate.id,
-        order_id: order.id,
-        amount: commission,
-        status: "pending",
-      });
-
-      // Producer/affiliate-recruiter reward — 3% of the sale for the first
-      // month after this affiliate signed up via a producer's referral
-      // link, capped at what PagaJá earned as its own platform fee on this
-      // order (same safety cap as the employee recruiter commission above),
-      // so it's always funded by the platform's own take, never by the
-      // affiliate or the selling producer.
-      if (affiliateProfile?.recruited_by_producer_id) {
-        const recruitedUntil = new Date(affiliateProfile.created_at);
-        recruitedUntil.setMonth(recruitedUntil.getMonth() + 1);
-        if (new Date() <= recruitedUntil) {
-          const rawReferralCommission = Math.round(order.total_amount * 0.03 * 100) / 100;
-          const referralCommission = Math.min(rawReferralCommission, platformFeeAmount);
-          if (referralCommission > 0) {
-            const { data: recruitingProducer } = await supabase
-              .from("profiles")
-              .select("balance_available")
-              .eq("id", affiliateProfile.recruited_by_producer_id)
-              .single();
+    // Employee/collaborator recruiter commission — 5% of the sale for the
+    // first 3 months after the producer signed up via their link, capped at
+    // what PagaJá actually earned as its own platform fee on this order so
+    // this can never push the platform's own take on the sale negative.
+    if (producer?.recruited_by_employee_id) {
+      const recruitedUntil = new Date(producer.created_at);
+      recruitedUntil.setMonth(recruitedUntil.getMonth() + 3);
+      if (new Date() <= recruitedUntil) {
+        const { data: employee } = await supabase
+          .from("employees")
+          .select("id, commission_percent, balance_available, active")
+          .eq("id", producer.recruited_by_employee_id)
+          .single();
+        if (employee?.active) {
+          const rawCommission = Math.round(order.total_amount * (employee.commission_percent / 100) * 100) / 100;
+          const employeeCommission = Math.min(rawCommission, platformFeeAmount);
+          if (employeeCommission > 0) {
             await supabase
-              .from("profiles")
-              .update({ balance_available: (recruitingProducer?.balance_available ?? 0) + referralCommission })
-              .eq("id", affiliateProfile.recruited_by_producer_id);
-            await supabase.from("producer_affiliate_commissions").insert({
-              producer_id: affiliateProfile.recruited_by_producer_id,
-              affiliate_id: affiliate.affiliate_id,
+              .from("employees")
+              .update({ balance_available: employee.balance_available + employeeCommission })
+              .eq("id", employee.id);
+            await supabase.from("employee_commissions").insert({
+              employee_id: employee.id,
               order_id: order.id,
-              amount: referralCommission,
+              producer_id: order.producer_id,
+              amount: employeeCommission,
             });
           }
         }
       }
     }
-  }
 
-  // Grant downloads for every file on the purchased product (and any
-  // order-bump products), each with its own signed-access token. Manual
-  // API charges have no product_id at all, so there's nothing to grant.
-  const { data: bumpRows } = await supabase.from("order_bumps").select("bump_product_id").eq("order_id", order.id);
-  const productIds = [order.product_id, ...(bumpRows ?? []).map((b) => b.bump_product_id)].filter(
-    (id): id is string => !!id
-  );
-  if (productIds.length > 0) {
-    const { data: files } = await supabase.from("product_files").select("*").in("product_id", productIds);
-    if (files?.length) {
-      await supabase.from("downloads").insert(files.map((f) => ({ order_id: order.id, product_file_id: f.id })));
+    if (order.product_id) {
+      await supabase.rpc("increment_product_sales", { p_id: order.product_id });
     }
+
+    if (order.affiliate_id && commission > 0) {
+      const { data: affiliate } = await supabase.from("affiliates").select("*").eq("id", order.affiliate_id).single();
+      if (affiliate) {
+        const { data: affiliateProfile } = await supabase
+          .from("profiles")
+          .select("balance_available, recruited_by_producer_id, created_at")
+          .eq("id", affiliate.affiliate_id)
+          .single();
+        await supabase
+          .from("profiles")
+          .update({ balance_available: (affiliateProfile?.balance_available ?? 0) + commission })
+          .eq("id", affiliate.affiliate_id);
+        await supabase
+          .from("affiliates")
+          .update({ sales: affiliate.sales + 1, commission_earned: affiliate.commission_earned + commission })
+          .eq("id", affiliate.id);
+        await supabase.from("commissions").insert({
+          affiliate_row_id: affiliate.id,
+          order_id: order.id,
+          amount: commission,
+          status: "pending",
+        });
+
+        // Producer/affiliate-recruiter reward — 3% of the sale for the first
+        // month after this affiliate signed up via a producer's referral
+        // link, capped at what PagaJá earned as its own platform fee on this
+        // order (same safety cap as the employee recruiter commission above),
+        // so it's always funded by the platform's own take, never by the
+        // affiliate or the selling producer.
+        if (affiliateProfile?.recruited_by_producer_id) {
+          const recruitedUntil = new Date(affiliateProfile.created_at);
+          recruitedUntil.setMonth(recruitedUntil.getMonth() + 1);
+          if (new Date() <= recruitedUntil) {
+            const rawReferralCommission = Math.round(order.total_amount * 0.03 * 100) / 100;
+            const referralCommission = Math.min(rawReferralCommission, platformFeeAmount);
+            if (referralCommission > 0) {
+              const { data: recruitingProducer } = await supabase
+                .from("profiles")
+                .select("balance_available")
+                .eq("id", affiliateProfile.recruited_by_producer_id)
+                .single();
+              await supabase
+                .from("profiles")
+                .update({ balance_available: (recruitingProducer?.balance_available ?? 0) + referralCommission })
+                .eq("id", affiliateProfile.recruited_by_producer_id);
+              await supabase.from("producer_affiliate_commissions").insert({
+                producer_id: affiliateProfile.recruited_by_producer_id,
+                affiliate_id: affiliate.affiliate_id,
+                order_id: order.id,
+                amount: referralCommission,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Grant downloads for every file on the purchased product (and any
+    // order-bump products), each with its own signed-access token. Manual
+    // API charges have no product_id at all, so there's nothing to grant.
+    const { data: bumpRows } = await supabase.from("order_bumps").select("bump_product_id").eq("order_id", order.id);
+    const productIds = [order.product_id, ...(bumpRows ?? []).map((b) => b.bump_product_id)].filter(
+      (id): id is string => !!id
+    );
+    if (productIds.length > 0) {
+      const { data: files } = await supabase.from("product_files").select("*").in("product_id", productIds);
+      if (files?.length) {
+        await supabase.from("downloads").insert(files.map((f) => ({ order_id: order.id, product_file_id: f.id })));
+      }
+    }
+  } catch (err) {
+    await supabase.from("logs").insert({
+      action: "credit_order_money_error",
+      target_table: "orders",
+      target_id: order.id,
+      metadata: { error: (err as Error).message },
+    });
   }
 
-  // Everything above is money/access — the wallet credit, commissions, and
-  // downloads granted. That's recorded now, before any notification is
-  // attempted, so a flaky email/SMS/webhook provider can never leave a sale
-  // fully paid-out yet missing from revenue reporting (platform_fee_amount
-  // used to be written last, after every notification below — one bad
-  // `throw` in that block was enough to skip it forever, since credited_at
-  // being set is also what stops every other path from ever retrying).
+  // Recorded unconditionally, even if the block above partly failed — a
+  // sale PagaJá actually processed must always show up in platform revenue.
+  // A failure logged above still needs a human to check the producer's
+  // balance/downloads for this order, but it must never also hide the sale
+  // from Admin -> Receita (platform_fee_amount used to be written last,
+  // after every notification below — one bad `throw` in that block was
+  // enough to skip it forever, since credited_at being set is also what
+  // stops every other path from ever retrying).
   await supabase
     .from("orders")
     .update({ credited_at: new Date().toISOString(), platform_fee_amount: platformFeeAmount })
