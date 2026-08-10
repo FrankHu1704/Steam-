@@ -123,11 +123,14 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     throw new Error(`Valor fora do limite da Pagar (20–40 000 MZN): ${amountMzn} MZN.`);
   }
 
+  // Deliberately never sends the real product title, customer name, or
+  // email to Pagar — only what's strictly required to process the charge
+  // (a generic title, the amount, and the payer's phone number).
   const { status, json } = await pagarPost(
     "/payments",
     {
       reference: input.sourceId,
-      title: input.title || "Compra PagaJá",
+      title: "Compra PagaJá",
       amountMzn,
       method: input.paymentMethod.toUpperCase(),
       payerPhone: toLocalPhone(input.customerPhone),
