@@ -75,6 +75,12 @@ async function sendEasyhostSms(to: string, body: string): Promise<void> {
 // from 160 to 70 — this stays a true single-segment SMS.
 const SMS_MAX_LENGTH = 160;
 
+function fitTitle(title: string, prefixLength: number, suffixLength: number): string {
+  const maxTitleLength = SMS_MAX_LENGTH - prefixLength - suffixLength;
+  const trimmed = title.trim();
+  return trimmed.length > maxTitleLength ? `${trimmed.slice(0, Math.max(0, maxTitleLength - 3))}...` : trimmed;
+}
+
 export async function sendPaymentConfirmedSms(input: {
   phone: string;
   productTitle: string;
@@ -82,27 +88,19 @@ export async function sendPaymentConfirmedSms(input: {
   currency: string;
 }) {
   const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
-  const prefix = `CONFIRMADO\n+${amountLabel} adicionado a sua conta referente a venda de `;
-  const suffix = " na PagaJa.";
+  const prefix = `VENDA CONFIRMADA\n+${amountLabel} na sua conta PagaJa\n`;
+  const suffix = "";
 
-  const maxTitleLength = SMS_MAX_LENGTH - prefix.length - suffix.length;
-  const title =
-    input.productTitle.length > maxTitleLength
-      ? `${input.productTitle.slice(0, Math.max(0, maxTitleLength - 3))}...`
-      : input.productTitle;
+  const title = fitTitle(input.productTitle, prefix.length, suffix.length);
 
   await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
 }
 
 export async function sendPurchaseConfirmedSms(input: { phone: string; productTitle: string; accessUrl: string }) {
-  const prefix = "COMPRA CONFIRMADA\nCompra de ";
-  const suffix = ` confirmada. Acesse: ${input.accessUrl}`;
+  const prefix = "COMPRA CONFIRMADA\n";
+  const suffix = `\nAcesse: ${input.accessUrl}`;
 
-  const maxTitleLength = SMS_MAX_LENGTH - prefix.length - suffix.length;
-  const title =
-    input.productTitle.length > maxTitleLength
-      ? `${input.productTitle.slice(0, Math.max(0, maxTitleLength - 3))}...`
-      : input.productTitle;
+  const title = fitTitle(input.productTitle, prefix.length, suffix.length);
 
   await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
 }
