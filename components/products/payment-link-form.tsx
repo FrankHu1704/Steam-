@@ -114,6 +114,10 @@ export function PaymentLinkForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!file) {
+      setError("Anexe um ficheiro ou link antes de continuar.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -287,7 +291,7 @@ export function PaymentLinkForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Anexo (ficheiro ou link — opcional)</Label>
+            <Label>Anexo (ficheiro ou link)</Label>
             {file ? (
               <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
@@ -326,7 +330,7 @@ export function PaymentLinkForm({
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Entregue ao comprador só depois de o pagamento ser confirmado. Pode adicionar depois.
+              Entregue ao comprador só depois de o pagamento ser confirmado.
             </p>
           </div>
 
