@@ -1,4 +1,4 @@
--- One-time SMS codes required before a withdrawal (producer or CTO wallet)
+-- One-time email codes required before a withdrawal (producer or CTO wallet)
 -- is actually processed. Only ever touched via the service-role client from
 -- server actions (lib/withdrawal-otp.ts) — no client-side access, so RLS
 -- stays default-deny.
