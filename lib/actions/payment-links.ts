@@ -39,6 +39,7 @@ export async function upsertPaymentLink(input: UpsertPaymentLinkInput): Promise<
   if (!title) return { error: "A descrição é obrigatória." };
   if (!(input.price >= MINIMUM_PRICE)) return { error: `O valor deve ser de pelo menos ${MINIMUM_PRICE} MT.` };
   if (!input.file) return { error: "Anexe um ficheiro ou link — é obrigatório." };
+  if (!input.coverImageUrl) return { error: "A imagem de capa é obrigatória." };
 
   // Accent color is only ever one of a fixed palette (lib/checkout-theme.ts)
   // — anything else is silently dropped rather than stored, since this

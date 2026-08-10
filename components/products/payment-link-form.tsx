@@ -118,6 +118,10 @@ export function PaymentLinkForm({
       setError("Anexe um ficheiro ou link antes de continuar.");
       return;
     }
+    if (!coverPreview && !coverFile) {
+      setError("Carregue uma imagem de capa antes de continuar.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -255,7 +259,7 @@ export function PaymentLinkForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Imagem de capa (opcional)</Label>
+            <Label>Imagem de capa</Label>
             {coverPreview ? (
               <div className="relative h-32 w-32 overflow-hidden rounded-xl border border-border">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
