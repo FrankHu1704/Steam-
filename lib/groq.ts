@@ -145,3 +145,51 @@ Responde em português, tom direto e prático, organizado em tópicos curtos com
   if (result.error) return { error: result.error };
   return { analysis: result.text };
 }
+
+export interface CheckoutCopyResult {
+  title: string;
+  description: string;
+  highlightText: string;
+}
+
+// Structured JSON output (title/description/highlight) instead of the free
+// text the rest of LunaAI returns — the caller applies this straight to
+// products.title/description/checkout_highlight_text, so it has to be
+// clean, bounded fields rather than a paragraph to parse.
+export async function generateCheckoutCopyWithGroq(
+  rawDescription: string
+): Promise<{ result?: CheckoutCopyResult; error?: string }> {
+  const prompt = `Você é a LunaAI, assistente de vendas da PagaJá (plataforma moçambicana de infoprodutos). Um produtor descreveu, nas próprias palavras, o que está a vender através de um link de pagamento direto. Escreva uma versão persuasiva para a página de checkout.
+
+Descrição do produtor: """${rawDescription}"""
+
+Responde APENAS com um objeto JSON válido, sem markdown, sem texto antes ou depois, exatamente neste formato:
+{"title": "título curto e persuasivo (máx 60 caracteres)", "description": "descrição persuasiva de 2-4 frases (máx 400 caracteres)", "highlightText": "frase curta de destaque/confiança para mostrar acima do botão de pagamento, ex: garantia, entrega imediata (máx 60 caracteres)"}
+
+Tom direto, para o mercado moçambicano, sem exageros nem promessas irreais.`;
+
+  const result = await chatCompletion([{ role: "user", content: prompt }], { temperature: 0.7, maxTokens: 400 });
+  if (result.error || !result.text) return { error: result.error ?? GENERIC_ERROR };
+
+  try {
+    const cleaned = result.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+    const parsed = JSON.parse(cleaned);
+    if (
+      typeof parsed.title !== "string" ||
+      typeof parsed.description !== "string" ||
+      typeof parsed.highlightText !== "string"
+    ) {
+      throw new Error("unexpected shape");
+    }
+    return {
+      result: {
+        title: parsed.title.slice(0, 120).trim(),
+        description: parsed.description.slice(0, 500).trim(),
+        highlightText: parsed.highlightText.slice(0, 80).trim(),
+      },
+    };
+  } catch {
+    await logAiDebug({ note: "checkout_copy_parse_failed", raw: result.text });
+    return { error: "A LunaAI não conseguiu gerar o texto agora. Tente novamente." };
+  }
+}

@@ -7,7 +7,8 @@ import { TrackingScriptInjector } from "@/components/products/tracking-script-in
 import { buildPixelScripts } from "@/lib/pixels";
 import { getActivePaymentProvider, methodsForProvider } from "@/lib/payments";
 import { getProductReviews, getProductRatingSummary } from "@/lib/data/reviews";
-import { formatCurrency } from "@/lib/utils";
+import { resolveAccentColor } from "@/lib/checkout-theme";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/database";
 
 interface ProductSearchParams {
@@ -63,6 +64,7 @@ export default async function ProductSalePage({
   ]);
 
   const hasPromo = product.promo_price != null;
+  const accentColor = product.is_payment_link ? resolveAccentColor(product.checkout_accent_color) : null;
 
   const pixelScripts = buildPixelScripts({
     facebookPixelId: product.facebook_pixel_id,
@@ -155,7 +157,10 @@ export default async function ProductSalePage({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{product.title}</p>
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <p className="whitespace-nowrap text-lg font-bold text-primary">
+                    <p
+                      className={cn("whitespace-nowrap text-lg font-bold", !accentColor && "text-primary")}
+                      style={accentColor ? { color: accentColor } : undefined}
+                    >
                       {formatCurrency(product.promo_price ?? product.price, product.currency as "MZN" | "ZAR")}
                     </p>
                     {hasPromo && (

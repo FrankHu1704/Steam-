@@ -35,6 +35,7 @@ import {
   type UpsellOfferPreview,
 } from "@/lib/actions/checkout";
 import { getDownloadLinks } from "@/lib/actions/downloads";
+import { resolveAccentColor } from "@/lib/checkout-theme";
 import type { PaymentMethod } from "@/lib/debito-pay";
 import type { Product } from "@/types/database";
 
@@ -222,6 +223,11 @@ type Step = "form" | "pending" | "paid" | "failed";
 export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm }: CheckoutFormProps) {
   const currency = product.currency;
   const methods = paymentMethods;
+  // Producer-chosen customization only applies to payment links (see
+  // /dashboard/products/link) — accentColor always resolves from the fixed
+  // palette in lib/checkout-theme.ts, never raw input.
+  const accentColor = product.is_payment_link ? resolveAccentColor(product.checkout_accent_color) : null;
+  const highlightText = product.is_payment_link ? product.checkout_highlight_text : null;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -637,7 +643,22 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" className="w-full gap-2 shadow-lg shadow-primary/20" size="lg" disabled={pending}>
+      {highlightText && (
+        <p
+          className="text-center text-sm font-medium"
+          style={{ color: accentColor ?? undefined }}
+        >
+          {highlightText}
+        </p>
+      )}
+
+      <Button
+        type="submit"
+        className={cn("w-full gap-2 shadow-lg shadow-primary/20", accentColor && "border-0 bg-none")}
+        style={accentColor ? { backgroundColor: accentColor } : undefined}
+        size="lg"
+        disabled={pending}
+      >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
         Pagar {formatCurrency(total, currency as "MZN" | "ZAR")}
       </Button>

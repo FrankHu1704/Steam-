@@ -209,6 +209,8 @@ export interface Product {
   bump_enabled: boolean;
   show_in_marketplace: boolean;
   is_payment_link: boolean;
+  checkout_accent_color: string | null;
+  checkout_highlight_text: string | null;
   status: ProductStatus;
   rejection_reason: string | null;
   seo_title: string | null;
