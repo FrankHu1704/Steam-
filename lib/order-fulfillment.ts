@@ -169,99 +169,119 @@ export async function creditOrder(orderId: string): Promise<void> {
     }
   }
 
-  await supabase.from("notifications").insert({
-    user_id: order.producer_id,
-    type: "sale",
-    title: "Nova venda!",
-    message: `Você vendeu por ${order.total_amount} ${order.currency}.`,
-  });
-
-  await sendPushToUser(order.producer_id, {
-    title: "Nova venda! 🎉",
-    body: `Vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
-    url: "/dashboard",
-  });
-
-  // Every sale on the platform also notifies every admin — not just the
-  // producer — so the admin can keep track of all activity from one place.
-  // This runs from the same creditOrder() shared by every crediting path
-  // (checkout success, every payment webhook), so it already covers sales
-  // made through a producer's own API integration (order.source === "api"),
-  // not just marketplace checkout — tagged below so admins can tell them apart.
-  const channelLabel = order.source === "api" ? " via API" : "";
-  const producerLabel = producer?.name ?? "produtor desconhecido";
-  const { data: admins } = await supabase.from("profiles").select("id, name").eq("role", "admin");
-  for (const adminProfile of admins ?? []) {
-    const messageText = `${adminProfile.name}, nova venda feita! Valor ${order.total_amount} ${order.currency}${channelLabel} - ${producerLabel}.`;
-    await supabase.from("notifications").insert({
-      user_id: adminProfile.id,
-      type: "sale",
-      title: "Nova venda",
-      message: messageText,
-    });
-    await sendPushToUser(adminProfile.id, {
-      title: "Nova venda 🎉",
-      body: messageText,
-      url: "/admin/orders",
-    });
-  }
-
-  if (producer?.email) {
-    await sendSaleNotificationEmail({
-      producerEmail: producer.email,
-      productTitle: productLabel,
-      amount: order.total_amount,
-      netAmount: ownerNet,
-      currency: order.currency,
-    });
-  }
-
-  if (producer?.phone) {
-    await sendPaymentConfirmedSms({
-      phone: producer.phone,
-      productTitle: productLabel,
-      amount: order.total_amount,
-      currency: order.currency,
-    });
-  }
-
-  const accessUrl = `${siteUrl()}/pedido/${order.id}`;
-
-  if (order.buyer_email) {
-    await sendBuyerReceiptEmail({
-      buyerEmail: order.buyer_email,
-      productTitle: productLabel,
-      accessUrl,
-      orderId: order.id,
-      amount: order.total_amount,
-      currency: order.currency as "MZN" | "ZAR",
-      purchasedAt: order.paid_at ?? new Date().toISOString(),
-      supportName: producer?.name,
-      supportContact: producer?.phone,
-    });
-  }
-
-  if (order.buyer_phone) {
-    await sendBuyerWhatsappReceipt({
-      phone: order.buyer_phone,
-      productTitle: productLabel,
-      accessUrl,
-    });
-    await sendPurchaseConfirmedSms({
-      phone: order.buyer_phone,
-      productTitle: productLabel,
-      amount: order.total_amount,
-      currency: order.currency,
-      accessUrl,
-    });
-  }
-
-  await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: productLabel });
-
+  // Everything above is money/access — the wallet credit, commissions, and
+  // downloads granted. That's recorded now, before any notification is
+  // attempted, so a flaky email/SMS/webhook provider can never leave a sale
+  // fully paid-out yet missing from revenue reporting (platform_fee_amount
+  // used to be written last, after every notification below — one bad
+  // `throw` in that block was enough to skip it forever, since credited_at
+  // being set is also what stops every other path from ever retrying).
   await supabase
     .from("orders")
     .update({ credited_at: new Date().toISOString(), platform_fee_amount: platformFeeAmount })
     .eq("id", order.id);
+
+  // Best-effort from here on — every helper below already swallows its own
+  // errors, but this outer try/catch is the backstop: nothing in a
+  // notification/receipt/webhook step is allowed to look like a crediting
+  // failure anymore.
+  try {
+    await supabase.from("notifications").insert({
+      user_id: order.producer_id,
+      type: "sale",
+      title: "Nova venda!",
+      message: `Você vendeu por ${order.total_amount} ${order.currency}.`,
+    });
+
+    await sendPushToUser(order.producer_id, {
+      title: "Nova venda! 🎉",
+      body: `Vendeu ${productLabel} por ${order.total_amount} ${order.currency}.`,
+      url: "/dashboard",
+    });
+
+    // Every sale on the platform also notifies every admin — not just the
+    // producer — so the admin can keep track of all activity from one place.
+    // This runs from the same creditOrder() shared by every crediting path
+    // (checkout success, every payment webhook), so it already covers sales
+    // made through a producer's own API integration (order.source === "api"),
+    // not just marketplace checkout — tagged below so admins can tell them apart.
+    const channelLabel = order.source === "api" ? " via API" : "";
+    const producerLabel = producer?.name ?? "produtor desconhecido";
+    const { data: admins } = await supabase.from("profiles").select("id, name").eq("role", "admin");
+    for (const adminProfile of admins ?? []) {
+      const messageText = `${adminProfile.name}, nova venda feita! Valor ${order.total_amount} ${order.currency}${channelLabel} - ${producerLabel}.`;
+      await supabase.from("notifications").insert({
+        user_id: adminProfile.id,
+        type: "sale",
+        title: "Nova venda",
+        message: messageText,
+      });
+      await sendPushToUser(adminProfile.id, {
+        title: "Nova venda 🎉",
+        body: messageText,
+        url: "/admin/orders",
+      });
+    }
+
+    if (producer?.email) {
+      await sendSaleNotificationEmail({
+        producerEmail: producer.email,
+        productTitle: productLabel,
+        amount: order.total_amount,
+        netAmount: ownerNet,
+        currency: order.currency,
+      });
+    }
+
+    if (producer?.phone) {
+      await sendPaymentConfirmedSms({
+        phone: producer.phone,
+        productTitle: productLabel,
+        amount: order.total_amount,
+        currency: order.currency,
+      });
+    }
+
+    const accessUrl = `${siteUrl()}/pedido/${order.id}`;
+
+    if (order.buyer_email) {
+      await sendBuyerReceiptEmail({
+        buyerEmail: order.buyer_email,
+        productTitle: productLabel,
+        accessUrl,
+        orderId: order.id,
+        amount: order.total_amount,
+        currency: order.currency as "MZN" | "ZAR",
+        purchasedAt: order.paid_at ?? new Date().toISOString(),
+        supportName: producer?.name,
+        supportContact: producer?.phone,
+      });
+    }
+
+    if (order.buyer_phone) {
+      await sendBuyerWhatsappReceipt({
+        phone: order.buyer_phone,
+        productTitle: productLabel,
+        accessUrl,
+      });
+      await sendPurchaseConfirmedSms({
+        phone: order.buyer_phone,
+        productTitle: productLabel,
+        amount: order.total_amount,
+        currency: order.currency,
+        accessUrl,
+      });
+    }
+
+    await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: productLabel });
+  } catch (err) {
+    await supabase.from("logs").insert({
+      action: "credit_order_notify_error",
+      target_table: "orders",
+      target_id: order.id,
+      metadata: { error: (err as Error).message },
+    });
+  }
 }
 
 // Called whenever a paid order is refunded or charged back by the payment
