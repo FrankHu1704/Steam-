@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import {
   LayoutDashboard,
   Package,
@@ -21,6 +22,11 @@ import { Shell, type ShellNavItem } from "@/components/shell";
 import { requireAdminUser } from "@/lib/data/admin";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
+
+// Kept out of robots.txt too — a "Disallow" entry there is public and just
+// advertises the path exists. This tag actively tells crawlers not to
+// index anything under /admin, without listing it anywhere.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const NAV: ShellNavItem[] = [
   { href: "/admin", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },

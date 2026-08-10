@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import {
   LayoutDashboard,
   Package,
@@ -21,6 +22,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
 import { getEmployeeByUserId } from "@/lib/data/employees";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const NAV: ShellNavItem[] = [
   { href: "/dashboard", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },

@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { Package, Download, History, UserRound, Share2 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const NAV: ShellNavItem[] = [
   { href: "/account/products", label: "Meus Produtos", icon: <Package className="h-4 w-4" /> },

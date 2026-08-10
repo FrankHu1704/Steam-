@@ -31,10 +31,14 @@ export default function robots(): MetadataRoute.Robots {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://pagaja.site";
   return {
     rules: [
+      // Private areas (/admin, /dashboard, /account, /api) are intentionally
+      // NOT listed here — this file is public, and a "Disallow" entry would
+      // just advertise those paths to anyone reading it. They're kept out
+      // of search results via a noindex response header/meta tag instead
+      // (see each area's layout.tsx), and out of reach entirely by auth.
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/account", "/admin", "/api"],
       },
       ...AI_TRAINING_BOTS.map((userAgent) => ({ userAgent, disallow: "/" })),
     ],
