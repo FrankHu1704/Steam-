@@ -3,6 +3,7 @@ import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getProductForOwner } from "@/lib/data/products";
 import { createClient } from "@/lib/supabase/server";
 import { PaymentLinkForm } from "@/components/products/payment-link-form";
+import { ShareLinkCard } from "@/components/products/share-link-card";
 import { StatusBadge } from "@/components/ui/badge";
 import type { ProductFile } from "@/types/database";
 
@@ -25,6 +26,11 @@ export default async function EditPaymentLinkPage({ params }: { params: Promise<
         <StatusBadge status={product.status} />
       </div>
       {product.rejection_reason && <p className="mt-1 text-sm text-destructive">Motivo: {product.rejection_reason}</p>}
+      {product.status === "approved" && (
+        <div className="mt-6 max-w-lg">
+          <ShareLinkCard productTitle={product.title} slug={product.slug} />
+        </div>
+      )}
       <div className="mt-6">
         <PaymentLinkForm
           userId={user.id}

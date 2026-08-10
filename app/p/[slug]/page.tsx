@@ -134,6 +134,10 @@ export default async function ProductSalePage({
 
         <div className="lg:col-span-2">
           <div className="sticky top-6 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            {product.checkout_banner_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.checkout_banner_url} alt="" className="aspect-[3/1] w-full object-cover" />
+            )}
             {hasPromo && (
               <div className="flex items-center justify-center gap-1.5 bg-brand-gradient px-4 py-2 text-xs font-semibold text-white">
                 <Flame className="h-3.5 w-3.5" />
@@ -172,6 +176,11 @@ export default async function ProductSalePage({
                           -{Math.round((1 - (product.promo_price as number) / product.price) * 100)}%
                         </span>
                       </>
+                    )}
+                    {product.price_usd != null && (
+                      <p className="whitespace-nowrap text-xs text-muted-foreground">
+                        ou ${product.price_usd.toFixed(2)} (cartão internacional, brevemente)
+                      </p>
                     )}
                   </div>
                 </div>

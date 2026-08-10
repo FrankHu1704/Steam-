@@ -211,6 +211,8 @@ export interface Product {
   is_payment_link: boolean;
   checkout_accent_color: string | null;
   checkout_highlight_text: string | null;
+  checkout_banner_url: string | null;
+  price_usd: number | null;
   status: ProductStatus;
   rejection_reason: string | null;
   seo_title: string | null;

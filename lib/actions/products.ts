@@ -4,7 +4,22 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
+import { improveDescriptionWithGroq } from "@/lib/groq";
 import type { ActionResult } from "@/lib/actions/auth";
+
+export async function improveProductDescription(
+  title: string,
+  currentDescription: string
+): Promise<{ description?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+  if (!title.trim()) return { error: "Indique o título primeiro." };
+
+  return improveDescriptionWithGroq(title, currentDescription);
+}
 
 interface UpsertProductInput {
   id?: string;
@@ -13,8 +28,10 @@ interface UpsertProductInput {
   description: string;
   price: number;
   promoPrice: number | null;
+  priceUsd: number | null;
   currency: "MZN" | "ZAR";
   coverImageUrl: string | null;
+  checkoutBannerUrl: string | null;
   videoUrl: string | null;
   affiliateEnabled: boolean;
   affiliateCommissionPercent: number;
@@ -45,6 +62,9 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
   if (input.promoPrice != null && input.promoPrice < 50) {
     return { error: "O preço promocional também deve ser de pelo menos 50 MT." };
   }
+  if (input.priceUsd != null && !(input.priceUsd > 0)) {
+    return { error: "O preço em USD deve ser maior que zero." };
+  }
   const baseSlug = slugify(input.title);
   const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -55,8 +75,10 @@ export async function upsertProduct(input: UpsertProductInput): Promise<ActionRe
     description: input.description,
     price: input.price,
     promo_price: input.promoPrice,
+    price_usd: input.priceUsd,
     currency: input.currency,
     cover_image_url: input.coverImageUrl,
+    checkout_banner_url: input.checkoutBannerUrl,
     video_url: input.videoUrl,
     affiliate_enabled: input.affiliateEnabled,
     affiliate_commission_percent: Math.min(90, Math.max(0, input.affiliateCommissionPercent)),

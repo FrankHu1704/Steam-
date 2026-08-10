@@ -146,6 +146,25 @@ Responde em português, tom direto e prático, organizado em tópicos curtos com
   return { analysis: result.text };
 }
 
+// "Melhorar com IA" on the normal product wizard's description field —
+// rewrites/expands whatever the producer already typed (or drafts one from
+// scratch if the field is still empty), returned as plain text for them to
+// review/edit, same non-automatic pattern as the rest of LunaAI.
+export async function improveDescriptionWithGroq(
+  title: string,
+  currentDescription: string
+): Promise<{ description?: string; error?: string }> {
+  const prompt = currentDescription.trim()
+    ? `Você é a LunaAI, assistente de vendas da PagaJá. Reescreva a descrição abaixo do produto "${title}" para ser mais persuasiva e clara, mantendo as informações reais que o produtor já deu (não invente factos, números ou promessas que não estão lá). Português, tom direto, para o mercado moçambicano. Responde APENAS com o texto da nova descrição, sem markdown, sem aspas, sem comentários.
+
+Descrição atual: """${currentDescription.trim()}"""`
+    : `Você é a LunaAI, assistente de vendas da PagaJá. Escreva uma descrição de vendas persuasiva (3-5 frases) para um infoproduto chamado "${title}", vendido no mercado moçambicano. Como não há mais detalhes, mantenha-a genérica mas convincente, sem inventar factos específicos (números, resultados, prazos). Responde APENAS com o texto da descrição, sem markdown, sem aspas.`;
+
+  const result = await chatCompletion([{ role: "user", content: prompt }], { temperature: 0.7, maxTokens: 350 });
+  if (result.error || !result.text) return { error: result.error ?? GENERIC_ERROR };
+  return { description: result.text.trim() };
+}
+
 export interface CheckoutCopyResult {
   title: string;
   description: string;

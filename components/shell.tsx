@@ -7,6 +7,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { InstallAppButton } from "@/components/install-app-button";
+import { SupportBubble } from "@/components/support/support-bubble";
 import { signOut } from "@/lib/actions/auth";
 import type { Notification } from "@/types/database";
 
@@ -129,6 +130,7 @@ export function Shell({
         </header>
         <main className="p-4 sm:p-6 md:p-8">{children}</main>
       </div>
+      <SupportBubble />
     </div>
   );
 }

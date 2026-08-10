@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText, PackagePlus, ImageOff, Loader2, Zap } from "lucide-react";
+import { Upload, X, Facebook, Music2, ChartLine, Link2, FileText, PackagePlus, ImageOff, Loader2, Zap, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { uploadCoverImage, uploadProductFile, type UploadedFile } from "@/lib/upload";
-import { upsertProduct, setBumpOffers, setUpsellOffer } from "@/lib/actions/products";
+import { upsertProduct, setBumpOffers, setUpsellOffer, improveProductDescription } from "@/lib/actions/products";
 import { slugify, formatCurrency } from "@/lib/utils";
 import type { Category, Product, ProductFile } from "@/types/database";
 import type { UpsellOffer } from "@/lib/data/products";
@@ -181,8 +181,10 @@ export function ProductForm({
   const [title, setTitle] = useState(product?.title ?? "");
   const [categoryId, setCategoryId] = useState(product?.category_id ?? categories[0]?.id ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
+  const [improvingDescription, setImprovingDescription] = useState(false);
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [promoPrice, setPromoPrice] = useState(product?.promo_price ? String(product.promo_price) : "");
+  const [priceUsd, setPriceUsd] = useState(product?.price_usd ? String(product.price_usd) : "");
   const [currency, setCurrency] = useState<"MZN" | "ZAR">((product?.currency as "MZN" | "ZAR") ?? "MZN");
   const [videoUrl, setVideoUrl] = useState(product?.video_url ?? "");
   const [affiliateEnabled, setAffiliateEnabled] = useState(product?.affiliate_enabled ?? false);
@@ -200,6 +202,8 @@ export function ProductForm({
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(product?.cover_image_url ?? null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(product?.checkout_banner_url ?? null);
   const [files, setFiles] = useState<UploadedFile[]>(
     existingFiles?.map((f) => ({
       name: f.name,
@@ -215,6 +219,22 @@ export function ProductForm({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleImproveDescription() {
+    if (!title.trim()) {
+      setError("Indique o título antes de usar a LunaAI.");
+      return;
+    }
+    setImprovingDescription(true);
+    setError(null);
+    const res = await improveProductDescription(title, description);
+    setImprovingDescription(false);
+    if (res.error) {
+      setError(res.error);
+      return;
+    }
+    if (res.description) setDescription(res.description);
+  }
 
   async function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? []);
@@ -268,6 +288,11 @@ export function ProductForm({
         return;
       }
 
+      let checkoutBannerUrl = bannerPreview;
+      if (bannerFile) {
+        checkoutBannerUrl = await uploadCoverImage(userId, bannerFile);
+      }
+
       const res = await upsertProduct({
         id: product?.id,
         categoryId,
@@ -275,8 +300,10 @@ export function ProductForm({
         description,
         price: Number(price),
         promoPrice: promoPrice ? Number(promoPrice) : null,
+        priceUsd: priceUsd ? Number(priceUsd) : null,
         currency,
         coverImageUrl,
+        checkoutBannerUrl,
         videoUrl: videoUrl || null,
         affiliateEnabled,
         affiliateCommissionPercent: Number(commissionPercent),
@@ -326,12 +353,29 @@ export function ProductForm({
               </Select>
             </div>
             <div>
-              <Label htmlFor="description">Descrição</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="description">Descrição</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleImproveDescription}
+                  disabled={improvingDescription}
+                >
+                  {improvingDescription ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  Melhorar com IA
+                </Button>
+              </div>
               <Textarea
                 id="description"
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                className="mt-1.5"
               />
             </div>
             <div>
@@ -379,6 +423,22 @@ export function ProductForm({
                 <option value="ZAR">ZAR</option>
               </Select>
             </div>
+          </div>
+          <div className="mt-4">
+            <Label htmlFor="priceUsd">Preço em USD (cartão internacional — opcional)</Label>
+            <Input
+              id="priceUsd"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="9.99"
+              value={priceUsd}
+              onChange={(e) => setPriceUsd(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Guardado para quando o pagamento internacional (cartão/PayPal) estiver disponível — ainda não é
+              cobrado.
+            </p>
           </div>
         </div>
 
@@ -559,6 +619,43 @@ export function ProductForm({
               }}
             />
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-semibold">Banner do checkout (opcional)</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Imagem larga mostrada no topo da página de pagamento — recomendado 1200×400px.</p>
+          <label className="mt-4 flex aspect-[3/1] cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-border hover:border-primary">
+            {bannerPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={bannerPreview} alt="Banner" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-sm font-semibold text-primary">Adicionar banner</span>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setBannerFile(file);
+                  setBannerPreview(URL.createObjectURL(file));
+                }
+              }}
+            />
+          </label>
+          {bannerPreview && (
+            <button
+              type="button"
+              onClick={() => {
+                setBannerFile(null);
+                setBannerPreview(null);
+              }}
+              className="mt-2 text-xs font-medium text-muted-foreground hover:text-destructive"
+            >
+              Remover banner
+            </button>
+          )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6">

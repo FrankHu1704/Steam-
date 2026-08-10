@@ -17,15 +17,49 @@ export interface DashboardStats {
   salesMonthChangePercent: number | null;
   ordersCount: number;
   customersCount: number;
-  chart: { date: string; total: number }[];
+  chart: { date: string; total: number; label: string }[];
   topProducts: TopProduct[];
   recentSales: (Order & { product_title: string })[];
 }
 
-export const DASHBOARD_PERIODS = [7, 14, 30, 90] as const;
+export const DASHBOARD_PERIODS = [7, 30, 90, 180, 365, "all"] as const;
 export type DashboardPeriod = (typeof DASHBOARD_PERIODS)[number];
 
-export async function getDashboardStats(producerId: string, days: DashboardPeriod = 14): Promise<DashboardStats> {
+export function dashboardPeriodLabel(period: DashboardPeriod): string {
+  if (period === "all") return "Tudo";
+  if (period === 180) return "6m";
+  if (period === 365) return "1a";
+  return `${period}d`;
+}
+
+type ChartGranularity = "day" | "week" | "month";
+
+function chartGranularityFor(period: DashboardPeriod): ChartGranularity {
+  if (period === "all") return "month";
+  if (period > 90) return "week";
+  return "day";
+}
+
+function stepDate(d: Date, granularity: ChartGranularity): Date {
+  const next = new Date(d);
+  if (granularity === "day") next.setDate(next.getDate() + 1);
+  else if (granularity === "week") next.setDate(next.getDate() + 7);
+  else next.setMonth(next.getMonth() + 1);
+  return next;
+}
+
+function bucketKeyFor(d: Date, granularity: ChartGranularity): string {
+  if (granularity === "month") return d.toISOString().slice(0, 7);
+  return d.toISOString().slice(0, 10);
+}
+
+function bucketLabelFor(d: Date, granularity: ChartGranularity): string {
+  if (granularity === "month") return d.toLocaleDateString("pt-MZ", { month: "short", year: "2-digit" });
+  if (granularity === "week") return d.toLocaleDateString("pt-MZ", { day: "2-digit", month: "2-digit" });
+  return d.toISOString().slice(5, 10);
+}
+
+export async function getDashboardStats(producerId: string, period: DashboardPeriod = 30): Promise<DashboardStats> {
   const supabase = await createClient();
 
   const startOfMonth = new Date();
@@ -38,9 +72,27 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const chartStart = new Date();
-  chartStart.setDate(chartStart.getDate() - (days - 1));
-  chartStart.setHours(0, 0, 0, 0);
+  const granularity = chartGranularityFor(period);
+
+  let chartStart: Date;
+  if (period === "all") {
+    const { data: earliest } = await supabase
+      .from("orders")
+      .select("paid_at")
+      .eq("producer_id", producerId)
+      .eq("status", "paid")
+      .not("paid_at", "is", null)
+      .order("paid_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    chartStart = earliest?.paid_at ? new Date(earliest.paid_at) : new Date();
+    chartStart.setDate(1);
+    chartStart.setHours(0, 0, 0, 0);
+  } else {
+    chartStart = new Date();
+    chartStart.setDate(chartStart.getDate() - (period - 1));
+    chartStart.setHours(0, 0, 0, 0);
+  }
 
   const { data: paidOrders } = await supabase
     .from("orders")
@@ -55,11 +107,16 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
   let salesToday = 0;
   let salesMonth = 0;
   let profitMonth = 0;
-  const byDay = new Map<string, number>();
-  for (let i = 0; i < days; i++) {
-    const d = new Date(chartStart);
-    d.setDate(d.getDate() + i);
-    byDay.set(d.toISOString().slice(0, 10), 0);
+  const byBucket = new Map<string, { total: number; label: string }>();
+  {
+    const now = new Date();
+    let cursor = new Date(chartStart);
+    let guard = 0;
+    while (cursor <= now && guard < 400) {
+      byBucket.set(bucketKeyFor(cursor, granularity), { total: 0, label: bucketLabelFor(cursor, granularity) });
+      cursor = stepDate(cursor, granularity);
+      guard++;
+    }
   }
 
   const productMap = new Map<string, TopProduct>();
@@ -67,8 +124,20 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
   for (const order of orders) {
     if (!order.paid_at) continue;
     const paidAt = new Date(order.paid_at);
-    const day = paidAt.toISOString().slice(0, 10);
-    if (byDay.has(day)) byDay.set(day, (byDay.get(day) ?? 0) + order.total_amount);
+
+    let bucketKey: string;
+    if (granularity === "month") {
+      bucketKey = paidAt.toISOString().slice(0, 7);
+    } else if (granularity === "week") {
+      const diffDays = Math.floor((paidAt.getTime() - chartStart.getTime()) / 86_400_000);
+      const weekStart = new Date(chartStart);
+      weekStart.setDate(weekStart.getDate() + Math.floor(diffDays / 7) * 7);
+      bucketKey = bucketKeyFor(weekStart, granularity);
+    } else {
+      bucketKey = paidAt.toISOString().slice(0, 10);
+    }
+    const bucket = byBucket.get(bucketKey);
+    if (bucket) bucket.total += order.total_amount;
 
     if (paidAt >= startOfToday) salesToday += order.total_amount;
     if (paidAt >= startOfMonth) {
@@ -134,7 +203,7 @@ export async function getDashboardStats(producerId: string, days: DashboardPerio
     salesMonthChangePercent,
     ordersCount: orders.length,
     customersCount,
-    chart: Array.from(byDay.entries()).map(([date, total]) => ({ date, total })),
+    chart: Array.from(byBucket.entries()).map(([date, v]) => ({ date, total: v.total, label: v.label })),
     topProducts,
     recentSales: orders.slice(0, 8).map((o) => ({ ...o, product_title: o.products?.title ?? "Produto" })),
   };

@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { cn, formatCurrency } from "@/lib/utils";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getDashboardStats, DASHBOARD_PERIODS, type DashboardPeriod } from "@/lib/data/dashboard";
+import { getDashboardStats, DASHBOARD_PERIODS, dashboardPeriodLabel, type DashboardPeriod } from "@/lib/data/dashboard";
 import { getProducerAchievements } from "@/lib/data/achievements";
 
 export default async function DashboardOverviewPage({
@@ -18,8 +18,10 @@ export default async function DashboardOverviewPage({
   if (!user || !profile) return null;
 
   const { days: daysParam } = await searchParams;
-  const requestedDays = Number(daysParam);
-  const days = (DASHBOARD_PERIODS.includes(requestedDays as DashboardPeriod) ? requestedDays : 14) as DashboardPeriod;
+  const requestedDays: DashboardPeriod | number = daysParam === "all" ? "all" : Number(daysParam);
+  const days = (
+    DASHBOARD_PERIODS.includes(requestedDays as DashboardPeriod) ? requestedDays : 30
+  ) as DashboardPeriod;
 
   const [stats, achievements] = await Promise.all([
     getDashboardStats(user.id, days),
@@ -144,8 +146,8 @@ export default async function DashboardOverviewPage({
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
-            <CardTitle>Vendas (últimos {days} dias)</CardTitle>
-            <div className="flex gap-1 rounded-lg bg-muted p-1">
+            <CardTitle>Vendas ({days === "all" ? "desde sempre" : `últimos ${days} dias`})</CardTitle>
+            <div className="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
               {DASHBOARD_PERIODS.map((p) => (
                 <Link
                   key={p}
@@ -155,7 +157,7 @@ export default async function DashboardOverviewPage({
                     p === days ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {p}d
+                  {dashboardPeriodLabel(p)}
                 </Link>
               ))}
             </div>
