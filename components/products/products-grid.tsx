@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, ImageOff, PackageSearch } from "lucide-react";
+import { Search, ImageOff, PackageSearch, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/badge";
@@ -61,7 +61,7 @@ export function ProductsGrid({ products }: { products: Product[] }) {
         )}
         {filtered.map((p) => (
           <div key={p.id} className="rounded-2xl border border-border bg-card p-4 transition-shadow hover:shadow-lg">
-            <Link href={`/dashboard/products/${p.id}`}>
+            <Link href={p.is_payment_link ? `/dashboard/products/link/${p.id}` : `/dashboard/products/${p.id}`}>
               <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
                 {p.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -74,6 +74,11 @@ export function ProductsGrid({ products }: { products: Product[] }) {
                 <p className="line-clamp-1 font-semibold">{p.title}</p>
                 <StatusBadge status={p.status} />
               </div>
+              {p.is_payment_link && (
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <Link2 className="h-3 w-3" /> Link de pagamento
+                </span>
+              )}
               <p className="mt-1 font-medium">
                 {formatCurrency(p.promo_price ?? p.price, p.currency as "MZN" | "ZAR")}
               </p>

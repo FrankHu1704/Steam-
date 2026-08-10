@@ -97,7 +97,14 @@ export default async function AdminProductsPage({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">{product.title}</p>
+                    <p className="flex items-center gap-1.5 font-medium">
+                      {product.title}
+                      {product.is_payment_link && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          Link de pagamento
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       por {product.producer_name} · {formatCurrency(product.price, product.currency as "MZN" | "ZAR")} ·{" "}
                       {product.sales_count} venda{product.sales_count === 1 ? "" : "s"}

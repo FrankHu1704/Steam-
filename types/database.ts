@@ -208,6 +208,7 @@ export interface Product {
   affiliate_commission_percent: number;
   bump_enabled: boolean;
   show_in_marketplace: boolean;
+  is_payment_link: boolean;
   status: ProductStatus;
   rejection_reason: string | null;
   seo_title: string | null;

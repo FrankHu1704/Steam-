@@ -20,6 +20,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   const product = await getProductForOwner(id, user.id);
   if (!product) redirect("/dashboard/products");
+  if (product.is_payment_link) redirect(`/dashboard/products/link/${id}`);
 
   const categories = await getCategories();
   const supabase = await createClient();
