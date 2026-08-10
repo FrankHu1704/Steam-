@@ -78,6 +78,20 @@ function toLocalPhone(raw: string): string {
   return raw.replace(/\D/g, "").slice(-9);
 }
 
+// Pagar's `reference` only accepts safe ASCII (alphanumeric/hyphen/
+// underscore) — free text like "Levantamento PagaJá" or a producer's name
+// has accents and other characters that get rejected outright ("reference
+// contém caracteres inválidos"). Strips accents (NFD-decompose then drop
+// the combining marks) before collapsing anything else non-ASCII to "-".
+function sanitizeReferenceSegment(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function mapStatus(raw: string): "success" | "pending" | "failed" {
   const s = raw.toUpperCase();
   if (s === "PAID") return "success";
@@ -264,7 +278,7 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
     return { success: false, error: `Valor fora do limite da Pagar (20–40 000 MZN): ${grossAmountMzn} MZN.` };
   }
 
-  const reference = `payout-${input.notes ? input.notes.replace(/\s+/g, "-").slice(0, 40) : "pagaja"}-${Date.now()}`;
+  const reference = `payout-${input.notes ? sanitizeReferenceSegment(input.notes).slice(0, 40) : "pagaja"}-${Date.now()}`;
   const { status, json } = await pagarPost(
     "/payouts",
     {
