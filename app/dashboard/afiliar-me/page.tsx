@@ -6,7 +6,10 @@ import { CopyLinkButton } from "@/components/affiliates/copy-link-button";
 import { getAffiliateMarketplace, getMyAffiliateLinks } from "@/lib/data/affiliates";
 import { formatCurrency } from "@/lib/utils";
 
-export default async function AccountAffiliatesPage() {
+// Same marketplace already used at /account/affiliates (buyers can also
+// become affiliates) — this is just the producer-facing entry point, with
+// the exact commission amount shown next to the percentage.
+export default async function AffiliateMarketplacePage() {
   const [marketplace, myLinks] = await Promise.all([getAffiliateMarketplace(), getMyAffiliateLinks()]);
   const promotedIds = new Set(myLinks.map((l) => l.product_id));
 

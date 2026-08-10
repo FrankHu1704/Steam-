@@ -14,9 +14,10 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const phoneRaw = String(formData.get("phone") ?? "").trim();
+  const birthDateRaw = String(formData.get("birthDate") ?? "").trim();
 
-  if (!name || !email || !password || !phoneRaw) {
-    return { error: "Preencha nome, email, telefone e palavra-passe." };
+  if (!name || !email || !password || !phoneRaw || !birthDateRaw) {
+    return { error: "Preencha nome, data de nascimento, telefone e palavra-passe." };
   }
   if (password.length < 6) {
     return { error: "A palavra-passe deve ter pelo menos 6 caracteres." };
@@ -25,16 +26,33 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   if (digits.length < 9) {
     return { error: "Indique um número de telemóvel válido." };
   }
+  const birthDate = new Date(birthDateRaw);
+  if (Number.isNaN(birthDate.getTime())) {
+    return { error: "Indique uma data de nascimento válida." };
+  }
+  const ageYears = (Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  if (ageYears < 16) {
+    return { error: "É preciso ter pelo menos 16 anos para criar conta." };
+  }
   const phone = normalizeMozambiquePhone(phoneRaw);
   const referralCode = String(formData.get("ref") ?? "").trim();
   const producerReferralId = String(formData.get("pref") ?? "").trim();
+
+  // Each phone number can only be used once — checked here (app level)
+  // rather than a DB unique constraint, so existing accounts with a
+  // shared/missing phone don't block this from ever being added.
+  const admin = createAdminClient();
+  const { data: existingPhone } = await admin.from("profiles").select("id").eq("phone", phone).maybeSingle();
+  if (existingPhone) {
+    return { error: "Este número de telemóvel já está associado a outra conta." };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name, phone },
+      data: { name, phone, birth_date: birthDateRaw },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
   });
@@ -42,7 +60,6 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   if (error) return { error: error.message };
 
   if (referralCode && data.user) {
-    const admin = createAdminClient();
     const { data: employee } = await admin
       .from("employees")
       .select("id")
@@ -57,7 +74,6 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   // Producers can also recruit affiliates via their own /signup?pref=<id>
   // link — see lib/order-fulfillment.ts for the resulting 3%/1-month payout.
   if (producerReferralId && data.user) {
-    const admin = createAdminClient();
     const { data: producer } = await admin
       .from("profiles")
       .select("id")
