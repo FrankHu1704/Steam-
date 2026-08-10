@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendWithdrawalOtpSms } from "@/lib/easyhost-sms";
+import { sendWithdrawalOtpEmail } from "@/lib/email";
 
 const CODE_LENGTH = 4;
 const EXPIRES_AFTER_MS = 5 * 60 * 1000;
@@ -10,19 +10,21 @@ function generateCode(): string {
   return String(Math.floor(Math.random() * 10 ** CODE_LENGTH)).padStart(CODE_LENGTH, "0");
 }
 
-/** "+258849311757" -> "84•••757" — enough to recognize, not enough to leak. */
-export function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "").slice(-9);
-  if (digits.length < 6) return "•••";
-  return `${digits.slice(0, 2)}•••${digits.slice(-3)}`;
+/** "producer@example.com" -> "pr•••@example.com" — enough to recognize, not enough to leak. */
+export function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) return "•••";
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}•••@${domain}`;
 }
 
 export async function sendWithdrawalOtp(
   userId: string,
-  phone: string | null
-): Promise<{ ok: true; phoneMasked: string } | { ok: false; error: string; retryAfterSeconds?: number }> {
-  if (!phone) {
-    return { ok: false, error: "A sua conta não tem um número de telemóvel registado. Atualize-o em Definições." };
+  email: string | null,
+  name?: string
+): Promise<{ ok: true; emailMasked: string } | { ok: false; error: string; retryAfterSeconds?: number }> {
+  if (!email) {
+    return { ok: false, error: "A sua conta não tem um email registado." };
   }
 
   const supabase = createAdminClient();
@@ -58,9 +60,9 @@ export async function sendWithdrawalOtp(
   });
   if (error) return { ok: false, error: "Falha ao gerar o código. Tente novamente." };
 
-  await sendWithdrawalOtpSms({ phone, code });
+  await sendWithdrawalOtpEmail({ email, name, code });
 
-  return { ok: true, phoneMasked: maskPhone(phone) };
+  return { ok: true, emailMasked: maskEmail(email) };
 }
 
 export async function verifyAndConsumeWithdrawalOtp(

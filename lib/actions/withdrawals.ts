@@ -16,9 +16,9 @@ export async function sendWithdrawalOtpCode() {
   if (!user) return { ok: false as const, error: "Precisa de iniciar sessão." };
 
   const supabase = createAdminClient();
-  const { data: profile } = await supabase.from("profiles").select("phone").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("email, name").eq("id", user.id).single();
 
-  return sendWithdrawalOtp(user.id, profile?.phone ?? null);
+  return sendWithdrawalOtp(user.id, profile?.email ?? null, profile?.name);
 }
 
 async function notifyAdminsOfWithdrawal(

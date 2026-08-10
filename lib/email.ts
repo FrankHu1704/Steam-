@@ -341,6 +341,30 @@ export async function sendSaleNotificationEmail(input: {
   });
 }
 
+export async function sendWithdrawalOtpEmail(input: { email: string; name?: string; code: string }) {
+  await sendEmail({
+    to: input.email,
+    subject: `${input.code} é o seu código de confirmação — PagaJá`,
+    html: emailBannerCard({
+      bannerColor: "#2563EB",
+      icon: "🔐",
+      title: "Confirme o seu levantamento",
+      bodyHtml:
+        emailParagraph(`Olá${input.name ? `, <strong>${input.name}</strong>` : ""}! Use o código abaixo para confirmar o seu pedido de levantamento.`) +
+        `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+          <tr>
+            <td align="center">
+              <div style="display:inline-block;background:#EEF2FF;border-radius:12px;padding:16px 32px;">
+                <span style="font-family:'Courier New',monospace;font-size:34px;font-weight:800;letter-spacing:12px;color:#2563EB;">${input.code}</span>
+              </div>
+            </td>
+          </tr>
+        </table>` +
+        emailParagraph(`<span style="color:#9ca3af;font-size:12px;">Válido por 5 minutos. Se não pediu este levantamento, ignore este email.</span>`),
+    }),
+  });
+}
+
 export async function sendWithdrawalRequestedEmail(input: {
   producerEmail: string;
   producerName?: string;

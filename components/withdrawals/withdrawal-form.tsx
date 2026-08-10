@@ -61,7 +61,7 @@ export function WithdrawalForm({
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpShakeKey, setOtpShakeKey] = useState(0);
-  const [phoneMasked, setPhoneMasked] = useState("");
+  const [emailMasked, setEmailMasked] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [sendingOtp, setSendingOtp] = useState(false);
 
@@ -89,7 +89,7 @@ export function WithdrawalForm({
       if (result.retryAfterSeconds) setCooldown(result.retryAfterSeconds);
       return false;
     }
-    setPhoneMasked(result.phoneMasked);
+    setEmailMasked(result.emailMasked);
     setCooldown(45);
     return true;
   }
@@ -177,7 +177,7 @@ export function WithdrawalForm({
           </div>
           <h3 className="mt-3 font-semibold">Confirme o levantamento</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Enviámos um código de 4 dígitos por SMS para <span className="font-medium text-foreground">{phoneMasked}</span>
+            Enviámos um código de 4 dígitos por email para <span className="font-medium text-foreground">{emailMasked}</span>
           </p>
         </div>
 
