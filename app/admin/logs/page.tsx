@@ -31,22 +31,31 @@ export default async function AdminLogsPage() {
           ) : (
             <div className="divide-y divide-border">
               {logs.map((log) => (
-                <div key={log.id} className="flex items-start gap-3 p-4 text-sm hover:bg-muted/30">
-                  <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", dotStyle(log.action))} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium capitalize">{log.action.replace(/_/g, " ")}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {new Date(log.created_at).toLocaleString("pt-MZ")}
-                      </span>
+                <details key={log.id} className="group p-4 text-sm">
+                  <summary className="flex cursor-pointer list-none items-start gap-3 [&::-webkit-details-marker]:hidden">
+                    <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", dotStyle(log.action))} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium capitalize">{log.action.replace(/_/g, " ")}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString("pt-MZ")}
+                        </span>
+                      </div>
+                      {log.target_table && (
+                        <p className="mt-1 font-mono text-xs text-muted-foreground">
+                          {log.target_table} · {log.target_id}
+                        </p>
+                      )}
                     </div>
-                    {log.target_table && (
-                      <p className="mt-1 font-mono text-xs text-muted-foreground">
-                        {log.target_table} · {log.target_id}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  </summary>
+                  {log.metadata != null ? (
+                    <pre className="mt-3 ml-5 overflow-x-auto rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
+                      {JSON.stringify(log.metadata, null, 2)}
+                    </pre>
+                  ) : (
+                    <p className="mt-3 ml-5 text-xs text-muted-foreground">Sem detalhes adicionais.</p>
+                  )}
+                </details>
               ))}
             </div>
           )}
