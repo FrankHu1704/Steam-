@@ -70,10 +70,12 @@ async function sendEasyhostSms(to: string, body: string): Promise<void> {
   }
 }
 
-// Kept free of accented characters on purpose: a single non-GSM-7 char
-// (á, ã, ç, ...) forces UCS-2 encoding, which drops the per-segment limit
-// from 160 to 70 — this stays a true single-segment SMS.
-const SMS_MAX_LENGTH = 160;
+// These templates use emoji + accented characters on purpose (the user's
+// choice), which forces UCS-2 encoding: the per-segment limit drops from
+// 160 to 70 chars, so these go out as 2-3 SMS segments (more credits)
+// instead of 1. The cap below just stops a very long product title from
+// growing that further — it's not trying to stay within one segment.
+const SMS_MAX_LENGTH = 300;
 
 function fitTitle(title: string, prefixLength: number, suffixLength: number): string {
   const maxTitleLength = SMS_MAX_LENGTH - prefixLength - suffixLength;
@@ -88,12 +90,9 @@ export async function sendPaymentConfirmedSms(input: {
   currency: string;
 }) {
   const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
-  const prefix = `VENDA CONFIRMADA\n+${amountLabel} na sua conta PagaJa\n`;
-  const suffix = "";
+  const body = `🎉 VENDA CONFIRMADA! +${amountLabel} foram adicionados à sua conta PagaJá. 💰 Continue vendendo e aumente seus ganhos! 🚀`;
 
-  const title = fitTitle(input.productTitle, prefix.length, suffix.length);
-
-  await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
+  await sendEasyhostSms(input.phone, body);
 }
 
 export async function sendPurchaseConfirmedSms(input: {
@@ -103,9 +102,10 @@ export async function sendPurchaseConfirmedSms(input: {
   currency: string;
   accessUrl: string;
 }) {
-  const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
-  const prefix = "COMPRA CONFIRMADA\n";
-  const suffix = ` - ${amountLabel}\nAcesse: ${input.accessUrl}`;
+  // Uses `a "titulo"` (no article) instead of `à`/`ao`/`às` so this reads
+  // correctly regardless of the product title's gender/number.
+  const prefix = `✅ COMPRA CONFIRMADA! O seu acesso a "`;
+  const suffix = `" está liberado. 🚀 Acesse agora: ${input.accessUrl}`;
 
   const title = fitTitle(input.productTitle, prefix.length, suffix.length);
 
