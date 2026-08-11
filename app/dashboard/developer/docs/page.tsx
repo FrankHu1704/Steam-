@@ -191,13 +191,16 @@ export default function DeveloperDocsPage() {
   "access_token": "a1b2c3...",
   "token_type": "Bearer",
   "scope": "read write products offers orders webhooks",
-  "expires_in": 3600
+  "expires_in": 3153600000
 }`}</Code>
         <p className="text-sm text-muted-foreground">
-          O <code>access_token</code> expira em <strong>3600 segundos (1 hora)</strong> exatos — não há refresh
-          token; peça simplesmente um novo <code>access_token</code> chamando <code>/oauth/token</code> outra vez
-          quando expirar (ou pouco antes, para evitar um pedido a meio a falhar com 401). Envie-o em todos os
-          pedidos seguintes no cabeçalho:
+          O <code>access_token</code> não expira na prática — pode gerá-lo uma vez e guardá-lo para uso contínuo.
+          A forma de o invalidar é <strong>revogar a chave</strong> em{" "}
+          <Link href="/dashboard/developer" className="text-primary hover:underline">
+            Programador
+          </Link>
+          , o que invalida imediatamente todos os tokens emitidos a partir dela. Envie-o em todos os pedidos no
+          cabeçalho:
         </p>
         <Code>{`Authorization: Bearer SEU_ACCESS_TOKEN`}</Code>
         <p className="text-xs text-muted-foreground">
@@ -622,7 +625,7 @@ function verify(rawBody, signatureHeader, secret) {
             <tr className="border-b border-border/60">
               <td className="py-2 pr-4 font-mono">401</td>
               <td className="py-2">
-                Token de acesso em falta, inválido ou expirado, ou credenciais erradas em{" "}
+                Token de acesso em falta, inválido, ou de uma chave revogada, ou credenciais erradas em{" "}
                 <code>/oauth/token</code>. Peça um novo <code>access_token</code>.
               </td>
             </tr>
@@ -666,8 +669,8 @@ function verify(rawBody, signatureHeader, secret) {
             com cuidado (ver nota na secção Cobranças).
           </li>
           <li>
-            Guarde o <code>access_token</code> em memória/cache do seu servidor durante a hora de validade, em vez
-            de pedir um novo a cada chamada — reduz latência e carga desnecessária.
+            Guarde o <code>access_token</code> — não expira — e reutilize-o em vez de pedir um novo a cada chamada;
+            só precisa de gerar outro se revogar a chave e criar uma nova.
           </li>
           <li>
             Nunca exponha o seu <code>client_secret</code> no código do lado do cliente (browser/app móvel) — troque-o

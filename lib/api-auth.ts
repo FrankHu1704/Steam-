@@ -7,7 +7,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // so producers can integrate PagaJá with their own tools — this is
 // read/manage access to a producer's own data, not a payment processor.
 
-const TOKEN_TTL_SECONDS = 60 * 60;
+// Producers kept hitting "token inválido ou expirado" from integrations
+// that never implemented a refresh cycle around the original 1-hour TTL —
+// so access_token effectively no longer expires. Revocation (api_keys.
+// revoked_at, checked in verifyBearerToken below) is the real security
+// control now, same as it always was: revoking the key invalidates every
+// token issued from it immediately, regardless of this TTL.
+const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 365 * 100;
 
 export function hashSecret(secret: string): string {
   return crypto.createHash("sha256").update(secret).digest("hex");
