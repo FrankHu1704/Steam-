@@ -85,6 +85,10 @@ interface ChargeResult {
   reference?: string;
   checkout_url?: string;
   error?: string;
+  // NetShop's full, unmapped response — stored as-is in payments.raw_response
+  // (see lib/actions/checkout.ts) so a stuck/failed mobile-money charge can
+  // be diagnosed from Admin -> Pedidos without needing new logging for it.
+  raw?: unknown;
 }
 
 export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
@@ -115,7 +119,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
   if (method === "card") {
     const checkoutUrl = json.checkout?.hosted_url;
     if (!checkoutUrl) throw new Error("Falha ao gerar checkout de cartão.");
-    return { success: true, payment_id: json.id, reference: json.id, status: "pending", checkout_url: checkoutUrl };
+    return { success: true, payment_id: json.id, reference: json.id, status: "pending", checkout_url: checkoutUrl, raw: json };
   }
 
   return {
@@ -123,6 +127,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     payment_id: json.id,
     reference: json.id,
     status: mapStatus(String(json.status ?? "pending")),
+    raw: json,
   };
 }
 
