@@ -15,12 +15,14 @@ export function SettingsForm({
   platformFixedFeeAmount,
   withdrawalMinimumAmount,
   paymentProvider,
+  emolaChargeProvider,
 }: {
   withdrawalFeePercent: number;
   platformFeePercent: number;
   platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
+  emolaChargeProvider: "pagar" | "active";
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
@@ -28,6 +30,7 @@ export function SettingsForm({
   const [fixedFee, setFixedFee] = useState(String(platformFixedFeeAmount));
   const [minimumAmount, setMinimumAmount] = useState(String(withdrawalMinimumAmount));
   const [provider, setProvider] = useState(paymentProvider);
+  const [emolaProvider, setEmolaProvider] = useState(emolaChargeProvider);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -41,6 +44,7 @@ export function SettingsForm({
       updateSetting("platform_fixed_fee_amount", Number(fixedFee)),
       updateSetting("withdrawal_minimum_amount", Number(minimumAmount)),
       updateSetting("payment_provider", provider),
+      updateSetting("emola_charge_provider", emolaProvider),
     ]);
     setPending(false);
     setSaved(true);
@@ -110,6 +114,22 @@ export function SettingsForm({
             <option value="netshop">NetShop</option>
           </Select>
           <p className="text-xs text-muted-foreground">Define qual processador é usado no checkout da PagaJá.</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="emola-provider">e-Mola processado via</Label>
+          <Select
+            id="emola-provider"
+            value={emolaProvider}
+            onChange={(e) => setEmolaProvider(e.target.value as "pagar" | "active")}
+          >
+            <option value="pagar">Pagar (padrão)</option>
+            <option value="active">Processador ativo (acima)</option>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Por padrão o e-Mola vai sempre pela Pagar, independentemente do processador ativo escolhido acima. Mude
+            para "Processador ativo" para testar o e-Mola do processador selecionado em cima (ex.: NetShop) em vez
+            da Pagar.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="min-withdrawal">Valor mínimo para saque (MT)</Label>

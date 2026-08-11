@@ -19,6 +19,8 @@ export default async function AdminSettingsPage() {
       | "zumbopay"
       | "netshop"
       | undefined) ?? "debito_pay";
+  const emolaChargeProvider =
+    (settings.find((s) => s.key === "emola_charge_provider")?.value as "pagar" | "active" | undefined) ?? "pagar";
 
   return (
     <div className="space-y-6">
@@ -35,6 +37,7 @@ export default async function AdminSettingsPage() {
             platformFixedFeeAmount={platformFixedFeeAmount}
             withdrawalMinimumAmount={withdrawalMinimumAmount}
             paymentProvider={paymentProvider}
+            emolaChargeProvider={emolaChargeProvider}
           />
         </CardContent>
       </Card>

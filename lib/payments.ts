@@ -64,12 +64,26 @@ function isPagarConfigured(): boolean {
   return Boolean(process.env.PAGAR_API_KEY?.trim() && process.env.PAGAR_SIGNING_SECRET?.trim());
 }
 
-// e-Mola charges route through Pagar specifically (per admin's choice —
-// everything else keeps using the globally active processor). Falls back
-// to the active processor if Pagar's credentials aren't set, so checkout
-// never breaks just because that one integration is mid-setup.
+// "pagar" (default) keeps e-Mola on Pagar regardless of the active
+// processor above; "active" lets e-Mola follow whatever's set as the
+// active processor instead — e.g. to A/B test NetShop's e-Mola wallet
+// against Pagar without ripping the routing rule out of the code.
+export async function getEmolaChargeProviderSetting(): Promise<"pagar" | "active"> {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "emola_charge_provider").single();
+  return data?.value === "active" ? "active" : "pagar";
+}
+
+// e-Mola charges route through Pagar by default (per admin's choice —
+// everything else keeps using the globally active processor), unless
+// emola_charge_provider is set to "active". Falls back to the active
+// processor if Pagar's credentials aren't set, so checkout never breaks
+// just because that one integration is mid-setup.
 export async function resolveChargeProvider(method: PaymentMethod, currency: string): Promise<ChargeProviderName> {
-  if (method === "emola" && currency === "MZN" && isPagarConfigured()) return "pagar";
+  if (method === "emola" && currency === "MZN" && isPagarConfigured()) {
+    const setting = await getEmolaChargeProviderSetting();
+    if (setting === "pagar") return "pagar";
+  }
   return getActivePaymentProvider();
 }
 
