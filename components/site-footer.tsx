@@ -28,7 +28,6 @@ export function SiteFooter() {
         <div>
           <p className="text-sm font-semibold">Produto</p>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><Link href="/marketplace">Marketplace</Link></li>
             <li><a href="#recursos">Recursos</a></li>
             <li><a href="#metodos">Métodos de Pagamento</a></li>
             <li><Link href="/taxas">Taxas</Link></li>

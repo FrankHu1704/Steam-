@@ -124,7 +124,7 @@ const BENEFITS = [
   "Entrega automática de ficheiros",
   "Notificações push em tempo real",
   "Cupões de desconto e order bumps",
-  "Marketplace para ganhar visibilidade extra",
+  "Programa de afiliados para vender através de outros",
 ];
 
 const STATS = [

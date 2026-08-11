@@ -4,7 +4,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallAppButton } from "@/components/install-app-button";
 
 const LINKS = [
-  { href: "/marketplace", label: "Marketplace" },
   { href: "#recursos", label: "Recursos" },
   { href: "#diferenciais", label: "Porque a PagaJá" },
   { href: "#como-funciona", label: "Como Funciona" },

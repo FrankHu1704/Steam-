@@ -125,7 +125,7 @@ export function Hero() {
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/marketplace">Ver Marketplace</Link>
+              <Link href="/login">Já tenho conta</Link>
             </Button>
           </motion.div>
 
