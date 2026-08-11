@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Trash2, Loader2, MessagesSquare } from "lucide-react";
+import { Send, Trash2, Loader2, MessagesSquare, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { sendChatMessage, deleteChatMessage } from "@/lib/actions/chat";
+import { LUNA_CHAT_NAME } from "@/lib/groq";
 import { cn } from "@/lib/utils";
 import type { CommunityChatMessage } from "@/types/database";
 
-const ROLE_LABEL: Record<string, string> = { producer: "Produtor", buyer: "Comprador", admin: "Admin" };
+const ROLE_LABEL: Record<string, string> = { producer: "Produtor", buyer: "Comprador", admin: "Admin", bot: "IA" };
 const MAX_MESSAGE_LENGTH = 500;
 // Grouping window — consecutive messages from the same sender within this
 // gap render as one visual block (name/avatar shown once), like WhatsApp.
@@ -88,7 +89,9 @@ export function CommunityChat({
   const [onlineCount, setOnlineCount] = useState(1);
   const [participants, setParticipants] = useState<Map<string, string>>(() => {
     const map = new Map<string, string>();
-    for (const m of initialMessages) map.set(m.user_id, m.user_name);
+    for (const m of initialMessages) {
+      if (m.user_id) map.set(m.user_id, m.user_name);
+    }
     return map;
   });
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -102,7 +105,9 @@ export function CommunityChat({
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "community_chat_messages" }, (payload) => {
         const row = payload.new as CommunityChatMessage;
         setMessages((prev) => [...prev, row]);
-        setParticipants((prev) => (prev.get(row.user_id) === row.user_name ? prev : new Map(prev).set(row.user_id, row.user_name)));
+        if (row.user_id) {
+          setParticipants((prev) => (prev.get(row.user_id!) === row.user_name ? prev : new Map(prev).set(row.user_id!, row.user_name)));
+        }
       })
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "community_chat_messages" }, (payload) => {
         const deletedId = (payload.old as { id: string }).id;
@@ -137,17 +142,21 @@ export function CommunityChat({
   }, [messages.length]);
 
   const knownNames = useMemo(
-    () => Array.from(new Set(Array.from(participants.values()).filter((n) => n !== currentUserName))),
+    () =>
+      Array.from(new Set([LUNA_CHAT_NAME, ...Array.from(participants.values())].filter((n) => n !== currentUserName))),
     [participants, currentUserName]
   );
 
   const mentionMatch = text.match(/(?:^|\s)@([^\s@]*)$/);
   const mentionQuery = mentionMatch ? mentionMatch[1].toLowerCase() : null;
-  const mentionSuggestions =
+  const mentionSuggestions: [string, string][] =
     mentionQuery !== null
-      ? Array.from(participants.entries())
-          .filter(([id, name]) => id !== currentUserId && name.toLowerCase().includes(mentionQuery))
-          .slice(0, 5)
+      ? [
+          ...(LUNA_CHAT_NAME.toLowerCase().includes(mentionQuery) ? ([["luna", LUNA_CHAT_NAME]] as [string, string][]) : []),
+          ...Array.from(participants.entries()).filter(
+            ([id, name]) => id !== currentUserId && name.toLowerCase().includes(mentionQuery)
+          ),
+        ].slice(0, 5)
       : [];
 
   function selectMention(name: string) {
@@ -212,22 +221,28 @@ export function CommunityChat({
               next.user_id !== m.user_id ||
               new Date(next.created_at).getTime() - new Date(m.created_at).getTime() > GROUP_WINDOW_MS;
 
+            const isLuna = m.user_role === "bot";
+
             return (
               <div key={m.id} className={cn("group flex items-end gap-2", mine ? "justify-end" : "justify-start", startsGroup ? "mt-3" : "mt-0.5")}>
                 {!mine && (
                   <span
                     className={cn(
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white",
-                      endsGroup ? avatarColor(m.user_id) : "opacity-0"
+                      endsGroup ? (isLuna ? "bg-brand-gradient" : avatarColor(m.user_id as string)) : "opacity-0"
                     )}
                   >
-                    {endsGroup ? initials(m.user_name) : null}
+                    {endsGroup ? isLuna ? <Sparkles className="h-3.5 w-3.5" /> : initials(m.user_name) : null}
                   </span>
                 )}
                 <div
                   className={cn(
                     "relative max-w-[75%] px-3.5 py-2 text-sm shadow-sm",
-                    mine ? "bg-brand-gradient text-white" : "border border-border/60 bg-background",
+                    mine
+                      ? "bg-brand-gradient text-white"
+                      : isLuna
+                        ? "border border-primary/20 bg-primary/5"
+                        : "border border-border/60 bg-background",
                     // WhatsApp-style corner rounding depending on position in group
                     mine
                       ? cn("rounded-2xl", startsGroup ? "rounded-tr-md" : "", endsGroup ? "rounded-br-md" : "rounded-br-2xl")
@@ -236,7 +251,7 @@ export function CommunityChat({
                 >
                   {!mine && startsGroup && (
                     <p className="mb-0.5 text-xs font-semibold" style={{ color: "inherit" }}>
-                      <span className="opacity-90">{m.user_name}</span>{" "}
+                      <span className={cn("opacity-90", isLuna && "text-primary")}>{m.user_name}</span>{" "}
                       <span className="font-normal opacity-60">· {ROLE_LABEL[m.user_role] ?? m.user_role}</span>
                     </p>
                   )}

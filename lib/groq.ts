@@ -13,6 +13,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GENERIC_ERROR = "A LunaAI não conseguiu responder agora. Tente novamente daqui a pouco.";
 
+// Display name used wherever LunaAI posts as if she were a chat participant
+// (currently only the community chat, see lib/actions/chat.ts).
+export const LUNA_CHAT_NAME = "LunaAI";
+
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
   content: string;

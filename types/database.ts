@@ -92,7 +92,9 @@ export interface CtoMonthlyCredit {
 
 export interface CommunityChatMessage {
   id: string;
-  user_id: string;
+  // null only for LunaAI's own messages (user_role "bot") — she has no
+  // real profiles row behind her.
+  user_id: string | null;
   user_name: string;
   user_role: string;
   message: string;
