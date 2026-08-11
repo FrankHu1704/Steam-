@@ -44,7 +44,7 @@ export default async function ProductSalePage({
   if (ref) await supabase.rpc("increment_affiliate_clicks", { affiliate_code: ref });
 
   const providerName = await getActivePaymentProvider();
-  const paymentMethods = methodsForProvider(providerName, product.currency);
+  const paymentMethods = await methodsForProvider(providerName, product.currency);
 
   let bumps: Product[] = [];
   if (product.bump_enabled) {

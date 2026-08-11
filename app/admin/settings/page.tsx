@@ -21,6 +21,7 @@ export default async function AdminSettingsPage() {
       | undefined) ?? "debito_pay";
   const emolaChargeProvider =
     (settings.find((s) => s.key === "emola_charge_provider")?.value as "pagar" | "active" | undefined) ?? "pagar";
+  const emolaEnabled = settings.find((s) => s.key === "emola_enabled")?.value !== false;
 
   return (
     <div className="space-y-6">
@@ -38,6 +39,7 @@ export default async function AdminSettingsPage() {
             withdrawalMinimumAmount={withdrawalMinimumAmount}
             paymentProvider={paymentProvider}
             emolaChargeProvider={emolaChargeProvider}
+            emolaEnabled={emolaEnabled}
           />
         </CardContent>
       </Card>

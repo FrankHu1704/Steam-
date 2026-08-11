@@ -114,7 +114,7 @@ export async function createOrder(input: CreateOrderInput) {
   if (!product) return { error: "Produto não encontrado ou indisponível." };
 
   const activeProviderName = await getActivePaymentProvider();
-  if (!methodsForProvider(activeProviderName, product.currency).includes(input.paymentMethod)) {
+  if (!(await methodsForProvider(activeProviderName, product.currency)).includes(input.paymentMethod)) {
     return { error: "Método de pagamento indisponível." };
   }
   const providerName = await resolveChargeProvider(input.paymentMethod, product.currency);
@@ -296,7 +296,7 @@ export async function createManualOrder(input: CreateManualOrderInput) {
   const supabase = createAdminClient();
 
   const activeProviderName = await getActivePaymentProvider();
-  if (!methodsForProvider(activeProviderName, input.currency).includes(input.paymentMethod)) {
+  if (!(await methodsForProvider(activeProviderName, input.currency)).includes(input.paymentMethod)) {
     return { error: "Método de pagamento indisponível." };
   }
   const providerName = await resolveChargeProvider(input.paymentMethod, input.currency);

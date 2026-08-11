@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { updateSetting } from "@/lib/actions/admin";
 
 export function SettingsForm({
@@ -16,6 +17,7 @@ export function SettingsForm({
   withdrawalMinimumAmount,
   paymentProvider,
   emolaChargeProvider,
+  emolaEnabled,
 }: {
   withdrawalFeePercent: number;
   platformFeePercent: number;
@@ -23,6 +25,7 @@ export function SettingsForm({
   withdrawalMinimumAmount: number;
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
   emolaChargeProvider: "pagar" | "active";
+  emolaEnabled: boolean;
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
@@ -31,6 +34,7 @@ export function SettingsForm({
   const [minimumAmount, setMinimumAmount] = useState(String(withdrawalMinimumAmount));
   const [provider, setProvider] = useState(paymentProvider);
   const [emolaProvider, setEmolaProvider] = useState(emolaChargeProvider);
+  const [emolaOn, setEmolaOn] = useState(emolaEnabled);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -45,6 +49,7 @@ export function SettingsForm({
       updateSetting("withdrawal_minimum_amount", Number(minimumAmount)),
       updateSetting("payment_provider", provider),
       updateSetting("emola_charge_provider", emolaProvider),
+      updateSetting("emola_enabled", emolaOn),
     ]);
     setPending(false);
     setSaved(true);
@@ -115,11 +120,22 @@ export function SettingsForm({
           </Select>
           <p className="text-xs text-muted-foreground">Define qual processador é usado no checkout da PagaJá.</p>
         </div>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+          <div>
+            <Label htmlFor="emola-enabled">e-Mola disponível no checkout</Label>
+            <p className="text-xs text-muted-foreground">
+              Desligue para tirar o e-Mola das opções de pagamento em todo o site — útil se todos os processadores
+              de e-Mola estiverem indisponíveis ao mesmo tempo (ex.: conta bloqueada, integração com falhas).
+            </p>
+          </div>
+          <Switch id="emola-enabled" checked={emolaOn} onChange={(e) => setEmolaOn(e.target.checked)} />
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor="emola-provider">e-Mola processado via</Label>
           <Select
             id="emola-provider"
             value={emolaProvider}
+            disabled={!emolaOn}
             onChange={(e) => setEmolaProvider(e.target.value as "pagar" | "active")}
           >
             <option value="pagar">Pagar (padrão)</option>

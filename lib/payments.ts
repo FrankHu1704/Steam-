@@ -50,10 +50,22 @@ export function providerModule(name: PaymentProviderName) {
   return debitoPay;
 }
 
-export function methodsForProvider(name: PaymentProviderName, currency: string): PaymentMethod[] {
+// Global kill switch for e-Mola checkout — independent of which processor
+// is active/handling it, for when every e-Mola path (Pagar, NetShop, ...)
+// is simultaneously unavailable (account blocked, integration broken) and
+// the option needs to disappear from checkout entirely rather than fail
+// after the customer already tried to pay.
+export async function isEmolaEnabled(): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "emola_enabled").single();
+  return data?.value !== false;
+}
+
+export async function methodsForProvider(name: PaymentProviderName, currency: string): Promise<PaymentMethod[]> {
   const allowed = PROVIDER_METHODS[name];
-  if (currency === "ZAR") return allowed.filter((m) => m === "payfast" || m === "visa_mastercard");
-  return allowed.filter((m) => m !== "payfast");
+  const filtered = currency === "ZAR" ? allowed.filter((m) => m === "payfast" || m === "visa_mastercard") : allowed.filter((m) => m !== "payfast");
+  if (!(await isEmolaEnabled())) return filtered.filter((m) => m !== "emola");
+  return filtered;
 }
 
 export function b2cMethodsForProvider(name: PaymentProviderName): ("mpesa" | "emola")[] {
