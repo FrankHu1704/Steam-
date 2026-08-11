@@ -485,6 +485,9 @@ export async function sendBuyerReceiptEmail(input: {
           "Guarde este email como comprovante da sua compra.<br/>O link de acesso é válido por tempo indeterminado.<br/>Em caso de dúvidas, contacte o suporte acima."
         ) +
         emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">A PagaJá é apenas o sistema de pagamentos usado por ${input.supportName ?? "o vendedor"} para processar esta compra. Não somos donos nem responsáveis pelo produto ou serviço vendido — para dúvidas sobre o conteúdo, contacte diretamente o vendedor. Contacte a PagaJá apenas para reclamações relacionadas com o pagamento, ou para reportar fraude.${input.supportContact ? `<br/>Contacto do vendedor: <strong>${input.supportContact}</strong>` : ""}</span>`
+        ) +
+        emailParagraph(
           `<span style="color:#9ca3af;font-size:12px;">Este email foi enviado automaticamente pela plataforma PagaJá.</span>`
         )
     ),

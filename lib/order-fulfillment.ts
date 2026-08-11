@@ -281,6 +281,8 @@ export async function creditOrder(orderId: string): Promise<void> {
         phone: order.buyer_phone,
         productTitle: productLabel,
         accessUrl,
+        supportName: producer?.name,
+        supportContact: producer?.phone,
       });
       await sendPurchaseConfirmedSms({
         phone: order.buyer_phone,

@@ -47,7 +47,18 @@ export async function sendWhatsapp(to: string, message: string): Promise<void> {
   }
 }
 
-export async function sendBuyerWhatsappReceipt(input: { phone: string; productTitle: string; accessUrl: string }) {
-  const message = `Pagamento Confirmado!\n\nProduto: ${input.productTitle}\n\nAcesse o seu conteúdo pelo link abaixo:\n${input.accessUrl}\n\nObrigado pela sua compra!\n— PagaJá`;
+export async function sendBuyerWhatsappReceipt(input: {
+  phone: string;
+  productTitle: string;
+  accessUrl: string;
+  supportName?: string | null;
+  supportContact?: string | null;
+}) {
+  const sellerLabel = input.supportName ?? "o vendedor";
+  const disclaimer =
+    `\n\nA PagaJá é apenas o sistema de pagamentos usado por ${sellerLabel} para processar esta compra. Não somos donos nem responsáveis pelo produto ou serviço vendido — para dúvidas sobre o conteúdo, contacte diretamente o vendedor. Contacte a PagaJá apenas para reclamações relacionadas com o pagamento, ou para reportar fraude.` +
+    (input.supportContact ? `\nContacto do vendedor: ${input.supportContact}` : "");
+
+  const message = `Pagamento Confirmado!\n\nProduto: ${input.productTitle}\n\nAcesse o seu conteúdo pelo link abaixo:\n${input.accessUrl}\n\nObrigado pela sua compra!\n— PagaJá${disclaimer}`;
   await sendWhatsapp(input.phone, message);
 }
