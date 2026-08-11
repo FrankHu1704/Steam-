@@ -116,10 +116,15 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     throw new Error(json?.error?.message || json?.error || `Falha no pagamento (HTTP ${status})`);
   }
 
-  if (method === "card") {
-    const checkoutUrl = json.checkout?.hosted_url;
-    if (!checkoutUrl) throw new Error("Falha ao gerar checkout de cartão.");
-    return { success: true, payment_id: json.id, reference: json.id, status: "pending", checkout_url: checkoutUrl, raw: json };
+  // NetShop sends this as a top-level `checkout_url` (confirmed from a real
+  // e-Mola charge's raw response) — `checkout.hosted_url` kept as a
+  // fallback in case card charges shape it differently. Not every mobile
+  // money charge gets one (a real STK/USSD push needs no redirect at all),
+  // but when it's present the buyer MUST complete payment there — without
+  // this, that charge sits "pending" forever with no way to actually pay.
+  const checkoutUrl = (json.checkout_url as string | undefined) ?? json.checkout?.hosted_url;
+  if (method === "card" && !checkoutUrl) {
+    throw new Error("Falha ao gerar checkout de cartão.");
   }
 
   return {
@@ -127,6 +132,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     payment_id: json.id,
     reference: json.id,
     status: mapStatus(String(json.status ?? "pending")),
+    checkout_url: checkoutUrl,
     raw: json,
   };
 }

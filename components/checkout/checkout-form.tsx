@@ -419,10 +419,10 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
         <p className="mt-3 font-semibold">A aguardar confirmação do pagamento…</p>
         <p className="text-sm text-muted-foreground">
-          {requiresPhone
-            ? "Verifique o seu telemóvel e aprove a transação."
-            : checkoutUrl
-              ? "Complete o pagamento seguro abaixo."
+          {checkoutUrl
+            ? "Complete o pagamento seguro abaixo."
+            : requiresPhone
+              ? "Verifique o seu telemóvel e aprove a transação."
               : "Conclua o pagamento na página aberta e volte aqui."}
         </p>
 
