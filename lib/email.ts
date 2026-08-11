@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import nodemailer from "nodemailer";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Best-effort transactional email — a failure here must never break the
@@ -10,25 +9,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // without needing the Resend dashboard.
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-// A custom SMTP server (SMTP_HOST + SMTP_PORT/SMTP_USER/SMTP_PASSWORD/
-// SMTP_FROM_NAME/SMTP_FROM_EMAIL) takes priority over Resend the moment
-// it's configured — flip every outgoing email over to it without touching
-// any call site, just by setting those env vars in Vercel.
-const smtpTransport = process.env.SMTP_HOST
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT ?? 465),
-      secure: Number(process.env.SMTP_PORT ?? 465) === 465,
-      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } : undefined,
-    })
-  : null;
-
-function smtpFrom(): string {
-  const name = process.env.SMTP_FROM_NAME || "PagaJá";
-  const email = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "";
-  return `${name} <${email}>`;
-}
-
 interface SendEmailInput {
   to: string;
   subject: string;
@@ -38,32 +18,10 @@ interface SendEmailInput {
 export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<void> {
   const supabase = createAdminClient();
 
-  if (smtpTransport) {
-    try {
-      const info = await smtpTransport.sendMail({
-        from: smtpFrom(),
-        to,
-        subject,
-        html,
-        ...(process.env.RESEND_REPLY_TO_EMAIL ? { replyTo: process.env.RESEND_REPLY_TO_EMAIL } : {}),
-      });
-      await supabase.from("logs").insert({
-        action: "email_debug",
-        metadata: { to, subject, ok: true, id: info.messageId, provider: "smtp" },
-      });
-    } catch (err) {
-      await supabase.from("logs").insert({
-        action: "email_debug",
-        metadata: { to, subject, ok: false, error: (err as Error).message, provider: "smtp" },
-      });
-    }
-    return;
-  }
-
   if (!resend) {
     await supabase.from("logs").insert({
       action: "email_debug",
-      metadata: { skipped: true, reason: "no RESEND_API_KEY or SMTP_HOST", to, subject },
+      metadata: { skipped: true, reason: "no RESEND_API_KEY", to, subject },
     });
     return;
   }
@@ -78,12 +36,12 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
     });
     await supabase.from("logs").insert({
       action: "email_debug",
-      metadata: { to, subject, ok: !result.error, id: result.data?.id ?? null, error: result.error ?? null, provider: "resend" },
+      metadata: { to, subject, ok: !result.error, id: result.data?.id ?? null, error: result.error ?? null },
     });
   } catch (err) {
     await supabase.from("logs").insert({
       action: "email_debug",
-      metadata: { to, subject, error: (err as Error).message, provider: "resend" },
+      metadata: { to, subject, error: (err as Error).message },
     });
   }
 }
@@ -650,11 +608,12 @@ export async function sendAdminMessageEmail(input: { to: string; subject: string
   });
 }
 
-const BATCH_SIZE = 100; // Resend batch API limit per call; also used to chunk SMTP concurrency below.
+const BATCH_SIZE = 100; // Resend batch API limit per call
 
 export async function sendBulkEmail(recipients: string[], subject: string, message: string): Promise<{ sent: number }> {
-  if (recipients.length === 0) return { sent: 0 };
+  if (!resend || recipients.length === 0) return { sent: 0 };
 
+  const from = process.env.RESEND_FROM_EMAIL || "PagaJá <onboarding@resend.dev>";
   const html = emailShell(
     subject,
     message
@@ -664,31 +623,6 @@ export async function sendBulkEmail(recipients: string[], subject: string, messa
   );
 
   let sent = 0;
-
-  if (smtpTransport) {
-    // SMTP has no batch endpoint — send each chunk's emails concurrently
-    // instead, same chunk size as the Resend batch limit below.
-    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-      const chunk = recipients.slice(i, i + BATCH_SIZE);
-      const results = await Promise.allSettled(
-        chunk.map((to) =>
-          smtpTransport.sendMail({
-            from: smtpFrom(),
-            to,
-            subject,
-            html,
-            ...(process.env.RESEND_REPLY_TO_EMAIL ? { replyTo: process.env.RESEND_REPLY_TO_EMAIL } : {}),
-          })
-        )
-      );
-      sent += results.filter((r) => r.status === "fulfilled").length;
-    }
-    return { sent };
-  }
-
-  if (!resend) return { sent: 0 };
-
-  const from = process.env.RESEND_FROM_EMAIL || "PagaJá <onboarding@resend.dev>";
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const chunk = recipients.slice(i, i + BATCH_SIZE);
     try {
