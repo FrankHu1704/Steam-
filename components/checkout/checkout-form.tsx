@@ -266,6 +266,23 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function readCookie(name: string): string | undefined {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : undefined;
+  }
+
+  // Fires the SAME Purchase event client-side, with the SAME eventID
+  // (order.id) as the server-side Conversions API call in
+  // lib/order-fulfillment.ts — Facebook dedupes any pair sharing an
+  // eventID, so this just gives it a second, faster signal instead of a
+  // duplicate. A no-op if the product has no Facebook Pixel configured
+  // (fbq never gets defined in that case — see lib/pixels.ts).
+  function fireClientPurchaseEvent(id: string) {
+    const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
+    if (!fbq) return;
+    fbq("track", "Purchase", { value: total, currency }, { eventID: id });
+  }
+
   const baseAmount = product.promo_price ?? product.price;
   const bumpTotal = bumps
     .filter((b) => selectedBumps.includes(b.id))
@@ -295,6 +312,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
       if (cancelledRef.current) return;
       if (result.status === "paid") {
         setStep("paid");
+        fireClientPurchaseEvent(id);
         const dl = await getDownloadLinks(id);
         setFiles(dl.files ?? []);
         return;
@@ -332,6 +350,8 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
       utmCampaign: utm?.campaign,
       utmContent: utm?.content,
       utmTerm: utm?.term,
+      fbp: readCookie("_fbp"),
+      fbc: readCookie("_fbc"),
     });
 
     setPending(false);
@@ -351,6 +371,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
 
     if (result.status === "success") {
       setStep("paid");
+      fireClientPurchaseEvent(result.orderId);
       const dl = await getDownloadLinks(result.orderId);
       setFiles(dl.files ?? []);
       return;

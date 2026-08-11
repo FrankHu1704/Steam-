@@ -288,6 +288,12 @@ export interface Order {
   // Only set for "manual" API charges (no product_id) — what the charge
   // was for, shown in place of a product title in emails/notifications.
   description: string | null;
+  // Captured at checkout time for the Facebook Conversions API's Purchase
+  // event (lib/facebook-capi.ts) — never required, always best-effort.
+  client_ip: string | null;
+  client_user_agent: string | null;
+  fbp: string | null;
+  fbc: string | null;
 }
 
 export interface WebhookDelivery {

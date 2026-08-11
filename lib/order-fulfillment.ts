@@ -10,6 +10,7 @@ import { sendPaymentConfirmedSms, sendPurchaseConfirmedSms } from "@/lib/easyhos
 import { sendBuyerWhatsappReceipt } from "@/lib/whatsapp";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
 import { sendPushToUser } from "@/lib/push";
+import { sendPurchaseEvent } from "@/lib/facebook-capi";
 
 // Shared by the Debito Pay webhook and the admin "mark as paid" fallback —
 // whichever one gets there first does the crediting; the `credited_at`
@@ -44,7 +45,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   // order.description stands in for the product title in every message
   // below.
   const product = order.product_id
-    ? (await supabase.from("products").select("title").eq("id", order.product_id).single()).data
+    ? (await supabase.from("products").select("title, slug, facebook_pixel_id").eq("id", order.product_id).single()).data
     : null;
   const productLabel = product?.title ?? order.description ?? "o seu produto";
 
@@ -291,6 +292,42 @@ export async function creditOrder(orderId: string): Promise<void> {
     }
 
     await dispatchPaymentCompletedWebhook(order, { id: order.product_id, title: productLabel });
+
+    // Facebook Conversions API — server-side "Purchase", using order.id as
+    // the event_id so Facebook dedupes it against the browser Pixel's own
+    // Purchase event (same event_id, fired client-side on the success step).
+    // Only runs if the producer configured both the Pixel ID (public,
+    // products.facebook_pixel_id) and an access token (secret,
+    // product_capi_configs) for this product.
+    if (product?.facebook_pixel_id) {
+      const { data: capiConfig } = await supabase
+        .from("product_capi_configs")
+        .select("fb_access_token")
+        .eq("product_id", order.product_id)
+        .maybeSingle();
+      if (capiConfig?.fb_access_token) {
+        const result = await sendPurchaseEvent({
+          pixelId: product.facebook_pixel_id,
+          accessToken: capiConfig.fb_access_token,
+          eventId: order.id,
+          eventSourceUrl: `${siteUrl()}/p/${product.slug}`,
+          value: order.total_amount,
+          currency: order.currency,
+          buyerEmail: order.buyer_email,
+          buyerPhone: order.buyer_phone,
+          clientIp: order.client_ip,
+          clientUserAgent: order.client_user_agent,
+          fbp: order.fbp,
+          fbc: order.fbc,
+        });
+        await supabase.from("logs").insert({
+          action: "facebook_capi_debug",
+          target_table: "orders",
+          target_id: order.id,
+          metadata: { ok: result.ok, error: result.error ?? null },
+        });
+      }
+    }
   } catch (err) {
     await supabase.from("logs").insert({
       action: "credit_order_notify_error",

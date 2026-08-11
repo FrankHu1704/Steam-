@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { PaymentMethod } from "@/lib/debito-pay";
@@ -86,6 +87,13 @@ interface CreateOrderInput {
   // PagaJá checkout) or "api" (charged through the developer/Pagar API by
   // the producer's own external app) — see lib/order-fulfillment.ts.
   source?: "marketplace" | "api";
+  // Facebook's own first-party cookies, read client-side from document.cookie
+  // by the checkout form — feed Meta's event-matching for the server-side
+  // Purchase event fired from creditOrder() (lib/facebook-capi.ts). Neither
+  // is set if the buyer has no Facebook Pixel history (ad blocker, first
+  // visit without the base script yet, etc) — both are optional everywhere.
+  fbp?: string;
+  fbc?: string;
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -159,6 +167,13 @@ export async function createOrder(input: CreateOrderInput) {
 
   const totalAmount = Math.max(0, baseAmount - discountAmount) + bumpTotal;
 
+  // Best-effort — used only to help the Facebook Conversions API
+  // (lib/facebook-capi.ts) match this order's later Purchase event to the
+  // buyer; never required for the charge/order itself.
+  const requestHeaders = await headers();
+  const clientIp = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const clientUserAgent = requestHeaders.get("user-agent");
+
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -184,6 +199,10 @@ export async function createOrder(input: CreateOrderInput) {
       utm_term: input.utmTerm ?? null,
       upsell_of_order_id: input.upsellOfOrderId ?? null,
       source: input.source ?? "marketplace",
+      client_ip: clientIp,
+      client_user_agent: clientUserAgent,
+      fbp: input.fbp ?? null,
+      fbc: input.fbc ?? null,
     })
     .select("id")
     .single();

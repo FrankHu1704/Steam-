@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { uploadCoverImage, uploadProductFile, type UploadedFile } from "@/lib/upload";
 import { upsertProduct, setBumpOffers, setUpsellOffer, improveProductDescription } from "@/lib/actions/products";
 import { slugify, formatCurrency } from "@/lib/utils";
+import { PixelCapiTokenField } from "@/components/products/pixel-capi-token-field";
 import type { Category, Product, ProductFile } from "@/types/database";
 import type { UpsellOffer } from "@/lib/data/products";
 
@@ -168,6 +169,7 @@ export function ProductForm({
   bumpCandidates,
   bumpOfferIds,
   upsellOffer,
+  hasCapiToken,
 }: {
   userId: string;
   categories: Category[];
@@ -176,6 +178,7 @@ export function ProductForm({
   bumpCandidates?: Product[];
   bumpOfferIds?: string[];
   upsellOffer?: UpsellOffer | null;
+  hasCapiToken?: boolean;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(product?.title ?? "");
@@ -552,6 +555,7 @@ export function ProductForm({
                 />
               </div>
             </div>
+            {product?.id && <PixelCapiTokenField productId={product.id} initiallyConfigured={!!hasCapiToken} />}
             <div className="flex items-center gap-3 rounded-xl border border-border p-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/10 text-foreground">
                 <Music2 className="h-4 w-4" />
