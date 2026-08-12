@@ -28,6 +28,7 @@ export default async function AdminSettingsPage() {
       | "active"
       | undefined) ?? "pagar";
   const emolaEnabled = settings.find((s) => s.key === "emola_enabled")?.value !== false;
+  const withdrawalsEnabled = settings.find((s) => s.key === "withdrawals_enabled")?.value !== false;
 
   return (
     <div className="space-y-6">
@@ -46,6 +47,7 @@ export default async function AdminSettingsPage() {
             paymentProvider={paymentProvider}
             emolaChargeProvider={emolaChargeProvider}
             emolaEnabled={emolaEnabled}
+            withdrawalsEnabled={withdrawalsEnabled}
           />
         </CardContent>
       </Card>

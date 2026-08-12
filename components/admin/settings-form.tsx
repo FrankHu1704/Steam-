@@ -18,6 +18,7 @@ export function SettingsForm({
   paymentProvider,
   emolaChargeProvider,
   emolaEnabled,
+  withdrawalsEnabled,
 }: {
   withdrawalFeePercent: number;
   platformFeePercent: number;
@@ -26,6 +27,7 @@ export function SettingsForm({
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
   emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active";
   emolaEnabled: boolean;
+  withdrawalsEnabled: boolean;
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
@@ -35,6 +37,7 @@ export function SettingsForm({
   const [provider, setProvider] = useState(paymentProvider);
   const [emolaProvider, setEmolaProvider] = useState(emolaChargeProvider);
   const [emolaOn, setEmolaOn] = useState(emolaEnabled);
+  const [withdrawalsOn, setWithdrawalsOn] = useState(withdrawalsEnabled);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -50,6 +53,7 @@ export function SettingsForm({
       updateSetting("payment_provider", provider),
       updateSetting("emola_charge_provider", emolaProvider),
       updateSetting("emola_enabled", emolaOn),
+      updateSetting("withdrawals_enabled", withdrawalsOn),
     ]);
     setPending(false);
     setSaved(true);
@@ -150,6 +154,20 @@ export function SettingsForm({
             Escolhe qual processador trata só o e-Mola, sem mudar o processador ativo acima (que continua a servir
             M-Pesa/mKesh/cartão). "Processador ativo" faz o e-Mola seguir esse mesmo processador em vez de um fixo.
           </p>
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+          <div>
+            <Label htmlFor="withdrawals-enabled">Saques disponíveis</Label>
+            <p className="text-xs text-muted-foreground">
+              Desligue para colocar os levantamentos em manutenção — os produtores vêem um aviso com o contacto do
+              suporte em vez do formulário de saque. O saldo deles continua intacto.
+            </p>
+          </div>
+          <Switch
+            id="withdrawals-enabled"
+            checked={withdrawalsOn}
+            onChange={(e) => setWithdrawalsOn(e.target.checked)}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="min-withdrawal">Valor mínimo para saque (MT)</Label>

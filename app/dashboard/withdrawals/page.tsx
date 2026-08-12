@@ -1,4 +1,4 @@
-import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle } from "lucide-react";
+import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle, Wrench, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
@@ -7,7 +7,12 @@ import { WithdrawalsTabs } from "@/components/withdrawals/withdrawals-tabs";
 import { ConfirmReceiptButton } from "@/components/withdrawals/confirm-receipt-button";
 import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
-import { getMyWithdrawals, getWithdrawalFeePercent, getWithdrawalMinimumAmount } from "@/lib/data/withdrawals";
+import {
+  getMyWithdrawals,
+  getWithdrawalFeePercent,
+  getWithdrawalMinimumAmount,
+  getWithdrawalsEnabled,
+} from "@/lib/data/withdrawals";
 import { getPayoutWallets } from "@/lib/data/payout-wallets";
 import { getActivePaymentProvider, b2cMethodsForProvider } from "@/lib/payments";
 import { formatCurrency, walletSourceLabel } from "@/lib/utils";
@@ -18,12 +23,13 @@ export default async function WithdrawalsPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const [withdrawals, feePercent, minimumAmount, wallets, providerName] = await Promise.all([
+  const [withdrawals, feePercent, minimumAmount, wallets, providerName, withdrawalsEnabled] = await Promise.all([
     getMyWithdrawals(user.id),
     getWithdrawalFeePercent(),
     getWithdrawalMinimumAmount(),
     getPayoutWallets(user.id),
     getActivePaymentProvider(),
+    getWithdrawalsEnabled(),
   ]);
   const currency = profile.currency as "MZN" | "ZAR";
   const instantMethods = b2cMethodsForProvider(providerName);
@@ -117,15 +123,36 @@ export default async function WithdrawalsPage() {
       <Card>
         <CardContent className="p-6">
           <h2 className="mb-4 font-semibold">Solicitar Saque</h2>
-          <WithdrawalForm
-            balanceAvailable={profile.balance_available}
-            balanceAvailableDev={profile.balance_available_dev}
-            balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
-            currency={profile.currency}
-            feePercent={feePercent}
-            minimumAmount={minimumAmount}
-            wallets={wallets}
-          />
+          {withdrawalsEnabled ? (
+            <WithdrawalForm
+              balanceAvailable={profile.balance_available}
+              balanceAvailableDev={profile.balance_available_dev}
+              balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
+              currency={profile.currency}
+              feePercent={feePercent}
+              minimumAmount={minimumAmount}
+              wallets={wallets}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-900 dark:bg-amber-950">
+              <Wrench className="h-8 w-8 text-amber-600" />
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200">Estamos em manutenção</p>
+                <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+                  Os levantamentos estão temporariamente indisponíveis. O seu saldo continua seguro e disponível
+                  assim que voltarmos.
+                </p>
+              </div>
+              <a
+                href="https://wa.me/258849311757"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+              >
+                <MessageCircle className="h-4 w-4" /> Falar com o suporte
+              </a>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

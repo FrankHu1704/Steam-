@@ -22,3 +22,12 @@ export async function getWithdrawalMinimumAmount(): Promise<number> {
   const { data } = await supabase.from("settings").select("value").eq("key", "withdrawal_minimum_amount").single();
   return typeof data?.value === "number" ? data.value : Number(data?.value ?? 150);
 }
+
+// Platform-wide maintenance switch — turns off new withdrawal requests
+// entirely (e.g. while every payout processor is unavailable at once).
+// Existing pending/paid withdrawals aren't affected, only new requests.
+export async function getWithdrawalsEnabled(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "withdrawals_enabled").single();
+  return data?.value !== false;
+}

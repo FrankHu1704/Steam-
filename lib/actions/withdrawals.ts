@@ -6,7 +6,11 @@ import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import { sendWithdrawalRequestedEmail, sendAdminWithdrawalRequestedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { sendWithdrawalOtp, verifyAndConsumeWithdrawalOtp } from "@/lib/withdrawal-otp";
+import { getWithdrawalsEnabled } from "@/lib/data/withdrawals";
 import type { PayoutMethod } from "@/types/database";
+
+const WITHDRAWALS_MAINTENANCE_MESSAGE =
+  "Os levantamentos estão temporariamente em manutenção. Contacte o suporte: +258 84 931 1757.";
 
 export async function sendWithdrawalOtpCode() {
   const authClient = await createClient();
@@ -14,6 +18,7 @@ export async function sendWithdrawalOtpCode() {
     data: { user },
   } = await authClient.auth.getUser();
   if (!user) return { ok: false as const, error: "Precisa de iniciar sessão." };
+  if (!(await getWithdrawalsEnabled())) return { ok: false as const, error: WITHDRAWALS_MAINTENANCE_MESSAGE };
 
   const supabase = createAdminClient();
   const { data: profile } = await supabase.from("profiles").select("email, name").eq("id", user.id).single();
@@ -73,6 +78,7 @@ export async function requestWithdrawal(input: {
     data: { user },
   } = await authClient.auth.getUser();
   if (!user) return { error: "Precisa de iniciar sessão." };
+  if (!(await getWithdrawalsEnabled())) return { error: WITHDRAWALS_MAINTENANCE_MESSAGE };
 
   const otpResult = await verifyAndConsumeWithdrawalOtp(user.id, input.otpCode);
   if (!otpResult.ok) return { error: otpResult.error };
