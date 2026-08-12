@@ -25,7 +25,7 @@ export function SettingsForm({
   platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
-  emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active";
+  emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active";
   emolaEnabled: boolean;
   withdrawalsEnabled: boolean;
 }) {
@@ -141,15 +141,24 @@ export function SettingsForm({
             value={emolaProvider}
             disabled={!emolaOn}
             onChange={(e) =>
-              setEmolaProvider(e.target.value as "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active")
+              setEmolaProvider(
+                e.target.value as "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active"
+              )
             }
           >
             <option value="pagar">Pagar (padrão)</option>
             <option value="zumbopay">ZumboPay</option>
             <option value="netshop">NetShop</option>
             <option value="debito_pay">Debito Pay</option>
+            <option value="paysuite">PaySuite</option>
             <option value="active">Processador ativo (acima)</option>
           </Select>
+          {emolaProvider === "paysuite" && (
+            <p className="text-xs text-amber-600">
+              A PaySuite ainda não tem levantamento automático (B2C) documentado — os saques em e-Mola ficam
+              pendentes para pagamento manual pelo admin enquanto estiver selecionada.
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Escolhe qual processador trata só o e-Mola, sem mudar o processador ativo acima (que continua a servir
             M-Pesa/mKesh/cartão). "Processador ativo" faz o e-Mola seguir esse mesmo processador em vez de um fixo.

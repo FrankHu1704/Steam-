@@ -47,7 +47,7 @@ export async function payWithdrawalB2C(
   if (withdrawal.status === "rejected") return { ok: false, error: "Este levantamento foi rejeitado." };
 
   const providerName = await resolveB2CProvider(withdrawal.payout_method as "mpesa" | "emola", withdrawal.currency);
-  if (providerName !== "pagar") {
+  if (providerName !== "pagar" && providerName !== "paysuite") {
     const allowedMethods = b2cMethodsForProvider(providerName);
     if (!(allowedMethods as readonly string[]).includes(withdrawal.payout_method)) {
       const error = `Pagamento instantâneo via B2C não suporta ${withdrawal.payout_method} no processador ativo.`;

@@ -407,7 +407,10 @@ export async function getOrderStatus(orderId: string) {
     if (payment?.provider_payment_id) {
       try {
         const providerName: ChargeProviderName =
-          payment.provider === "zumbopay" || payment.provider === "netshop" || payment.provider === "pagar"
+          payment.provider === "zumbopay" ||
+          payment.provider === "netshop" ||
+          payment.provider === "pagar" ||
+          payment.provider === "paysuite"
             ? payment.provider
             : "debito_pay";
         const remote = await chargeProviderModule(providerName).checkChargeStatus(

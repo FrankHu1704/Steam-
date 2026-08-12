@@ -25,6 +25,7 @@ export default async function AdminSettingsPage() {
       | "zumbopay"
       | "netshop"
       | "debito_pay"
+      | "paysuite"
       | "active"
       | undefined) ?? "pagar";
   const emolaEnabled = settings.find((s) => s.key === "emola_enabled")?.value !== false;

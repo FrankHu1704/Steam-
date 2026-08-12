@@ -3,17 +3,22 @@ import * as debitoPay from "@/lib/debito-pay";
 import * as zumboPay from "@/lib/zumbopay";
 import * as netShop from "@/lib/netshop";
 import * as pagar from "@/lib/pagar";
+import * as paysuite from "@/lib/paysuite";
 import type { PaymentMethod } from "@/lib/debito-pay";
 
 export type PaymentProviderName = "debito_pay" | "zumbopay" | "netshop";
 
-// Pagar is NOT a selectable "active processor" like the three above — it's
-// only ever used for e-Mola charges specifically (see
+// Pagar and PaySuite are NOT selectable "active processors" like the three
+// above — they're only ever used for e-Mola charges specifically (see
 // resolveChargeProvider below), while everything else keeps going through
-// whichever processor is set as active. This keeps payments.provider (and
-// getOrderStatus's reconciliation) able to name it without widening every
-// admin-settings/B2C-payout code path that deals with PaymentProviderName.
-export type ChargeProviderName = PaymentProviderName | "pagar";
+// whichever processor is set as active. PaySuite additionally has no
+// documented B2C payout-creation endpoint, so it can't fund withdrawals —
+// its createPayout() (lib/paysuite.ts) always fails gracefully, unlike
+// Pagar's real one (lib/pagar.ts). This keeps payments.provider (and
+// getOrderStatus's reconciliation) able to name both without widening
+// every admin-settings/B2C-payout code path that deals with
+// PaymentProviderName.
+export type ChargeProviderName = PaymentProviderName | "pagar" | "paysuite";
 
 // ZumboPay's Visa/Mastercard flow only offers a hosted checkout page with
 // their own "ZumboPay" branding clearly visible (confirmed live — even
@@ -76,7 +81,7 @@ function isPagarConfigured(): boolean {
   return Boolean(process.env.PAGAR_API_KEY?.trim() && process.env.PAGAR_SIGNING_SECRET?.trim());
 }
 
-export type EmolaChargeProviderSetting = "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active";
+export type EmolaChargeProviderSetting = "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active";
 
 // Which processor e-Mola charges use, independent of the "active
 // processor" setting used for every other method — e.g. keep M-Pesa on
@@ -87,7 +92,8 @@ export async function getEmolaChargeProviderSetting(): Promise<EmolaChargeProvid
   const supabase = createAdminClient();
   const { data } = await supabase.from("settings").select("value").eq("key", "emola_charge_provider").single();
   const value = data?.value;
-  if (value === "zumbopay" || value === "netshop" || value === "debito_pay" || value === "active") return value;
+  if (value === "zumbopay" || value === "netshop" || value === "debito_pay" || value === "paysuite" || value === "active")
+    return value;
   return "pagar";
 }
 
@@ -101,13 +107,14 @@ export async function resolveChargeProvider(method: PaymentMethod, currency: str
   if (method === "emola" && currency === "MZN") {
     const setting = await getEmolaChargeProviderSetting();
     if (setting === "pagar" && isPagarConfigured()) return "pagar";
-    if (setting === "zumbopay" || setting === "netshop" || setting === "debito_pay") return setting;
+    if (setting === "zumbopay" || setting === "netshop" || setting === "debito_pay" || setting === "paysuite") return setting;
   }
   return getActivePaymentProvider();
 }
 
 export function chargeProviderModule(name: ChargeProviderName) {
   if (name === "pagar") return pagar;
+  if (name === "paysuite") return paysuite;
   return providerModule(name);
 }
 
