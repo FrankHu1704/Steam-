@@ -20,7 +20,13 @@ export default async function AdminSettingsPage() {
       | "netshop"
       | undefined) ?? "debito_pay";
   const emolaChargeProvider =
-    (settings.find((s) => s.key === "emola_charge_provider")?.value as "pagar" | "active" | undefined) ?? "pagar";
+    (settings.find((s) => s.key === "emola_charge_provider")?.value as
+      | "pagar"
+      | "zumbopay"
+      | "netshop"
+      | "debito_pay"
+      | "active"
+      | undefined) ?? "pagar";
   const emolaEnabled = settings.find((s) => s.key === "emola_enabled")?.value !== false;
 
   return (

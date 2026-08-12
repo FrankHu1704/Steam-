@@ -24,7 +24,7 @@ export function SettingsForm({
   platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
-  emolaChargeProvider: "pagar" | "active";
+  emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active";
   emolaEnabled: boolean;
 }) {
   const router = useRouter();
@@ -136,15 +136,19 @@ export function SettingsForm({
             id="emola-provider"
             value={emolaProvider}
             disabled={!emolaOn}
-            onChange={(e) => setEmolaProvider(e.target.value as "pagar" | "active")}
+            onChange={(e) =>
+              setEmolaProvider(e.target.value as "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active")
+            }
           >
             <option value="pagar">Pagar (padrão)</option>
+            <option value="zumbopay">ZumboPay</option>
+            <option value="netshop">NetShop</option>
+            <option value="debito_pay">Debito Pay</option>
             <option value="active">Processador ativo (acima)</option>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Por padrão o e-Mola vai sempre pela Pagar, independentemente do processador ativo escolhido acima. Mude
-            para "Processador ativo" para testar o e-Mola do processador selecionado em cima (ex.: NetShop) em vez
-            da Pagar.
+            Escolhe qual processador trata só o e-Mola, sem mudar o processador ativo acima (que continua a servir
+            M-Pesa/mKesh/cartão). "Processador ativo" faz o e-Mola seguir esse mesmo processador em vez de um fixo.
           </p>
         </div>
         <div className="space-y-1.5">

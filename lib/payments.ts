@@ -76,25 +76,32 @@ function isPagarConfigured(): boolean {
   return Boolean(process.env.PAGAR_API_KEY?.trim() && process.env.PAGAR_SIGNING_SECRET?.trim());
 }
 
-// "pagar" (default) keeps e-Mola on Pagar regardless of the active
-// processor above; "active" lets e-Mola follow whatever's set as the
-// active processor instead — e.g. to A/B test NetShop's e-Mola wallet
-// against Pagar without ripping the routing rule out of the code.
-export async function getEmolaChargeProviderSetting(): Promise<"pagar" | "active"> {
+export type EmolaChargeProviderSetting = "pagar" | "zumbopay" | "netshop" | "debito_pay" | "active";
+
+// Which processor e-Mola charges use, independent of the "active
+// processor" setting used for every other method — e.g. keep M-Pesa on
+// NetShop while routing only e-Mola to ZumboPay, without a global
+// processor switch affecting both. "active" explicitly follows whatever's
+// set as the active processor above; "pagar" is the long-standing default.
+export async function getEmolaChargeProviderSetting(): Promise<EmolaChargeProviderSetting> {
   const supabase = createAdminClient();
   const { data } = await supabase.from("settings").select("value").eq("key", "emola_charge_provider").single();
-  return data?.value === "active" ? "active" : "pagar";
+  const value = data?.value;
+  if (value === "zumbopay" || value === "netshop" || value === "debito_pay" || value === "active") return value;
+  return "pagar";
 }
 
-// e-Mola charges route through Pagar by default (per admin's choice —
-// everything else keeps using the globally active processor), unless
-// emola_charge_provider is set to "active". Falls back to the active
-// processor if Pagar's credentials aren't set, so checkout never breaks
-// just because that one integration is mid-setup.
+// e-Mola charges route through whichever processor emola_charge_provider
+// names — "pagar" by default (falls back to the active processor if
+// Pagar's credentials aren't set, so checkout never breaks just because
+// that one integration is mid-setup), "active" explicitly follows the
+// globally active processor, or a specific processor name to pin e-Mola
+// there regardless of what's active for everything else.
 export async function resolveChargeProvider(method: PaymentMethod, currency: string): Promise<ChargeProviderName> {
-  if (method === "emola" && currency === "MZN" && isPagarConfigured()) {
+  if (method === "emola" && currency === "MZN") {
     const setting = await getEmolaChargeProviderSetting();
-    if (setting === "pagar") return "pagar";
+    if (setting === "pagar" && isPagarConfigured()) return "pagar";
+    if (setting === "zumbopay" || setting === "netshop" || setting === "debito_pay") return setting;
   }
   return getActivePaymentProvider();
 }
