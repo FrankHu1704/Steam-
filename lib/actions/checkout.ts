@@ -14,6 +14,24 @@ import {
 import { creditOrder, notifyProducerOfFailedPayment } from "@/lib/order-fulfillment";
 import type { Product } from "@/types/database";
 
+// Only NetShop's charge response is confirmed to include this (its own
+// processing commission, e.g. "fee": 18.7 on a 187 MZN charge — verified
+// from a real response, not assumed). Other providers may or may not
+// return an equivalent field; until that's checked, this just quietly
+// captures nothing for them rather than guessing at a field name. See
+// getPlatformRevenue() (lib/data/admin.ts) for why this matters: without
+// it, "Lucro líquido" never accounts for what the processor itself takes
+// out of each sale, on top of our own platform fee.
+async function recordProcessorFee(
+  supabase: ReturnType<typeof createAdminClient>,
+  orderId: string,
+  charge: unknown
+): Promise<void> {
+  const fee = (charge as { processorFee?: unknown })?.processorFee;
+  if (typeof fee !== "number") return;
+  await supabase.from("orders").update({ processor_fee_amount: fee }).eq("id", orderId);
+}
+
 export interface CouponPreview {
   code: string;
   discountType: "percent" | "fixed";
@@ -253,6 +271,7 @@ export async function createOrder(input: CreateOrderInput) {
     status: paymentStatus,
     raw_response: charge,
   });
+  await recordProcessorFee(supabase, order.id, charge);
 
   if (charge.status === "success") {
     await supabase.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", order.id);
@@ -357,6 +376,7 @@ export async function createManualOrder(input: CreateManualOrderInput) {
     status: paymentStatus,
     raw_response: charge,
   });
+  await recordProcessorFee(supabase, order.id, charge);
 
   if (charge.status === "success") {
     await supabase.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", order.id);

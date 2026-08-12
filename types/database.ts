@@ -296,6 +296,9 @@ export interface Order {
   client_user_agent: string | null;
   fbp: string | null;
   fbc: string | null;
+  // The processor's own commission for this sale (NetShop-confirmed only
+  // so far) — a real cost, separate from our own platform_fee_amount.
+  processor_fee_amount: number | null;
 }
 
 export interface WebhookDelivery {

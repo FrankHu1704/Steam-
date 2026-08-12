@@ -275,6 +275,10 @@ export interface RevenuePeriod {
   salesFees: number;
   withdrawalFees: number;
   employeeCommissions: number;
+  // What the payment processor itself charged us to process each sale
+  // (e.g. NetShop's own commission) — separate from salesFees, which is
+  // only our own platform_fee_percent revenue off the producer.
+  processorFees: number;
   netProfit: number;
 }
 
@@ -295,7 +299,7 @@ function maputoDayStart(date: Date): Date {
 }
 
 function emptyPeriod(): RevenuePeriod {
-  return { grossVolume: 0, salesFees: 0, withdrawalFees: 0, employeeCommissions: 0, netProfit: 0 };
+  return { grossVolume: 0, salesFees: 0, withdrawalFees: 0, employeeCommissions: 0, processorFees: 0, netProfit: 0 };
 }
 
 export async function getPlatformRevenue(): Promise<PlatformRevenue> {
@@ -314,7 +318,7 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
     await Promise.all([
       supabase
         .from("orders")
-        .select("total_amount, platform_fee_amount, paid_at")
+        .select("total_amount, platform_fee_amount, processor_fee_amount, paid_at")
         .eq("status", "paid")
         .not("platform_fee_amount", "is", null),
       supabase.from("withdrawals").select("fee_amount, provider_fee_amount, paid_at").in("status", ["paid", "confirmed"]),
@@ -350,6 +354,7 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
     for (const key of bucketsFor(at)) {
       periods[key].grossVolume += o.total_amount;
       periods[key].salesFees += fee;
+      periods[key].processorFees += o.processor_fee_amount ?? 0;
     }
   }
 
@@ -385,7 +390,7 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
 
   for (const key of Object.keys(periods) as (keyof typeof periods)[]) {
     const p = periods[key];
-    p.netProfit = p.salesFees + p.withdrawalFees - p.employeeCommissions;
+    p.netProfit = p.salesFees + p.withdrawalFees - p.employeeCommissions - p.processorFees;
   }
 
   return periods;

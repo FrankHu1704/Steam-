@@ -54,6 +54,18 @@ export default async function AdminRevenuePage() {
       icon: Users,
       style: "bg-rose-500/10 text-rose-600",
     },
+    {
+      label: "Comissão do processador (total)",
+      value: revenue.allTime.processorFees,
+      icon: ArrowDownToLine,
+      style: "bg-rose-500/10 text-rose-600",
+    },
+    {
+      label: "Comissão do processador (mês)",
+      value: revenue.thisMonth.processorFees,
+      icon: ArrowDownToLine,
+      style: "bg-rose-500/10 text-rose-600",
+    },
   ];
 
   return (
@@ -149,12 +161,13 @@ export default async function AdminRevenuePage() {
             <code>settings.platform_fee_percent</code> no momento em que foi creditada). "Taxas de saques" soma o{" "}
             <code>fee_amount</code> de cada levantamento já pago ou confirmado. "Comissões de colaboradores" soma o
             que cada colaborador acumulou por ter recrutado o produtor (nos primeiros 3 meses da conta), e é sempre
-            um custo dentro da própria taxa de venda — nunca faz o lucro líquido ficar negativo por si só. O "Lucro
-            líquido" de cada período é a receita bruta desse período menos essas comissões. "Hoje"/"Ontem" usam o
-            dia em hora de Maputo (UTC+2); "Últimos 7 dias" é uma janela móvel, não a semana de calendário.{" "}
-            <strong>Não inclui taxas cobradas pelo processador de pagamento</strong> (ZumboPay/NetShop/Debito Pay),
-            porque esses valores não são devolvidos pela API deles — se o seu processador cobrar uma taxa por
-            transação, subtraia-a manualmente.
+            um custo dentro da própria taxa de venda — nunca faz o lucro líquido ficar negativo por si só.
+            "Comissão do processador" soma o <code>processor_fee_amount</code> que a NetShop devolveu em cada
+            cobrança (a comissão que ela própria cobra por processar a venda) — confirmado só para a NetShop até
+            agora; a Pagar, ZumboPay e Debito Pay podem ter uma comissão equivalente que ainda não devolvem de
+            forma visível na resposta da cobrança. O "Lucro líquido" de cada período é a receita bruta desse
+            período menos essas comissões. "Hoje"/"Ontem" usam o dia em hora de Maputo (UTC+2); "Últimos 7 dias" é
+            uma janela móvel, não a semana de calendário.
           </p>
         </CardContent>
       </Card>

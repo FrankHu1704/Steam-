@@ -89,6 +89,11 @@ interface ChargeResult {
   // (see lib/actions/checkout.ts) so a stuck/failed mobile-money charge can
   // be diagnosed from Admin -> Pedidos without needing new logging for it.
   raw?: unknown;
+  // NetShop's own processing commission for this charge (confirmed present
+  // on real responses, e.g. "fee": 18.7 on a 187 MZN charge) — captured
+  // into orders.processor_fee_amount so it counts as a real cost in
+  // Admin -> Receita, not just our own platform_fee_amount revenue.
+  processorFee?: number;
 }
 
 export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
@@ -134,6 +139,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     status: mapStatus(String(json.status ?? "pending")),
     checkout_url: checkoutUrl,
     raw: json,
+    processorFee: typeof json.fee === "number" ? json.fee : undefined,
   };
 }
 

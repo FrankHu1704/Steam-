@@ -16,8 +16,9 @@ function maputoMonthBounds(monthsAgo: number): { start: Date; end: Date } {
 }
 
 // Same net-profit formula as getPlatformRevenue() in lib/data/admin.ts
-// (sales fees + withdrawal fees - employee commissions), scoped to one
-// calendar month instead of the rolling "this month so far" bucket.
+// (sales fees + withdrawal fees - employee commissions - processor fees),
+// scoped to one calendar month instead of the rolling "this month so far"
+// bucket.
 export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<number> {
   const supabase = createAdminClient();
   const { start, end } = maputoMonthBounds(monthsAgo);
@@ -26,7 +27,7 @@ export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<n
     await Promise.all([
       supabase
         .from("orders")
-        .select("platform_fee_amount, paid_at")
+        .select("platform_fee_amount, processor_fee_amount, paid_at")
         .eq("status", "paid")
         .not("platform_fee_amount", "is", null)
         .gte("paid_at", start.toISOString())
@@ -51,10 +52,11 @@ export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<n
     ]);
 
   const salesFees = (orders ?? []).reduce((sum, o) => sum + (o.platform_fee_amount ?? 0), 0);
+  const processorFees = (orders ?? []).reduce((sum, o) => sum + (o.processor_fee_amount ?? 0), 0);
   const withdrawalFees = (withdrawals ?? []).reduce((sum, w) => sum + w.fee_amount + (w.provider_fee_amount ?? 0), 0);
   const payoutProviderFees = (employeePayouts ?? []).reduce((sum, ep) => sum + (ep.provider_fee_amount ?? 0), 0);
   const commissions = (employeeCommissions ?? []).reduce((sum, c) => sum + c.amount, 0);
-  return salesFees + withdrawalFees + payoutProviderFees - commissions;
+  return salesFees + withdrawalFees + payoutProviderFees - commissions - processorFees;
 }
 
 export interface CtoDashboardData {
