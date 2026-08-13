@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge, StatusBadge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { UserCtoToggle } from "@/components/admin/user-cto-toggle";
+import { UserSuspendToggle } from "@/components/admin/user-suspend-toggle";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
 import { PrivateMessageForm } from "@/components/admin/private-message-form";
 import { ResetPasswordForm } from "@/components/admin/reset-password-form";
@@ -123,6 +124,21 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           )}
         </CardContent>
       </Card>
+
+      {profile.role !== "admin" && (
+        <div>
+          <h2 className="mb-3 font-semibold">Acesso à conta</h2>
+          <Card>
+            <CardContent className="p-6">
+              <UserSuspendToggle
+                userId={profile.id}
+                suspended={Boolean(profile.suspended_at)}
+                suspensionReason={profile.suspension_reason}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {(recruitedByEmployeeName || recruitedByProducerName || recruitedAffiliatesCount > 0) && (
         <div>

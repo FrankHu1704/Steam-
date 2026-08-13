@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountSuspendedEmail, sendAccountReinstatedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -432,6 +432,60 @@ export async function setCtoStatus(userId: string, isCto: boolean) {
 
   const { error } = await supabase.from("profiles").update({ is_cto: isCto }).eq("id", userId);
   if (error) return { error: error.message };
+  return { ok: true };
+}
+
+// Suspends a user's access without touching their balance, products, or
+// order history — signIn() rejects the login outright, and
+// getCurrentUserAndProfile() signs out any session already active for
+// this account the next time it loads a protected page (see
+// lib/data/profile.ts). Admins can't suspend themselves or another admin,
+// to avoid a mistaken click locking every admin out at once.
+export async function suspendUser(userId: string, reason: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (userId === admin.user.id) return { error: "Não pode suspender a sua própria conta." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase.from("profiles").select("role, name, email").eq("id", userId).single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.role === "admin") return { error: "Não é possível suspender outra conta de administrador." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      suspended_at: new Date().toISOString(),
+      suspension_reason: reason.trim() || null,
+      suspended_by: admin.user.id,
+    })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  if (target.email) {
+    await sendAccountSuspendedEmail({ to: target.email, name: target.name, reason: reason.trim() || undefined });
+  }
+
+  return { ok: true };
+}
+
+export async function unsuspendUser(userId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase.from("profiles").select("name, email").eq("id", userId).single();
+  if (!target) return { error: "Utilizador não encontrado." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ suspended_at: null, suspension_reason: null, suspended_by: null })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  if (target.email) {
+    await sendAccountReinstatedEmail({ to: target.email, name: target.name });
+  }
+
   return { ok: true };
 }
 

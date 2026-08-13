@@ -79,6 +79,9 @@ export interface Profile {
   is_cto: boolean;
   balance_available_cto: number;
   created_at: string;
+  suspended_at: string | null;
+  suspension_reason: string | null;
+  suspended_by: string | null;
 }
 
 export interface CtoMonthlyCredit {

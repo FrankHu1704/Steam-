@@ -594,6 +594,45 @@ export async function sendAdminDailySummaryEmail(input: {
   });
 }
 
+export async function sendAccountSuspendedEmail(input: { to: string; name?: string; reason?: string }) {
+  await sendEmail({
+    to: input.to,
+    subject: "A sua conta PagaJá foi suspensa",
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "🚫",
+      title: "Conta suspensa",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PagaJá foi suspensa por um administrador e o acesso foi bloqueado.`
+        ) +
+        (input.reason ? emailReasonBox("Motivo", input.reason) : "") +
+        emailParagraph(
+          "O seu saldo e os seus dados continuam guardados. Se acha que isto foi um engano, contacte o suporte."
+        ) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Suporte PagaJá: +258 84 931 1757</span>`
+        ),
+    }),
+  });
+}
+
+export async function sendAccountReinstatedEmail(input: { to: string; name?: string }) {
+  await sendEmail({
+    to: input.to,
+    subject: "A sua conta PagaJá foi reativada",
+    html: emailBannerCard({
+      bannerColor: "#059669",
+      icon: "✅",
+      title: "Conta reativada",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PagaJá foi reativada — já pode iniciar sessão normalmente.`
+        ) + emailButton("Iniciar Sessão", `${siteUrl()}/login`),
+    }),
+  });
+}
+
 export async function sendAdminMessageEmail(input: { to: string; subject: string; message: string }) {
   await sendEmail({
     to: input.to,

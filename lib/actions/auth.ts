@@ -108,8 +108,22 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
   const next = String(formData.get("next") ?? "/dashboard");
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: "Email ou palavra-passe incorretos." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("suspended_at, suspension_reason")
+    .eq("id", data.user.id)
+    .single();
+  if (profile?.suspended_at) {
+    await supabase.auth.signOut();
+    return {
+      error: profile.suspension_reason
+        ? `A sua conta foi suspensa: ${profile.suspension_reason}. Contacte o suporte: +258 84 931 1757.`
+        : "A sua conta foi suspensa. Contacte o suporte: +258 84 931 1757.",
+    };
+  }
 
   redirect(next);
 }
