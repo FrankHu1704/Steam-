@@ -83,6 +83,7 @@ export interface Profile {
   suspension_reason: string | null;
   suspended_by: string | null;
   fraud_flag: boolean;
+  became_producer_at: string | null;
 }
 
 export interface CtoMonthlyCredit {

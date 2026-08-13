@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Percent, CreditCard } from "lucide-react";
+import { Loader2, Percent, CreditCard, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ export function SettingsForm({
   emolaChargeProvider,
   emolaEnabled,
   withdrawalsEnabled,
+  inactiveProducerDeletionEnabled,
 }: {
   withdrawalFeePercent: number;
   platformFeePercent: number;
@@ -28,6 +29,7 @@ export function SettingsForm({
   emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active";
   emolaEnabled: boolean;
   withdrawalsEnabled: boolean;
+  inactiveProducerDeletionEnabled: boolean;
 }) {
   const router = useRouter();
   const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
@@ -38,6 +40,7 @@ export function SettingsForm({
   const [emolaProvider, setEmolaProvider] = useState(emolaChargeProvider);
   const [emolaOn, setEmolaOn] = useState(emolaEnabled);
   const [withdrawalsOn, setWithdrawalsOn] = useState(withdrawalsEnabled);
+  const [deletionOn, setDeletionOn] = useState(inactiveProducerDeletionEnabled);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -54,6 +57,7 @@ export function SettingsForm({
       updateSetting("emola_charge_provider", emolaProvider),
       updateSetting("emola_enabled", emolaOn),
       updateSetting("withdrawals_enabled", withdrawalsOn),
+      updateSetting("inactive_producer_deletion_enabled", deletionOn),
     ]);
     setPending(false);
     setSaved(true);
@@ -187,6 +191,28 @@ export function SettingsForm({
             step="1"
             value={minimumAmount}
             onChange={(e) => setMinimumAmount(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4 border-t border-border pt-5">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <UserX className="h-4 w-4" /> Contas de Produtores
+        </h3>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+          <div>
+            <Label htmlFor="deletion-enabled">Eliminação automática de contas inativas</Label>
+            <p className="text-xs text-muted-foreground">
+              Apaga sozinho, todos os dias, contas de produtor sem nenhum produto 3 dias depois de se tornarem
+              produtor, ou sem nenhuma venda 2 semanas depois — quem já vendeu alguma vez fica sempre isento. A
+              conta é avisada por email no momento em que é apagada. Desligue para pausar isto sem precisar de
+              alterar código.
+            </p>
+          </div>
+          <Switch
+            id="deletion-enabled"
+            checked={deletionOn}
+            onChange={(e) => setDeletionOn(e.target.checked)}
           />
         </div>
       </div>

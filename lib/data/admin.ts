@@ -555,6 +555,18 @@ export async function getAllSettings(): Promise<Setting[]> {
   return (data as Setting[]) ?? [];
 }
 
+// Escape hatch for the inactivity-deletion cron (see
+// app/api/cron/delete-inactive-producers/route.ts) — lets an admin pause
+// automatic account deletion instantly from Admin → Definições, without a
+// code deploy, same pattern as every other kill switch this app has
+// (emola_enabled, withdrawals_enabled, ...). Uses the admin client since
+// the cron route has no user session to read settings through RLS with.
+export async function isInactiveProducerDeletionEnabled(): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "inactive_producer_deletion_enabled").single();
+  return data?.value !== false;
+}
+
 export async function getRecentLogs(limit = 100): Promise<LogEntry[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("logs").select("*").order("created_at", { ascending: false }).limit(limit);

@@ -614,6 +614,31 @@ export async function sendAccountReinstatedEmail(input: { to: string; name?: str
   });
 }
 
+// Sent by the inactivity-deletion cron (see
+// app/api/cron/delete-inactive-producers/route.ts) right as the account
+// is deleted — this one IS disclosed (unlike the fraud/suspend silence
+// policy) since it's a stated onboarding policy, not a fraud
+// investigation nothing should tip off.
+export async function sendAccountDeletedInactivityEmail(input: { to: string; name?: string; reason: string }) {
+  await sendEmail({
+    to: input.to,
+    subject: "A sua conta PayNow foi eliminada por inatividade",
+    html: emailBannerCard({
+      bannerColor: "#374151",
+      icon: "🗑️",
+      title: "Conta eliminada",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta de produtor na PayNow foi eliminada automaticamente por não cumprir a nossa política de atividade mínima.`
+        ) +
+        emailReasonBox("Motivo", input.reason) +
+        emailParagraph(
+          "Pode voltar a criar uma conta na PayNow a qualquer momento. Se acha que isto foi um engano, contacte o suporte: +258 84 931 1757."
+        ),
+    }),
+  });
+}
+
 export async function sendAdminMessageEmail(input: { to: string; subject: string; message: string }) {
   await sendEmail({
     to: input.to,

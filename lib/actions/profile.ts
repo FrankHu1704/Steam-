@@ -54,7 +54,7 @@ export async function becomeProducer(): Promise<ActionResult> {
 
   const { error } = await supabase
     .from("profiles")
-    .update({ role: "producer" })
+    .update({ role: "producer", became_producer_at: new Date().toISOString() })
     .eq("id", user.id)
     .eq("role", "buyer");
 
