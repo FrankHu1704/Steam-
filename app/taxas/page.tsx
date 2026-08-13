@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 
 export const metadata = {
-  title: "Preços claros — PagaJá",
-  description: "Entenda as taxas da PagaJá: comissão por venda, taxa de saque, valor mínimo de levantamento e o custo do acesso à API.",
+  title: "Preços claros — PayNow",
+  description: "Entenda as taxas da PayNow: comissão por venda, taxa de saque, valor mínimo de levantamento e o custo do acesso à API.",
 };
 
 const PRODUCTION_UNLOCK_AMOUNT = 300;
@@ -17,12 +17,12 @@ export default async function TaxasPage() {
   const { data: settings } = await supabase
     .from("settings")
     .select("key, value")
-    .in("key", ["platform_fee_percent", "platform_fixed_fee_amount", "withdrawal_fee_percent", "withdrawal_minimum_amount"]);
+    .in("key", ["platform_fee_percent", "platform_fixed_fee_amount", "withdrawal_fee_flat", "withdrawal_minimum_amount"]);
 
   const platformFee = Number(settings?.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
   const platformFixedFee = Number(settings?.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
-  const withdrawalFee = Number(settings?.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
-  const minimumWithdrawal = Number(settings?.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
+  const withdrawalFee = Number(settings?.find((s) => s.key === "withdrawal_fee_flat")?.value ?? 20);
+  const minimumWithdrawal = Number(settings?.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 200);
 
   const saleFeeLabel = platformFixedFee > 0 ? `${platformFee}% + ${formatCurrency(platformFixedFee, "MZN")}` : `${platformFee}%`;
 
@@ -53,7 +53,7 @@ export default async function TaxasPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">No levantamento</span>
-                <span className="font-bold text-primary">{withdrawalFee}%</span>
+                <span className="font-bold text-primary">{formatCurrency(withdrawalFee, "MZN")}</span>
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -75,7 +75,7 @@ export default async function TaxasPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">No levantamento</span>
-                <span className="font-bold text-primary">{withdrawalFee}%</span>
+                <span className="font-bold text-primary">{formatCurrency(withdrawalFee, "MZN")}</span>
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -103,8 +103,8 @@ export default async function TaxasPage() {
                   Vendeu um produto por 1.000 MT? A taxa de {platformFee}%
                   {platformFixedFee > 0 ? ` + ${formatCurrency(platformFixedFee, "MZN")}` : ""} (
                   {formatCurrency(saleFee, "MZN")}) é descontada automaticamente, e {formatCurrency(netSale, "MZN")}{" "}
-                  ficam no seu saldo disponível. Ao pedir um saque de {formatCurrency(netSale, "MZN")}, a taxa de{" "}
-                  {withdrawalFee}% é descontada e você recebe o restante na sua conta.
+                  ficam no seu saldo disponível. Ao pedir um saque, a taxa fixa de{" "}
+                  {formatCurrency(withdrawalFee, "MZN")} é descontada e você recebe o restante na sua conta.
                 </>
               );
             })()}

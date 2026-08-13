@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountSuspendedEmail, sendAccountReinstatedEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountSuspendedEmail, sendAccountReinstatedEmail, sendAccountFraudBlockedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -145,7 +145,7 @@ export async function sendManualB2CPayout(input: {
     method: input.method,
     amount: input.amount,
     destination: input.destination,
-    notes: input.note || `Pagamento manual PagaJá (admin)`,
+    notes: input.note || `Pagamento manual PayNow (admin)`,
     autoDispatch: true,
   });
 
@@ -375,7 +375,7 @@ export async function adminResetUserPassword(userId: string, newPassword: string
       to: profile.email,
       subject: "A sua senha foi redefinida",
       message:
-        "A sua senha na PagaJá foi redefinida por um administrador.\n\nSe pediu esta alteração, já pode entrar com a nova senha. Se não pediu, contacte-nos imediatamente respondendo a este email.",
+        "A sua senha na PayNow foi redefinida por um administrador.\n\nSe pediu esta alteração, já pode entrar com a nova senha. Se não pediu, contacte-nos imediatamente respondendo a este email.",
     });
   }
 
@@ -458,6 +458,82 @@ export async function setCtoStatus(userId: string, isCto: boolean) {
   return { ok: true };
 }
 
+const BALANCE_FIELD_LABEL: Record<"producer" | "dev" | "cto", string> = {
+  producer: "Carteira Produtor",
+  dev: "Carteira Programador (API)",
+  cto: "Carteira CTO",
+};
+
+// Manual correction tool — e.g. fixing a support case, crediting a
+// goodwill adjustment, or clawing back a wrongly-credited sale that
+// wasn't caught by the normal refund flow. `amount` is a signed delta
+// (positive credits, negative debits) applied directly to the chosen
+// wallet; the resulting balance is allowed to go negative (same as a
+// refund clawback already can — see the negative-balance banner in
+// /dashboard/withdrawals), it's just deducted from future sales like any
+// other negative balance. Every adjustment is logged with a required
+// reason and notifies the producer, since this moves real money without
+// an order or withdrawal behind it.
+export async function adminAdjustBalance(
+  userId: string,
+  wallet: "producer" | "dev" | "cto",
+  amount: number,
+  reason: string
+) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (!Number.isFinite(amount) || amount === 0) return { error: "Indique um valor válido (positivo para adicionar, negativo para retirar)." };
+  if (!reason.trim()) return { error: "Indique o motivo do ajuste para o registo." };
+
+  const walletField =
+    wallet === "dev" ? "balance_available_dev" : wallet === "cto" ? "balance_available_cto" : "balance_available";
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select(`name, email, currency, ${walletField}`)
+    .eq("id", userId)
+    .single<{ name: string; email: string; currency: string } & Record<string, number>>();
+  if (!target) return { error: "Utilizador não encontrado." };
+
+  const before = target[walletField];
+  const after = Math.round((before + amount) * 100) / 100;
+
+  const { error } = await supabase.from("profiles").update({ [walletField]: after }).eq("id", userId);
+  if (error) return { error: error.message };
+
+  await supabase.from("logs").insert({
+    actor_id: admin.user.id,
+    action: "admin_balance_adjustment",
+    target_table: "profiles",
+    target_id: userId,
+    metadata: { wallet, amount, before, after, currency: target.currency, reason: reason.trim() },
+  });
+
+  const verb = amount > 0 ? "creditou" : "debitou";
+  const absAmount = Math.abs(amount);
+  await supabase.from("notifications").insert({
+    user_id: userId,
+    type: "admin_message",
+    title: amount > 0 ? "Saldo creditado pelo admin" : "Saldo ajustado pelo admin",
+    message: `Um administrador ${verb} ${absAmount.toLocaleString("pt-MZ")} ${target.currency} na sua ${BALANCE_FIELD_LABEL[wallet]}. Motivo: ${reason.trim()}`,
+  });
+  await sendPushToUser(userId, {
+    title: amount > 0 ? "Saldo creditado" : "Saldo ajustado",
+    body: `${amount > 0 ? "+" : "-"}${absAmount.toLocaleString("pt-MZ")} ${target.currency} — ${BALANCE_FIELD_LABEL[wallet]}`,
+    url: "/dashboard/withdrawals",
+  });
+  if (target.email) {
+    await sendAdminMessageEmail({
+      to: target.email,
+      subject: amount > 0 ? "Saldo creditado na sua conta PayNow" : "Saldo ajustado na sua conta PayNow",
+      message: `Um administrador ${verb} ${absAmount.toLocaleString("pt-MZ")} ${target.currency} na sua ${BALANCE_FIELD_LABEL[wallet]}.\n\nMotivo: ${reason.trim()}\n\nSaldo anterior: ${before.toLocaleString("pt-MZ")} ${target.currency}\nSaldo atual: ${after.toLocaleString("pt-MZ")} ${target.currency}`,
+    });
+  }
+
+  return { ok: true, before, after };
+}
+
 // Suspends a user's access without touching their balance, products, or
 // order history — signIn() rejects the login outright, and
 // getCurrentUserAndProfile() signs out any session already active for
@@ -486,6 +562,79 @@ export async function suspendUser(userId: string, reason: string) {
 
   if (target.email) {
     await sendAccountSuspendedEmail({ to: target.email, name: target.name, reason: reason.trim() || undefined });
+  }
+
+  return { ok: true };
+}
+
+// Stronger than suspendUser() — used when the admin has actually
+// identified fraud/a scam, not just a policy violation worth pausing. On
+// top of the same login block, this permanently forfeits every wallet the
+// account holds (producer/API/CTO) — set to 0 and never restored, per
+// PayNow's no-refund-on-fraud policy — and sets fraud_flag, which stays
+// true forever (even across a later unsuspendUser()) as a historical
+// record for reporting. Reactivation (restoring login access, never the
+// balance) still goes through the same unsuspendUser() as a plain
+// suspension.
+export async function markUserAsFraud(userId: string, reason: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (userId === admin.user.id) return { error: "Não pode marcar a sua própria conta." };
+  if (!reason.trim()) return { error: "Indique o motivo da fraude para o registo." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("role, name, email, currency, balance_available, balance_available_dev, balance_available_cto")
+    .eq("id", userId)
+    .single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.role === "admin") return { error: "Não é possível marcar outra conta de administrador." };
+
+  const forfeitedAmount =
+    Math.max(0, target.balance_available) +
+    Math.max(0, target.balance_available_dev) +
+    Math.max(0, target.balance_available_cto);
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      suspended_at: new Date().toISOString(),
+      suspension_reason: reason.trim(),
+      suspended_by: admin.user.id,
+      fraud_flag: true,
+      balance_available: 0,
+      balance_available_dev: 0,
+      balance_available_cto: 0,
+    })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  await supabase.from("logs").insert({
+    action: "user_marked_fraud",
+    target_table: "profiles",
+    target_id: userId,
+    metadata: {
+      admin_id: admin.user.id,
+      reason: reason.trim(),
+      forfeited_amount: forfeitedAmount,
+      currency: target.currency,
+      forfeited_breakdown: {
+        producer: target.balance_available,
+        dev: target.balance_available_dev,
+        cto: target.balance_available_cto,
+      },
+    },
+  });
+
+  if (target.email) {
+    await sendAccountFraudBlockedEmail({
+      to: target.email,
+      name: target.name,
+      reason: reason.trim(),
+      forfeitedAmount,
+      currency: target.currency,
+    });
   }
 
   return { ok: true };

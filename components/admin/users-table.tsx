@@ -78,7 +78,11 @@ export function UsersTable({ users }: { users: Profile[] }) {
                         {initials(user.name)}
                       </span>
                       <span className="font-medium">{user.name}</span>
-                      {user.suspended_at && <Badge variant="destructive">Suspenso</Badge>}
+                      {user.fraud_flag ? (
+                        <Badge variant="destructive">Fraude</Badge>
+                      ) : (
+                        user.suspended_at && <Badge variant="destructive">Suspenso</Badge>
+                      )}
                     </div>
                   </td>
                   <td className="p-4 text-muted-foreground">{user.email}</td>

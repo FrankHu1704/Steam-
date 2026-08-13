@@ -31,7 +31,7 @@ export function WithdrawalForm({
   balanceAvailableDev,
   balanceAvailableCto,
   currency,
-  feePercent,
+  feeFlat,
   minimumAmount,
   wallets,
 }: {
@@ -39,7 +39,7 @@ export function WithdrawalForm({
   balanceAvailableDev: number;
   balanceAvailableCto?: number;
   currency: string;
-  feePercent: number;
+  feeFlat: number;
   minimumAmount: number;
   wallets: PayoutWallet[];
 }) {
@@ -75,9 +75,10 @@ export function WithdrawalForm({
     walletSource === "dev" ? balanceAvailableDev : walletSource === "cto" ? (balanceAvailableCto ?? 0) : balanceAvailable;
   const numericAmount = Number(amount) || 0;
   // The CTO wallet never carries the standard withdrawal fee — see
-  // requestWithdrawal() in lib/actions/withdrawals.ts.
-  const effectiveFeePercent = walletSource === "cto" ? 0 : feePercent;
-  const feeAmount = Math.round(numericAmount * (effectiveFeePercent / 100) * 100) / 100;
+  // requestWithdrawal() in lib/actions/withdrawals.ts. Everyone else pays
+  // the same flat MZN fee regardless of amount (not a percentage).
+  const effectiveFeeFlat = walletSource === "cto" ? 0 : feeFlat;
+  const feeAmount = effectiveFeeFlat;
   const netAmount = Math.max(0, numericAmount - feeAmount);
 
   async function requestOtp() {
@@ -346,7 +347,7 @@ export function WithdrawalForm({
       {numericAmount > 0 && (
         <div className="space-y-1 rounded-lg bg-muted/60 p-3 text-sm">
           <div className="flex justify-between text-muted-foreground">
-            <span>Taxa ({effectiveFeePercent}%)</span>
+            <span>Taxa {effectiveFeeFlat > 0 ? `(${formatCurrency(effectiveFeeFlat, currency as "MZN" | "ZAR")})` : ""}</span>
             <span>-{formatCurrency(feeAmount, currency as "MZN" | "ZAR")}</span>
           </div>
           <div className="flex justify-between font-semibold">

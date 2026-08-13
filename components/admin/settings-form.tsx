@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { updateSetting } from "@/lib/actions/admin";
 
 export function SettingsForm({
-  withdrawalFeePercent,
+  withdrawalFeeFlat,
   platformFeePercent,
   platformFixedFeeAmount,
   withdrawalMinimumAmount,
@@ -20,7 +20,7 @@ export function SettingsForm({
   emolaEnabled,
   withdrawalsEnabled,
 }: {
-  withdrawalFeePercent: number;
+  withdrawalFeeFlat: number;
   platformFeePercent: number;
   platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
@@ -30,7 +30,7 @@ export function SettingsForm({
   withdrawalsEnabled: boolean;
 }) {
   const router = useRouter();
-  const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeePercent));
+  const [withdrawalFee, setWithdrawalFee] = useState(String(withdrawalFeeFlat));
   const [platformFee, setPlatformFee] = useState(String(platformFeePercent));
   const [fixedFee, setFixedFee] = useState(String(platformFixedFeeAmount));
   const [minimumAmount, setMinimumAmount] = useState(String(withdrawalMinimumAmount));
@@ -46,7 +46,7 @@ export function SettingsForm({
     setPending(true);
     setSaved(false);
     await Promise.all([
-      updateSetting("withdrawal_fee_percent", Number(withdrawalFee)),
+      updateSetting("withdrawal_fee_flat", Number(withdrawalFee)),
       updateSetting("platform_fee_percent", Number(platformFee)),
       updateSetting("platform_fixed_fee_amount", Number(fixedFee)),
       updateSetting("withdrawal_minimum_amount", Number(minimumAmount)),
@@ -67,16 +67,19 @@ export function SettingsForm({
           <Percent className="h-4 w-4" /> Taxas
         </h3>
         <div className="space-y-1.5">
-          <Label htmlFor="withdrawal-fee">Taxa de levantamento (%)</Label>
+          <Label htmlFor="withdrawal-fee">Taxa de levantamento (MT, valor fixo)</Label>
           <Input
             id="withdrawal-fee"
             type="number"
             min={0}
-            max={100}
-            step="0.1"
+            step="1"
             value={withdrawalFee}
             onChange={(e) => setWithdrawalFee(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Valor fixo em Meticais cobrado por saque, não uma percentagem — o mesmo valor seja o saque de 200 MT ou
+            de 20 000 MT.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="platform-fee">Taxa da plataforma (%)</Label>
@@ -122,7 +125,7 @@ export function SettingsForm({
             <option value="zumbopay">ZumboPay</option>
             <option value="netshop">NetShop</option>
           </Select>
-          <p className="text-xs text-muted-foreground">Define qual processador é usado no checkout da PagaJá.</p>
+          <p className="text-xs text-muted-foreground">Define qual processador é usado no checkout da PayNow.</p>
         </div>
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
           <div>

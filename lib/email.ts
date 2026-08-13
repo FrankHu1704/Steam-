@@ -28,7 +28,7 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
 
   try {
     const result = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "PagaJá <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM_EMAIL || "PayNow <onboarding@resend.dev>",
       to,
       subject,
       html,
@@ -65,7 +65,7 @@ function emailShell(title: string, bodyHtml: string): string {
                       <span style="color:#ffffff;font-weight:700;font-size:18px;line-height:36px;">P</span>
                     </td>
                     <td style="padding-left:10px;font-size:18px;font-weight:700;color:#111827;">
-                      Paga<span style="color:#7C3AED;">Já</span>
+                      Pay<span style="color:#7C3AED;">Now</span>
                     </td>
                   </tr>
                 </table>
@@ -81,11 +81,11 @@ function emailShell(title: string, bodyHtml: string): string {
               <td style="padding:8px 32px 28px;">
                 <div style="height:1px;background:#e5e7eb;margin:20px 0;"></div>
                 <p style="font-size:12px;color:#9ca3af;margin:0 0 6px;">
-                  <a href="${url}" style="color:#9ca3af;text-decoration:none;">PagaJá</a> ·
+                  <a href="${url}" style="color:#9ca3af;text-decoration:none;">PayNow</a> ·
                   <a href="${url}/privacidade" style="color:#9ca3af;text-decoration:none;">Privacidade</a> ·
                   <a href="${url}/termos" style="color:#9ca3af;text-decoration:none;">Termos</a>
                 </p>
-                <p style="font-size:12px;color:#9ca3af;margin:0;">Recebeu este email porque tem uma conta PagaJá.</p>
+                <p style="font-size:12px;color:#9ca3af;margin:0;">Recebeu este email porque tem uma conta PayNow.</p>
                 <p style="font-size:11px;color:#d1d5db;margin:14px 0 0;">by FRANK AI SOLUTIONS</p>
               </td>
             </tr>
@@ -150,11 +150,11 @@ function emailBannerCard(input: { bannerColor: string; icon: string; title: stri
               <td style="padding:8px 32px 28px;">
                 <div style="height:1px;background:#e5e7eb;margin:20px 0;"></div>
                 <p style="font-size:12px;color:#9ca3af;margin:0 0 6px;">
-                  <a href="${url}" style="color:#9ca3af;text-decoration:none;">PagaJá</a> ·
+                  <a href="${url}" style="color:#9ca3af;text-decoration:none;">PayNow</a> ·
                   <a href="${url}/privacidade" style="color:#9ca3af;text-decoration:none;">Privacidade</a> ·
                   <a href="${url}/termos" style="color:#9ca3af;text-decoration:none;">Termos</a>
                 </p>
-                <p style="font-size:12px;color:#9ca3af;margin:0;">Recebeu este email porque tem uma conta PagaJá.</p>
+                <p style="font-size:12px;color:#9ca3af;margin:0;">Recebeu este email porque tem uma conta PayNow.</p>
                 <p style="font-size:11px;color:#d1d5db;margin:14px 0 0;">by FRANK AI SOLUTIONS</p>
               </td>
             </tr>
@@ -252,7 +252,7 @@ export async function sendRefundNotificationEmail(input: {
           { label: "Novo saldo disponível", value: `${input.newBalance} ${input.currency}`, emphasize: true },
         ]) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">O valor desta venda foi descontado do seu saldo disponível porque já não foi efetivamente recebido pela PagaJá. Se já tinha levantado este valor, o seu saldo pode ficar negativo até à próxima venda.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">O valor desta venda foi descontado do seu saldo disponível porque já não foi efetivamente recebido pela PayNow. Se já tinha levantado este valor, o seu saldo pode ficar negativo até à próxima venda.</span>`
         ),
     }),
   });
@@ -267,14 +267,14 @@ export async function sendEmployeeWelcomeEmail(input: {
   const loginUrl = `${siteUrl()}/colaborador/login`;
   await sendEmail({
     to: input.email,
-    subject: "Bem-vindo à equipa PagaJá — a sua conta de colaborador",
+    subject: "Bem-vindo à equipa PayNow — a sua conta de colaborador",
     html: emailBannerCard({
       bannerColor: "#2563EB",
       icon: "🤝",
-      title: "Bem-vindo à equipa PagaJá",
+      title: "Bem-vindo à equipa PayNow",
       bodyHtml:
         emailParagraph(
-          `Olá, <strong>${input.name}</strong>! Foi criada uma conta de colaborador para si na PagaJá. Vai ganhar comissão sobre as vendas dos produtores que recrutar através do seu link único.`
+          `Olá, <strong>${input.name}</strong>! Foi criada uma conta de colaborador para si na PayNow. Vai ganhar comissão sobre as vendas dos produtores que recrutar através do seu link único.`
         ) +
         emailInfoBox([
           { label: "Email", value: input.email },
@@ -285,7 +285,7 @@ export async function sendEmployeeWelcomeEmail(input: {
         ) +
         emailButton("Entrar na Área de Colaboradores", loginUrl) +
         emailParagraph(
-          `É obrigatório seguir as redes sociais oficiais da PagaJá:<br/><a href="https://www.instagram.com/pagaja.co.mz">Instagram</a> · <a href="https://www.tiktok.com/@pagaja.site">TikTok</a>`
+          `É obrigatório seguir as redes sociais oficiais da PayNow:<br/><a href="https://www.instagram.com/pagaja.co.mz">Instagram</a> · <a href="https://www.tiktok.com/@pagaja.site">TikTok</a>`
         ) +
         emailParagraph(
           `<span style="color:#9ca3af;font-size:12px;">Recomendamos que troque a palavra-passe assim que entrar pela primeira vez.</span>`
@@ -297,11 +297,11 @@ export async function sendEmployeeWelcomeEmail(input: {
 export async function sendInstantWithdrawalAnnouncementEmail(input: { producerEmail: string; producerName: string }) {
   await sendEmail({
     to: input.producerEmail,
-    subject: "🎉 Novidade: Saques instantâneos na PagaJá!",
+    subject: "🎉 Novidade: Saques instantâneos na PayNow!",
     html: emailBannerCard({
       bannerColor: "#2563EB",
       icon: "🎉",
-      title: "Saques instantâneos na PagaJá!",
+      title: "Saques instantâneos na PayNow!",
       bodyHtml:
         emailParagraph(`Olá, <strong>${input.producerName}</strong>!`) +
         emailParagraph(
@@ -326,10 +326,10 @@ export async function sendSaleNotificationEmail(input: {
 }) {
   await sendEmail({
     to: input.producerEmail,
-    subject: "Nova venda na PagaJá! 🎉",
+    subject: "Nova venda na PayNow! 🎉",
     html: emailShell(
       "Parabéns, você tem uma nova venda!",
-      emailParagraph(`Acabou de vender <strong>${input.productTitle}</strong> na PagaJá.`) +
+      emailParagraph(`Acabou de vender <strong>${input.productTitle}</strong> na PayNow.`) +
         emailInfoBox([
           { label: "Produto", value: input.productTitle },
           { label: "Valor bruto", value: `${input.amount} ${input.currency}` },
@@ -344,7 +344,7 @@ export async function sendSaleNotificationEmail(input: {
 export async function sendWithdrawalOtpEmail(input: { email: string; name?: string; code: string }) {
   await sendEmail({
     to: input.email,
-    subject: `${input.code} é o seu código de confirmação — PagaJá`,
+    subject: `${input.code} é o seu código de confirmação — PayNow`,
     html: emailBannerCard({
       bannerColor: "#2563EB",
       icon: "🔐",
@@ -464,7 +464,7 @@ export async function sendBuyerReceiptEmail(input: {
   });
   const supportLabel = input.supportName
     ? `${input.supportName}${input.supportContact ? ` — ${input.supportContact}` : ""}`
-    : "Falar com o vendedor pelo painel PagaJá";
+    : "Falar com o vendedor pelo painel PayNow";
 
   await sendEmail({
     to: input.buyerEmail,
@@ -485,10 +485,10 @@ export async function sendBuyerReceiptEmail(input: {
           "Guarde este email como comprovante da sua compra.<br/>O link de acesso é válido por tempo indeterminado.<br/>Em caso de dúvidas, contacte o suporte acima."
         ) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">A PagaJá é apenas o sistema de pagamentos usado por ${input.supportName ?? "o vendedor"} para processar esta compra. Não somos donos nem responsáveis pelo produto ou serviço vendido — para dúvidas sobre o conteúdo, contacte diretamente o vendedor. Contacte a PagaJá apenas para reclamações relacionadas com o pagamento, ou para reportar fraude.${input.supportContact ? `<br/>Contacto do vendedor: <strong>${input.supportContact}</strong>` : ""}</span>`
+          `<span style="color:#9ca3af;font-size:12px;">A PayNow é apenas o sistema de pagamentos usado por ${input.supportName ?? "o vendedor"} para processar esta compra. Não somos donos nem responsáveis pelo produto ou serviço vendido — para dúvidas sobre o conteúdo, contacte diretamente o vendedor. Contacte a PayNow apenas para reclamações relacionadas com o pagamento, ou para reportar fraude.${input.supportContact ? `<br/>Contacto do vendedor: <strong>${input.supportContact}</strong>` : ""}</span>`
         ) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Este email foi enviado automaticamente pela plataforma PagaJá.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Este email foi enviado automaticamente pela plataforma PayNow.</span>`
         )
     ),
   });
@@ -557,7 +557,7 @@ export async function sendDailySalesReportEmail(input: {
         ) +
         emailButton("Ver Painel", `${siteUrl()}/dashboard`) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Recebe este relatório automaticamente todos os dias às 17h30, enquanto tiver uma conta de produtor ativa na PagaJá.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Recebe este relatório automaticamente todos os dias às 17h30, enquanto tiver uma conta de produtor ativa na PayNow.</span>`
         )
     ),
   });
@@ -579,16 +579,16 @@ export async function sendAdminDailySummaryEmail(input: {
     subject: `Resumo diário da plataforma — ${input.dateLabel}`,
     html: emailShell(
       `Resumo de hoje, ${input.dateLabel}`,
-      emailParagraph(`Resumo de toda a plataforma PagaJá hoje.`) +
+      emailParagraph(`Resumo de toda a plataforma PayNow hoje.`) +
         emailInfoBox([
           { label: "Transações", value: String(input.transactionsCount) },
           { label: "Volume bruto", value: money(input.grossVolume) },
-          { label: "Comissões (receita PagaJá)", value: money(input.commissions), emphasize: true },
+          { label: "Comissões (receita PayNow)", value: money(input.commissions), emphasize: true },
           { label: "Líquido pago aos produtores", value: money(input.netToProducers) },
         ]) +
         emailButton("Ver Painel Admin", `${siteUrl()}/admin`) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Recebe este resumo automaticamente todos os dias às 17h30, enquanto tiver uma conta de admin ativa na PagaJá.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Recebe este resumo automaticamente todos os dias às 17h30, enquanto tiver uma conta de admin ativa na PayNow.</span>`
         )
     ),
   });
@@ -597,21 +597,59 @@ export async function sendAdminDailySummaryEmail(input: {
 export async function sendAccountSuspendedEmail(input: { to: string; name?: string; reason?: string }) {
   await sendEmail({
     to: input.to,
-    subject: "A sua conta PagaJá foi suspensa",
+    subject: "A sua conta PayNow foi suspensa",
     html: emailBannerCard({
       bannerColor: "#DC2626",
       icon: "🚫",
       title: "Conta suspensa",
       bodyHtml:
         emailParagraph(
-          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PagaJá foi suspensa por um administrador e o acesso foi bloqueado.`
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PayNow foi suspensa por um administrador e o acesso foi bloqueado.`
         ) +
         (input.reason ? emailReasonBox("Motivo", input.reason) : "") +
         emailParagraph(
           "O seu saldo e os seus dados continuam guardados. Se acha que isto foi um engano, contacte o suporte."
         ) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Suporte PagaJá: +258 84 931 1757</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Suporte PayNow: +258 84 931 1757</span>`
+        ),
+    }),
+  });
+}
+
+export async function sendAccountFraudBlockedEmail(input: {
+  to: string;
+  name?: string;
+  reason?: string;
+  forfeitedAmount: number;
+  currency: string;
+}) {
+  await sendEmail({
+    to: input.to,
+    subject: "A sua conta PayNow foi bloqueada por fraude",
+    html: emailBannerCard({
+      bannerColor: "#7F1D1D",
+      icon: "⛔",
+      title: "Conta bloqueada por fraude",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PayNow foi identificada por um administrador como envolvida numa tentativa de fraude/burla e foi bloqueada.`
+        ) +
+        (input.reason ? emailReasonBox("Motivo", input.reason) : "") +
+        (input.forfeitedAmount > 0
+          ? emailInfoBox([
+              {
+                label: "Saldo perdido",
+                value: `${input.forfeitedAmount.toLocaleString("pt-MZ")} ${input.currency}`,
+                emphasize: true,
+              },
+            ])
+          : "") +
+        emailParagraph(
+          "De acordo com a política da PayNow contra fraude, o saldo disponível desta conta foi retido e não será reembolsado. O acesso só pode ser restaurado por um administrador, após revisão."
+        ) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Se acha que isto foi um engano, contacte o suporte: +258 84 931 1757.</span>`
         ),
     }),
   });
@@ -620,14 +658,14 @@ export async function sendAccountSuspendedEmail(input: { to: string; name?: stri
 export async function sendAccountReinstatedEmail(input: { to: string; name?: string }) {
   await sendEmail({
     to: input.to,
-    subject: "A sua conta PagaJá foi reativada",
+    subject: "A sua conta PayNow foi reativada",
     html: emailBannerCard({
       bannerColor: "#059669",
       icon: "✅",
       title: "Conta reativada",
       bodyHtml:
         emailParagraph(
-          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PagaJá foi reativada — já pode iniciar sessão normalmente.`
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PayNow foi reativada — já pode iniciar sessão normalmente.`
         ) + emailButton("Iniciar Sessão", `${siteUrl()}/login`),
     }),
   });
@@ -644,7 +682,7 @@ export async function sendAdminMessageEmail(input: { to: string; subject: string
         .map((paragraph) => emailParagraph(paragraph.replace(/\n/g, "<br/>")))
         .join("") +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Esta é uma mensagem privada enviada pela equipa PagaJá diretamente para a sua conta.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Esta é uma mensagem privada enviada pela equipa PayNow diretamente para a sua conta.</span>`
         )
     ),
   });
@@ -655,7 +693,7 @@ const BATCH_SIZE = 100; // Resend batch API limit per call
 export async function sendBulkEmail(recipients: string[], subject: string, message: string): Promise<{ sent: number }> {
   if (!resend || recipients.length === 0) return { sent: 0 };
 
-  const from = process.env.RESEND_FROM_EMAIL || "PagaJá <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM_EMAIL || "PayNow <onboarding@resend.dev>";
   const html = emailShell(
     subject,
     message
@@ -700,7 +738,7 @@ export async function sendProductApprovedEmail(input: {
       title: "Produto aprovado 🎉",
       bodyHtml:
         emailParagraph(
-          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi revisto e aprovado — já está disponível para venda na PagaJá.`
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi revisto e aprovado — já está disponível para venda na PayNow.`
         ) +
         emailInfoBox([{ label: "Produto aprovado", value: input.productTitle }]) +
         emailButton("Ver Produto", `${siteUrl()}/p/${input.productSlug}`) +
@@ -723,11 +761,11 @@ export async function sendProductDeletedEmail(input: {
       title: "Produto removido",
       bodyHtml:
         emailParagraph(
-          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi removido da PagaJá pela nossa equipa e já não está disponível para venda.`
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi removido da PayNow pela nossa equipa e já não está disponível para venda.`
         ) +
         emailInfoBox([{ label: "Produto removido", value: input.productTitle }]) +
         emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Se considera que isto foi um engano, entre em contacto com o suporte da PagaJá.</span>`
+          `<span style="color:#9ca3af;font-size:12px;">Se considera que isto foi um engano, entre em contacto com o suporte da PayNow.</span>`
         ),
     }),
   });
@@ -748,7 +786,7 @@ export async function sendProductRejectedEmail(input: {
       title: "Produto rejeitado",
       bodyHtml:
         emailParagraph(
-          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi analisado e não foi aprovado para venda na PagaJá.`
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""}! O seu produto foi analisado e não foi aprovado para venda na PayNow.`
         ) +
         emailInfoBox([{ label: "Produto rejeitado", value: input.productTitle }]) +
         emailReasonBox("Motivo da rejeição", input.reason || "Não especificado.") +

@@ -9,10 +9,10 @@ import { hasPushSubscription } from "@/lib/actions/push";
 
 export default async function AdminSettingsPage() {
   const [settings, pushSubscribed] = await Promise.all([getAllSettings(), hasPushSubscription()]);
-  const withdrawalFeePercent = Number(settings.find((s) => s.key === "withdrawal_fee_percent")?.value ?? 5);
+  const withdrawalFeeFlat = Number(settings.find((s) => s.key === "withdrawal_fee_flat")?.value ?? 20);
   const platformFeePercent = Number(settings.find((s) => s.key === "platform_fee_percent")?.value ?? 10);
   const platformFixedFeeAmount = Number(settings.find((s) => s.key === "platform_fixed_fee_amount")?.value ?? 0);
-  const withdrawalMinimumAmount = Number(settings.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 150);
+  const withdrawalMinimumAmount = Number(settings.find((s) => s.key === "withdrawal_minimum_amount")?.value ?? 200);
   const paymentProvider =
     (settings.find((s) => s.key === "payment_provider")?.value as
       | "debito_pay"
@@ -41,7 +41,7 @@ export default async function AdminSettingsPage() {
       <Card className="max-w-lg">
         <CardContent className="p-6">
           <SettingsForm
-            withdrawalFeePercent={withdrawalFeePercent}
+            withdrawalFeeFlat={withdrawalFeeFlat}
             platformFeePercent={platformFeePercent}
             platformFixedFeeAmount={platformFixedFeeAmount}
             withdrawalMinimumAmount={withdrawalMinimumAmount}

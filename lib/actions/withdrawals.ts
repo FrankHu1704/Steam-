@@ -26,6 +26,58 @@ export async function sendWithdrawalOtpCode() {
   return sendWithdrawalOtp(user.id, profile?.email ?? null, profile?.name);
 }
 
+// Automatic fraud SIGNAL, not an automatic block — several different
+// producer accounts cashing out to the exact same phone number is a
+// known multi-account/money-mule pattern, but it can also be innocent
+// (family sharing one mobile money number), so this only flags both
+// accounts for an admin to review via markUserAsFraud() in
+// lib/actions/admin.ts, it never locks anyone out or touches balances by
+// itself. Only checks against destinations from a withdrawal that
+// actually got paid — a pending/failed one proves nothing yet.
+async function flagIfSharedPayoutDestination(
+  supabase: ReturnType<typeof createAdminClient>,
+  input: { withdrawalId: string; producerId: string; producerName: string; destination: string }
+) {
+  const { data: priorPaid } = await supabase
+    .from("withdrawals")
+    .select("producer_id, profiles!producer_id(name)")
+    .eq("destination", input.destination)
+    .neq("producer_id", input.producerId)
+    .in("status", ["paid", "confirmed"])
+    .limit(1)
+    .maybeSingle<{ producer_id: string; profiles: { name: string } | null }>();
+
+  if (!priorPaid) return;
+
+  await supabase.from("logs").insert({
+    action: "fraud_alert_shared_destination",
+    target_table: "withdrawals",
+    target_id: input.withdrawalId,
+    metadata: {
+      destination: input.destination,
+      producer_id: input.producerId,
+      producer_name: input.producerName,
+      other_producer_id: priorPaid.producer_id,
+      other_producer_name: priorPaid.profiles?.name ?? null,
+    },
+  });
+
+  const { data: admins } = await supabase.from("profiles").select("id").eq("role", "admin");
+  for (const admin of admins ?? []) {
+    await supabase.from("notifications").insert({
+      user_id: admin.id,
+      type: "fraud_alert",
+      title: "Possível fraude: destino de saque partilhado",
+      message: `${input.producerName} pediu um saque para o mesmo número já usado por ${priorPaid.profiles?.name ?? "outra conta"} — reveja as duas contas.`,
+    });
+    await sendPushToUser(admin.id, {
+      title: "⚠️ Possível fraude — destino partilhado",
+      body: `${input.producerName} ↔ ${priorPaid.profiles?.name ?? "outra conta"}`,
+      url: `/admin/users/${input.producerId}`,
+    });
+  }
+}
+
 async function notifyAdminsOfWithdrawal(
   supabase: ReturnType<typeof createAdminClient>,
   input: {
@@ -105,7 +157,7 @@ export async function requestWithdrawal(input: {
     .select("value")
     .eq("key", "withdrawal_minimum_amount")
     .single();
-  const minimumAmount = Number(minSetting?.value ?? 150);
+  const minimumAmount = Number(minSetting?.value ?? 200);
   if (input.amount < minimumAmount) {
     return { error: `O valor mínimo para levantamento é ${minimumAmount} MT.` };
   }
@@ -114,11 +166,12 @@ export async function requestWithdrawal(input: {
   // The CTO's balance is already the platform's own profit share handed to
   // them — charging the standard withdrawal fee on top would just be the
   // platform taking a cut of a cut, so that wallet always withdraws in full.
+  // Everyone else pays the same flat MZN fee regardless of amount (not a
+  // percentage).
   let feeAmount = 0;
   if (walletSource !== "cto") {
-    const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();
-    const feePercent = typeof feeSetting?.value === "number" ? feeSetting.value : Number(feeSetting?.value ?? 5);
-    feeAmount = Math.round(input.amount * (feePercent / 100) * 100) / 100;
+    const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_flat").single();
+    feeAmount = typeof feeSetting?.value === "number" ? feeSetting.value : Number(feeSetting?.value ?? 20);
   }
   const netAmount = input.amount - feeAmount;
 
@@ -139,6 +192,13 @@ export async function requestWithdrawal(input: {
     .single();
 
   if (error || !withdrawal) return { error: error?.message ?? "Falha ao pedir o levantamento." };
+
+  await flagIfSharedPayoutDestination(supabase, {
+    withdrawalId: withdrawal.id,
+    producerId: user.id,
+    producerName: profile.name,
+    destination: input.destination,
+  });
 
   await supabase
     .from("profiles")

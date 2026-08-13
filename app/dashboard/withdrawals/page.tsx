@@ -9,7 +9,7 @@ import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import {
   getMyWithdrawals,
-  getWithdrawalFeePercent,
+  getWithdrawalFeeFlat,
   getWithdrawalMinimumAmount,
   getWithdrawalsEnabled,
 } from "@/lib/data/withdrawals";
@@ -23,9 +23,9 @@ export default async function WithdrawalsPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const [withdrawals, feePercent, minimumAmount, wallets, providerName, withdrawalsEnabled] = await Promise.all([
+  const [withdrawals, feeFlat, minimumAmount, wallets, providerName, withdrawalsEnabled] = await Promise.all([
     getMyWithdrawals(user.id),
-    getWithdrawalFeePercent(),
+    getWithdrawalFeeFlat(),
     getWithdrawalMinimumAmount(),
     getPayoutWallets(user.id),
     getActivePaymentProvider(),
@@ -70,7 +70,7 @@ export default async function WithdrawalsPage() {
           <p className="relative mt-2 text-3xl font-bold sm:text-4xl">
             {formatCurrency(profile.balance_available, currency)}
           </p>
-          <p className="relative mt-1 text-xs text-white/70">Vendas dos seus produtos no marketplace PagaJá.</p>
+          <p className="relative mt-1 text-xs text-white/70">Vendas dos seus produtos no marketplace PayNow.</p>
         </div>
         <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
           <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
@@ -129,7 +129,7 @@ export default async function WithdrawalsPage() {
               balanceAvailableDev={profile.balance_available_dev}
               balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
               currency={profile.currency}
-              feePercent={feePercent}
+              feeFlat={feeFlat}
               minimumAmount={minimumAmount}
               wallets={wallets}
             />
