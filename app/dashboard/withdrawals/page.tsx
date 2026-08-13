@@ -9,7 +9,7 @@ import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import {
   getMyWithdrawals,
-  getWithdrawalFeeFlat,
+  getWithdrawalFeePercent,
   getWithdrawalMinimumAmount,
   getWithdrawalsEnabled,
 } from "@/lib/data/withdrawals";
@@ -23,9 +23,9 @@ export default async function WithdrawalsPage() {
   const { user, profile } = await getCurrentUserAndProfile();
   if (!user || !profile) return null;
 
-  const [withdrawals, feeFlat, minimumAmount, wallets, providerName, withdrawalsEnabled] = await Promise.all([
+  const [withdrawals, feePercent, minimumAmount, wallets, providerName, withdrawalsEnabled] = await Promise.all([
     getMyWithdrawals(user.id),
-    getWithdrawalFeeFlat(),
+    getWithdrawalFeePercent(),
     getWithdrawalMinimumAmount(),
     getPayoutWallets(user.id),
     getActivePaymentProvider(),
@@ -129,7 +129,7 @@ export default async function WithdrawalsPage() {
               balanceAvailableDev={profile.balance_available_dev}
               balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
               currency={profile.currency}
-              feeFlat={feeFlat}
+              feePercent={feePercent}
               minimumAmount={minimumAmount}
               wallets={wallets}
             />

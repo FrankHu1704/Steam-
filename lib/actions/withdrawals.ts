@@ -166,12 +166,11 @@ export async function requestWithdrawal(input: {
   // The CTO's balance is already the platform's own profit share handed to
   // them — charging the standard withdrawal fee on top would just be the
   // platform taking a cut of a cut, so that wallet always withdraws in full.
-  // Everyone else pays the same flat MZN fee regardless of amount (not a
-  // percentage).
   let feeAmount = 0;
   if (walletSource !== "cto") {
-    const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_flat").single();
-    feeAmount = typeof feeSetting?.value === "number" ? feeSetting.value : Number(feeSetting?.value ?? 20);
+    const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();
+    const feePercent = typeof feeSetting?.value === "number" ? feeSetting.value : Number(feeSetting?.value ?? 20);
+    feeAmount = Math.round(input.amount * (feePercent / 100) * 100) / 100;
   }
   const netAmount = input.amount - feeAmount;
 

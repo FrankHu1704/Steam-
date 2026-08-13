@@ -11,11 +11,9 @@ export async function getMyWithdrawals(producerId: string): Promise<Withdrawal[]
   return (data as Withdrawal[]) ?? [];
 }
 
-// A single flat MZN fee per withdrawal, not a percentage — same amount
-// whether the saque is 200 MT or 20 000 MT.
-export async function getWithdrawalFeeFlat(): Promise<number> {
+export async function getWithdrawalFeePercent(): Promise<number> {
   const supabase = await createClient();
-  const { data } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_flat").single();
+  const { data } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();
   return typeof data?.value === "number" ? data.value : Number(data?.value ?? 20);
 }
 
