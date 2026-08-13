@@ -84,6 +84,10 @@ export interface Profile {
   suspended_by: string | null;
   fraud_flag: boolean;
   became_producer_at: string | null;
+  is_sponsor: boolean;
+  sponsor_share_percent: number | null;
+  sponsor_contract_started_at: string | null;
+  balance_available_sponsor: number;
 }
 
 export interface CtoMonthlyCredit {
@@ -397,7 +401,7 @@ export interface Withdrawal {
   currency: string;
   payout_method: PayoutMethod;
   destination: string;
-  wallet_source: "producer" | "dev" | "cto";
+  wallet_source: "producer" | "dev" | "cto" | "sponsor";
   status: WithdrawalStatus;
   rejection_reason: string | null;
   payout_reference: string | null;

@@ -7,7 +7,7 @@ const MAPUTO_OFFSET_MS = 2 * 60 * 60 * 1000; // UTC+2 year-round, no DST
 // monthsAgo=0 is the current calendar month so far (for a live estimate);
 // monthsAgo=1 is the last fully-closed calendar month (for the actual
 // monthly credit, run on day 1 of the new month).
-function maputoMonthBounds(monthsAgo: number): { start: Date; end: Date } {
+export function maputoMonthBounds(monthsAgo: number): { start: Date; end: Date } {
   const now = new Date();
   const local = new Date(now.getTime() + MAPUTO_OFFSET_MS);
   const startLocal = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth() - monthsAgo, 1, 0, 0, 0));
@@ -17,11 +17,12 @@ function maputoMonthBounds(monthsAgo: number): { start: Date; end: Date } {
 
 // Same net-profit formula as getPlatformRevenue() in lib/data/admin.ts
 // (sales fees + withdrawal fees - employee commissions - processor fees),
-// scoped to one calendar month instead of the rolling "this month so far"
-// bucket.
-export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<number> {
+// over an arbitrary [start, end) window — used directly by sponsors (see
+// lib/sponsor.ts), whose contract can start mid-month, and by
+// getPlatformNetProfitForMonth() below for CTOs, who always use a full
+// calendar month.
+export async function getPlatformNetProfitForRange(start: Date, end: Date): Promise<number> {
   const supabase = createAdminClient();
-  const { start, end } = maputoMonthBounds(monthsAgo);
 
   const [{ data: orders }, { data: withdrawals }, { data: employeeCommissions }, { data: employeePayouts }] =
     await Promise.all([
@@ -57,6 +58,11 @@ export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<n
   const payoutProviderFees = (employeePayouts ?? []).reduce((sum, ep) => sum + (ep.provider_fee_amount ?? 0), 0);
   const commissions = (employeeCommissions ?? []).reduce((sum, c) => sum + c.amount, 0);
   return salesFees + withdrawalFees + payoutProviderFees - commissions - processorFees;
+}
+
+export async function getPlatformNetProfitForMonth(monthsAgo: number): Promise<number> {
+  const { start, end } = maputoMonthBounds(monthsAgo);
+  return getPlatformNetProfitForRange(start, end);
 }
 
 export interface CtoDashboardData {

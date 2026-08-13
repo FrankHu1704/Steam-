@@ -9,9 +9,10 @@ export function formatCurrency(amount: number, currency: "MZN" | "ZAR" = "MZN") 
   return `${amount.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 }
 
-export function walletSourceLabel(walletSource: "producer" | "dev" | "cto") {
+export function walletSourceLabel(walletSource: "producer" | "dev" | "cto" | "sponsor") {
   if (walletSource === "dev") return "Programador";
   if (walletSource === "cto") return "CTO";
+  if (walletSource === "sponsor") return "Patrocinador";
   return "Produtor";
 }
 

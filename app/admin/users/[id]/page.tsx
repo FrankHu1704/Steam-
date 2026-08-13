@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge, StatusBadge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 import { UserCtoToggle } from "@/components/admin/user-cto-toggle";
+import { UserSponsorForm } from "@/components/admin/user-sponsor-form";
 import { UserSuspendToggle } from "@/components/admin/user-suspend-toggle";
 import { AdminBalanceAdjustForm } from "@/components/admin/admin-balance-adjust-form";
 import { AdminDeleteProductButton } from "@/components/admin/admin-delete-product-button";
@@ -79,6 +80,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <p className="text-xs text-muted-foreground">Saldo Programador (API)</p>
             <p className="font-medium">{formatCurrency(profile.balance_available_dev, currency)}</p>
           </div>
+          {profile.is_sponsor && (
+            <div>
+              <p className="text-xs text-muted-foreground">Saldo Patrocinador</p>
+              <p className="font-medium">{formatCurrency(profile.balance_available_sponsor, currency)}</p>
+            </div>
+          )}
           <div>
             <p className="text-xs text-muted-foreground">Membro desde</p>
             <p className="font-medium">{new Date(profile.created_at).toLocaleDateString("pt-MZ")}</p>
@@ -143,10 +150,29 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       )}
 
       <div>
+        <h2 className="mb-3 font-semibold">Patrocinador</h2>
+        <Card>
+          <CardContent className="p-6">
+            <UserSponsorForm
+              userId={profile.id}
+              isSponsor={profile.is_sponsor}
+              sharePercent={profile.sponsor_share_percent}
+              contractStartedAt={profile.sponsor_contract_started_at}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
         <h2 className="mb-3 font-semibold">Ajustar saldo</h2>
         <Card>
           <CardContent className="p-6">
-            <AdminBalanceAdjustForm userId={profile.id} currency={profile.currency} isCto={profile.is_cto} />
+            <AdminBalanceAdjustForm
+              userId={profile.id}
+              currency={profile.currency}
+              isCto={profile.is_cto}
+              isSponsor={profile.is_sponsor}
+            />
           </CardContent>
         </Card>
       </div>

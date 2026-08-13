@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveB2CProvider, chargeProviderModule } from "@/lib/payments";
 import { creditMonthlyCtoShare } from "@/lib/cto";
+import { creditMonthlySponsorShare } from "@/lib/sponsor";
 
 // Runs on day 1 of every month (see vercel.json) — pays out every active
 // employee's accrued recruiter commission automatically via B2C. M-Pesa is
@@ -120,5 +121,13 @@ export async function GET(request: Request) {
     metadata: { periodMonth, ...ctoResult },
   });
 
-  return NextResponse.json({ ok: true, periodMonth, results, cto: ctoResult });
+  // And each sponsor's own admin-defined % of last month's net profit,
+  // clamped to their contract start date — see lib/sponsor.ts.
+  const sponsorResult = await creditMonthlySponsorShare(periodMonth);
+  await supabase.from("logs").insert({
+    action: "sponsor_payout_credit_cron",
+    metadata: { periodMonth, ...sponsorResult },
+  });
+
+  return NextResponse.json({ ok: true, periodMonth, results, cto: ctoResult, sponsor: sponsorResult });
 }

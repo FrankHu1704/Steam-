@@ -458,10 +458,48 @@ export async function setCtoStatus(userId: string, isCto: boolean) {
   return { ok: true };
 }
 
-const BALANCE_FIELD_LABEL: Record<"producer" | "dev" | "cto", string> = {
+// Sponsor: unlike CTO, any account can be one (buyer or producer — a
+// sponsor doesn't need to sell anything) and each sponsor has their own
+// admin-defined share percentage instead of a fixed platform-wide rate.
+// contractStartedAt is the clock creditMonthlySponsorShare() (lib/
+// sponsor.ts) uses — profit generated before it never counts, even
+// retroactively within the same month. Passing isSponsor=false clears the
+// percentage/date too, so re-enabling later always starts from a clean
+// contract rather than reusing stale values.
+export async function setSponsorStatus(
+  userId: string,
+  isSponsor: boolean,
+  sharePercent: number | null,
+  contractStartedAt: string | null
+) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  if (isSponsor) {
+    if (!sharePercent || sharePercent <= 0 || sharePercent > 100) {
+      return { error: "Indique uma percentagem válida (entre 0 e 100)." };
+    }
+    if (!contractStartedAt) return { error: "Indique a data de início do contrato." };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      is_sponsor: isSponsor,
+      sponsor_share_percent: isSponsor ? sharePercent : null,
+      sponsor_contract_started_at: isSponsor ? contractStartedAt : null,
+    })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
+const BALANCE_FIELD_LABEL: Record<"producer" | "dev" | "cto" | "sponsor", string> = {
   producer: "Carteira Produtor",
   dev: "Carteira Programador (API)",
   cto: "Carteira CTO",
+  sponsor: "Carteira Patrocinador",
 };
 
 // Manual correction tool — e.g. fixing a support case, crediting a
@@ -476,7 +514,7 @@ const BALANCE_FIELD_LABEL: Record<"producer" | "dev" | "cto", string> = {
 // an order or withdrawal behind it.
 export async function adminAdjustBalance(
   userId: string,
-  wallet: "producer" | "dev" | "cto",
+  wallet: "producer" | "dev" | "cto" | "sponsor",
   amount: number,
   reason: string
 ) {
@@ -486,7 +524,13 @@ export async function adminAdjustBalance(
   if (!reason.trim()) return { error: "Indique o motivo do ajuste para o registo." };
 
   const walletField =
-    wallet === "dev" ? "balance_available_dev" : wallet === "cto" ? "balance_available_cto" : "balance_available";
+    wallet === "dev"
+      ? "balance_available_dev"
+      : wallet === "cto"
+        ? "balance_available_cto"
+        : wallet === "sponsor"
+          ? "balance_available_sponsor"
+          : "balance_available";
 
   const supabase = createAdminClient();
   const { data: target } = await supabase

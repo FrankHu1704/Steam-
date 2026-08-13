@@ -122,7 +122,7 @@ export async function requestWithdrawal(input: {
   amount: number;
   payoutMethod: PayoutMethod;
   destination: string;
-  walletSource?: "producer" | "dev" | "cto";
+  walletSource?: "producer" | "dev" | "cto" | "sponsor";
   otpCode: string;
 }) {
   const authClient = await createClient();
@@ -140,13 +140,19 @@ export async function requestWithdrawal(input: {
 
   const walletSource = input.walletSource ?? "producer";
   const walletField =
-    walletSource === "dev" ? "balance_available_dev" : walletSource === "cto" ? "balance_available_cto" : "balance_available";
+    walletSource === "dev"
+      ? "balance_available_dev"
+      : walletSource === "cto"
+        ? "balance_available_cto"
+        : walletSource === "sponsor"
+          ? "balance_available_sponsor"
+          : "balance_available";
 
   const supabase = createAdminClient();
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, email, balance_available, balance_available_dev, balance_available_cto, currency")
+    .select("name, email, balance_available, balance_available_dev, balance_available_cto, balance_available_sponsor, currency")
     .eq("id", user.id)
     .single();
   if (!profile) return { error: "Perfil não encontrado." };
@@ -163,11 +169,12 @@ export async function requestWithdrawal(input: {
   }
   if (input.amount > currentBalance) return { error: "Saldo insuficiente." };
 
-  // The CTO's balance is already the platform's own profit share handed to
-  // them — charging the standard withdrawal fee on top would just be the
-  // platform taking a cut of a cut, so that wallet always withdraws in full.
+  // The CTO's and sponsor's balances are already the platform's own
+  // profit share handed to them — charging the standard withdrawal fee on
+  // top would just be the platform taking a cut of a cut, so those
+  // wallets always withdraw in full.
   let feeAmount = 0;
-  if (walletSource !== "cto") {
+  if (walletSource !== "cto" && walletSource !== "sponsor") {
     const { data: feeSetting } = await supabase.from("settings").select("value").eq("key", "withdrawal_fee_percent").single();
     const feePercent = typeof feeSetting?.value === "number" ? feeSetting.value : Number(feeSetting?.value ?? 20);
     feeAmount = Math.round(input.amount * (feePercent / 100) * 100) / 100;

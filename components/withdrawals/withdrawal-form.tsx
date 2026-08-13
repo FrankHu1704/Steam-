@@ -30,6 +30,7 @@ export function WithdrawalForm({
   balanceAvailable,
   balanceAvailableDev,
   balanceAvailableCto,
+  balanceAvailableSponsor,
   currency,
   feePercent,
   minimumAmount,
@@ -38,6 +39,7 @@ export function WithdrawalForm({
   balanceAvailable: number;
   balanceAvailableDev: number;
   balanceAvailableCto?: number;
+  balanceAvailableSponsor?: number;
   currency: string;
   feePercent: number;
   minimumAmount: number;
@@ -46,8 +48,9 @@ export function WithdrawalForm({
   const router = useRouter();
   const defaultWallet = wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
   const showCtoWallet = balanceAvailableCto !== undefined;
+  const showSponsorWallet = balanceAvailableSponsor !== undefined;
 
-  const [walletSource, setWalletSource] = useState<"producer" | "dev" | "cto">("producer");
+  const [walletSource, setWalletSource] = useState<"producer" | "dev" | "cto" | "sponsor">("producer");
   const [amount, setAmount] = useState("");
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(defaultWallet?.id ?? null);
   const [useOther, setUseOther] = useState(wallets.length === 0);
@@ -72,11 +75,17 @@ export function WithdrawalForm({
   }, [cooldown]);
 
   const currentBalance =
-    walletSource === "dev" ? balanceAvailableDev : walletSource === "cto" ? (balanceAvailableCto ?? 0) : balanceAvailable;
+    walletSource === "dev"
+      ? balanceAvailableDev
+      : walletSource === "cto"
+        ? (balanceAvailableCto ?? 0)
+        : walletSource === "sponsor"
+          ? (balanceAvailableSponsor ?? 0)
+          : balanceAvailable;
   const numericAmount = Number(amount) || 0;
-  // The CTO wallet never carries the standard withdrawal fee — see
-  // requestWithdrawal() in lib/actions/withdrawals.ts.
-  const effectiveFeePercent = walletSource === "cto" ? 0 : feePercent;
+  // The CTO and sponsor wallets never carry the standard withdrawal fee —
+  // see requestWithdrawal() in lib/actions/withdrawals.ts.
+  const effectiveFeePercent = walletSource === "cto" || walletSource === "sponsor" ? 0 : feePercent;
   const feeAmount = Math.round(numericAmount * (effectiveFeePercent / 100) * 100) / 100;
   const netAmount = Math.max(0, numericAmount - feeAmount);
 
@@ -208,7 +217,13 @@ export function WithdrawalForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <Label>Carteira</Label>
-        <div className={cn("grid gap-2", showCtoWallet ? "grid-cols-3" : "grid-cols-2")}>
+        <div
+          className={cn(
+            "grid grid-cols-2 gap-2",
+            showCtoWallet && showSponsorWallet && "sm:grid-cols-4",
+            (showCtoWallet || showSponsorWallet) && !(showCtoWallet && showSponsorWallet) && "sm:grid-cols-3"
+          )}
+        >
           <button
             type="button"
             onClick={() => setWalletSource("producer")}
@@ -242,6 +257,19 @@ export function WithdrawalForm({
             >
               <p className="text-xs text-muted-foreground">CTO</p>
               <p className="font-semibold">{formatCurrency(balanceAvailableCto ?? 0, currency as "MZN" | "ZAR")}</p>
+            </button>
+          )}
+          {showSponsorWallet && (
+            <button
+              type="button"
+              onClick={() => setWalletSource("sponsor")}
+              className={cn(
+                "rounded-xl border-2 px-3 py-2.5 text-left transition-colors",
+                walletSource === "sponsor" ? "border-primary bg-primary/5" : "border-border"
+              )}
+            >
+              <p className="text-xs text-muted-foreground">Patrocinador</p>
+              <p className="font-semibold">{formatCurrency(balanceAvailableSponsor ?? 0, currency as "MZN" | "ZAR")}</p>
             </button>
           )}
         </div>

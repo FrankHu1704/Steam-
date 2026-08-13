@@ -16,13 +16,15 @@ export function AdminBalanceAdjustForm({
   userId,
   currency,
   isCto,
+  isSponsor,
 }: {
   userId: string;
   currency: string;
   isCto: boolean;
+  isSponsor: boolean;
 }) {
   const router = useRouter();
-  const [wallet, setWallet] = useState<"producer" | "dev" | "cto">("producer");
+  const [wallet, setWallet] = useState<"producer" | "dev" | "cto" | "sponsor">("producer");
   const [direction, setDirection] = useState<"add" | "remove">("add");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
@@ -64,10 +66,15 @@ export function AdminBalanceAdjustForm({
     <form onSubmit={handleSubmit} className="max-w-sm space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="balance-wallet">Carteira</Label>
-        <Select id="balance-wallet" value={wallet} onChange={(e) => setWallet(e.target.value as "producer" | "dev" | "cto")}>
+        <Select
+          id="balance-wallet"
+          value={wallet}
+          onChange={(e) => setWallet(e.target.value as "producer" | "dev" | "cto" | "sponsor")}
+        >
           <option value="producer">Carteira Produtor</option>
           <option value="dev">Carteira Programador (API)</option>
           {isCto && <option value="cto">Carteira CTO</option>}
+          {isSponsor && <option value="sponsor">Carteira Patrocinador</option>}
         </Select>
       </div>
       <div className="grid grid-cols-2 gap-3">
