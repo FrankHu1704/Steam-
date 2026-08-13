@@ -4,21 +4,22 @@ import * as zumboPay from "@/lib/zumbopay";
 import * as netShop from "@/lib/netshop";
 import * as pagar from "@/lib/pagar";
 import * as paysuite from "@/lib/paysuite";
+import * as paymoz from "@/lib/paymoz";
 import type { PaymentMethod } from "@/lib/debito-pay";
 
 export type PaymentProviderName = "debito_pay" | "zumbopay" | "netshop";
 
-// Pagar and PaySuite are NOT selectable "active processors" like the three
-// above — they're only ever used for e-Mola charges specifically (see
-// resolveChargeProvider below), while everything else keeps going through
-// whichever processor is set as active. PaySuite additionally has no
-// documented B2C payout-creation endpoint, so it can't fund withdrawals —
-// its createPayout() (lib/paysuite.ts) always fails gracefully, unlike
-// Pagar's real one (lib/pagar.ts). This keeps payments.provider (and
-// getOrderStatus's reconciliation) able to name both without widening
-// every admin-settings/B2C-payout code path that deals with
-// PaymentProviderName.
-export type ChargeProviderName = PaymentProviderName | "pagar" | "paysuite";
+// Pagar, PaySuite and PayMoz are NOT selectable "active processors" like
+// the three above — they're only ever used for e-Mola or M-Pesa charges
+// specifically (see resolveChargeProvider below), while everything else
+// keeps going through whichever processor is set as active. PaySuite and
+// PayMoz additionally have no documented B2C payout-creation endpoint, so
+// neither can fund withdrawals — their createPayout() (lib/paysuite.ts,
+// lib/paymoz.ts) always fails gracefully, unlike Pagar's real one
+// (lib/pagar.ts). This keeps payments.provider (and getOrderStatus's
+// reconciliation) able to name all three without widening every
+// admin-settings/B2C-payout code path that deals with PaymentProviderName.
+export type ChargeProviderName = PaymentProviderName | "pagar" | "paysuite" | "paymoz";
 
 // ZumboPay's Visa/Mastercard flow only offers a hosted checkout page with
 // their own "ZumboPay" branding clearly visible (confirmed live — even
@@ -97,17 +98,37 @@ export async function getEmolaChargeProviderSetting(): Promise<EmolaChargeProvid
   return "pagar";
 }
 
+export type MpesaChargeProviderSetting = "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paymoz" | "active";
+
+// Same idea as EmolaChargeProviderSetting, for M-Pesa — defaults to
+// "active" (i.e. no behavior change) since, unlike e-Mola, M-Pesa already
+// works fine across every active processor; PayMoz is an extra option an
+// admin opts into deliberately, not a new default.
+export async function getMpesaChargeProviderSetting(): Promise<MpesaChargeProviderSetting> {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "mpesa_charge_provider").single();
+  const value = data?.value;
+  if (value === "pagar" || value === "zumbopay" || value === "netshop" || value === "debito_pay" || value === "paymoz")
+    return value;
+  return "active";
+}
+
 // e-Mola charges route through whichever processor emola_charge_provider
 // names — "pagar" by default (falls back to the active processor if
 // Pagar's credentials aren't set, so checkout never breaks just because
 // that one integration is mid-setup), "active" explicitly follows the
 // globally active processor, or a specific processor name to pin e-Mola
-// there regardless of what's active for everything else.
+// there regardless of what's active for everything else. M-Pesa follows
+// the analogous mpesa_charge_provider setting, defaulting to "active".
 export async function resolveChargeProvider(method: PaymentMethod, currency: string): Promise<ChargeProviderName> {
   if (method === "emola" && currency === "MZN") {
     const setting = await getEmolaChargeProviderSetting();
     if (setting === "pagar" && isPagarConfigured()) return "pagar";
     if (setting === "zumbopay" || setting === "netshop" || setting === "debito_pay" || setting === "paysuite") return setting;
+  }
+  if (method === "mpesa" && currency === "MZN") {
+    const setting = await getMpesaChargeProviderSetting();
+    if (setting !== "active") return setting;
   }
   return getActivePaymentProvider();
 }
@@ -115,6 +136,7 @@ export async function resolveChargeProvider(method: PaymentMethod, currency: str
 export function chargeProviderModule(name: ChargeProviderName) {
   if (name === "pagar") return pagar;
   if (name === "paysuite") return paysuite;
+  if (name === "paymoz") return paymoz;
   return providerModule(name);
 }
 

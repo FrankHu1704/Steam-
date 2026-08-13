@@ -29,6 +29,15 @@ export default async function AdminSettingsPage() {
       | "active"
       | undefined) ?? "pagar";
   const emolaEnabled = settings.find((s) => s.key === "emola_enabled")?.value !== false;
+  const mpesaChargeProvider =
+    (settings.find((s) => s.key === "mpesa_charge_provider")?.value as
+      | "pagar"
+      | "zumbopay"
+      | "netshop"
+      | "debito_pay"
+      | "paymoz"
+      | "active"
+      | undefined) ?? "active";
   const withdrawalsEnabled = settings.find((s) => s.key === "withdrawals_enabled")?.value !== false;
   const inactiveProducerDeletionEnabled =
     settings.find((s) => s.key === "inactive_producer_deletion_enabled")?.value !== false;
@@ -50,6 +59,7 @@ export default async function AdminSettingsPage() {
             paymentProvider={paymentProvider}
             emolaChargeProvider={emolaChargeProvider}
             emolaEnabled={emolaEnabled}
+            mpesaChargeProvider={mpesaChargeProvider}
             withdrawalsEnabled={withdrawalsEnabled}
             inactiveProducerDeletionEnabled={inactiveProducerDeletionEnabled}
           />

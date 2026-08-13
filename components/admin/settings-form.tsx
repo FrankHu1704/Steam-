@@ -18,6 +18,7 @@ export function SettingsForm({
   paymentProvider,
   emolaChargeProvider,
   emolaEnabled,
+  mpesaChargeProvider,
   withdrawalsEnabled,
   inactiveProducerDeletionEnabled,
 }: {
@@ -28,6 +29,7 @@ export function SettingsForm({
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
   emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active";
   emolaEnabled: boolean;
+  mpesaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paymoz" | "active";
   withdrawalsEnabled: boolean;
   inactiveProducerDeletionEnabled: boolean;
 }) {
@@ -39,6 +41,7 @@ export function SettingsForm({
   const [provider, setProvider] = useState(paymentProvider);
   const [emolaProvider, setEmolaProvider] = useState(emolaChargeProvider);
   const [emolaOn, setEmolaOn] = useState(emolaEnabled);
+  const [mpesaProvider, setMpesaProvider] = useState(mpesaChargeProvider);
   const [withdrawalsOn, setWithdrawalsOn] = useState(withdrawalsEnabled);
   const [deletionOn, setDeletionOn] = useState(inactiveProducerDeletionEnabled);
   const [pending, setPending] = useState(false);
@@ -56,6 +59,7 @@ export function SettingsForm({
       updateSetting("payment_provider", provider),
       updateSetting("emola_charge_provider", emolaProvider),
       updateSetting("emola_enabled", emolaOn),
+      updateSetting("mpesa_charge_provider", mpesaProvider),
       updateSetting("withdrawals_enabled", withdrawalsOn),
       updateSetting("inactive_producer_deletion_enabled", deletionOn),
     ]);
@@ -166,6 +170,35 @@ export function SettingsForm({
           <p className="text-xs text-muted-foreground">
             Escolhe qual processador trata só o e-Mola, sem mudar o processador ativo acima (que continua a servir
             M-Pesa/mKesh/cartão). "Processador ativo" faz o e-Mola seguir esse mesmo processador em vez de um fixo.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="mpesa-provider">M-Pesa processado via</Label>
+          <Select
+            id="mpesa-provider"
+            value={mpesaProvider}
+            onChange={(e) =>
+              setMpesaProvider(
+                e.target.value as "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paymoz" | "active"
+              )
+            }
+          >
+            <option value="active">Processador ativo (acima, padrão)</option>
+            <option value="paymoz">PayMoz</option>
+            <option value="pagar">Pagar</option>
+            <option value="zumbopay">ZumboPay</option>
+            <option value="netshop">NetShop</option>
+            <option value="debito_pay">Debito Pay</option>
+          </Select>
+          {mpesaProvider === "paymoz" && (
+            <p className="text-xs text-amber-600">
+              O PayMoz ainda não tem levantamento automático (B2C) documentado — os saques em M-Pesa ficam
+              pendentes para pagamento manual pelo admin enquanto estiver selecionado.
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Escolhe qual processador trata só o M-Pesa, sem mudar o processador ativo acima. "Processador ativo" é o
+            padrão — nada muda até escolheres outro explicitamente.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">

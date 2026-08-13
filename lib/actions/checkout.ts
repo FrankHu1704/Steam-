@@ -410,7 +410,8 @@ export async function getOrderStatus(orderId: string) {
           payment.provider === "zumbopay" ||
           payment.provider === "netshop" ||
           payment.provider === "pagar" ||
-          payment.provider === "paysuite"
+          payment.provider === "paysuite" ||
+          payment.provider === "paymoz"
             ? payment.provider
             : "debito_pay";
         const remote = await chargeProviderModule(providerName).checkChargeStatus(
