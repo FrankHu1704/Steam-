@@ -300,6 +300,29 @@ export async function adminDeleteProduct(productId: string) {
   return { ok: true };
 }
 
+// A product with any order history (even a failed/pending attempt) can't
+// be hard-deleted — orders.product_id has no ON DELETE CASCADE, so the
+// database itself would reject it, and cascading the delete would erase
+// real sales/financial records. Pausing is the safe admin equivalent:
+// takes the product off checkout immediately (same effect a producer gets
+// from their own "Pausar" button in lib/actions/products.ts) without
+// touching any order data — the only way to shut down a live product once
+// it already has sales, e.g. right after suspending its producer's
+// account and they can no longer pause it themselves.
+export async function adminSetProductStatus(productId: string, status: "approved" | "paused") {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ status })
+    .eq("id", productId)
+    .in("status", ["approved", "paused"]);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
 export async function sendPrivateMessage(userId: string, subject: string, message: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

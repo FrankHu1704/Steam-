@@ -187,7 +187,11 @@ export default async function AdminProductsPage({
                   <div className="flex flex-wrap items-center gap-3">
                     <StatusBadge status={product.status} />
                     {product.status === "pending" && <ProductReviewActions productId={product.id} />}
-                    <AdminDeleteProductButton productId={product.id} salesCount={product.sales_count} />
+                    <AdminDeleteProductButton
+                      productId={product.id}
+                      salesCount={product.sales_count}
+                      status={product.status}
+                    />
                   </div>
                 </div>
                 );

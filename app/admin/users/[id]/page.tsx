@@ -264,7 +264,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                     </div>
                     <div className="flex items-center gap-3">
                       <StatusBadge status={p.status} />
-                      <AdminDeleteProductButton productId={p.id} salesCount={p.sales_count} />
+                      <AdminDeleteProductButton productId={p.id} salesCount={p.sales_count} status={p.status} />
                     </div>
                   </div>
                 ))}
