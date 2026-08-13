@@ -32,7 +32,7 @@ export function UserSuspendToggle({
       toast.error(result.error);
       return;
     }
-    toast.success("Conta suspensa — o utilizador foi desligado e não consegue voltar a entrar.");
+    toast.success("Conta suspensa — o utilizador foi desligado e não consegue voltar a entrar. Não recebe nenhum aviso.");
     setMode("none");
     router.refresh();
   }
@@ -56,7 +56,7 @@ export function UserSuspendToggle({
       toast.error(result.error);
       return;
     }
-    toast.success("Conta marcada como fraude — saldo perdido e acesso bloqueado.");
+    toast.success("Conta marcada como fraude — saldo perdido e acesso bloqueado. Não recebe nenhum aviso.");
     setMode("none");
     router.refresh();
   }
@@ -110,19 +110,22 @@ export function UserSuspendToggle({
 
   return (
     <div className="max-w-sm space-y-2">
-      {mode === "fraud" && (
+      {mode === "fraud" ? (
         <p className="text-xs font-medium text-destructive">
           Isto bloqueia o login e perde permanentemente o saldo disponível desta conta (sem reembolso). Só um
-          administrador pode reativar o acesso depois.
+          administrador pode reativar o acesso depois. A conta não recebe nenhum aviso — ao tentar entrar, vê o
+          mesmo erro de sempre ("conta não existe").
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          A conta não recebe nenhum aviso — ao tentar entrar, vê o mesmo erro de sempre ("conta não existe").
         </p>
       )}
       <Textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         placeholder={
-          mode === "fraud"
-            ? "Motivo da fraude (obrigatório — fica registado e é enviado por email)"
-            : "Motivo da suspensão (opcional — é enviado por email ao utilizador)"
+          mode === "fraud" ? "Motivo da fraude (obrigatório — fica registado internamente)" : "Motivo da suspensão (opcional — fica registado internamente)"
         }
         rows={2}
       />

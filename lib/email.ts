@@ -594,67 +594,10 @@ export async function sendAdminDailySummaryEmail(input: {
   });
 }
 
-export async function sendAccountSuspendedEmail(input: { to: string; name?: string; reason?: string }) {
-  await sendEmail({
-    to: input.to,
-    subject: "A sua conta PayNow foi suspensa",
-    html: emailBannerCard({
-      bannerColor: "#DC2626",
-      icon: "🚫",
-      title: "Conta suspensa",
-      bodyHtml:
-        emailParagraph(
-          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PayNow foi suspensa por um administrador e o acesso foi bloqueado.`
-        ) +
-        (input.reason ? emailReasonBox("Motivo", input.reason) : "") +
-        emailParagraph(
-          "O seu saldo e os seus dados continuam guardados. Se acha que isto foi um engano, contacte o suporte."
-        ) +
-        emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Suporte PayNow: +258 84 931 1757</span>`
-        ),
-    }),
-  });
-}
-
-export async function sendAccountFraudBlockedEmail(input: {
-  to: string;
-  name?: string;
-  reason?: string;
-  forfeitedAmount: number;
-  currency: string;
-}) {
-  await sendEmail({
-    to: input.to,
-    subject: "A sua conta PayNow foi bloqueada por fraude",
-    html: emailBannerCard({
-      bannerColor: "#7F1D1D",
-      icon: "⛔",
-      title: "Conta bloqueada por fraude",
-      bodyHtml:
-        emailParagraph(
-          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta na PayNow foi identificada por um administrador como envolvida numa tentativa de fraude/burla e foi bloqueada.`
-        ) +
-        (input.reason ? emailReasonBox("Motivo", input.reason) : "") +
-        (input.forfeitedAmount > 0
-          ? emailInfoBox([
-              {
-                label: "Saldo perdido",
-                value: `${input.forfeitedAmount.toLocaleString("pt-MZ")} ${input.currency}`,
-                emphasize: true,
-              },
-            ])
-          : "") +
-        emailParagraph(
-          "De acordo com a política da PayNow contra fraude, o saldo disponível desta conta foi retido e não será reembolsado. O acesso só pode ser restaurado por um administrador, após revisão."
-        ) +
-        emailParagraph(
-          `<span style="color:#9ca3af;font-size:12px;">Se acha que isto foi um engano, contacte o suporte: +258 84 931 1757.</span>`
-        ),
-    }),
-  });
-}
-
+// Suspension/fraud-block itself is deliberately silent (no email) — see
+// suspendUser()/markUserAsFraud() in lib/actions/admin.ts — so this is the
+// only signal a reactivated account ever gets, letting them know login
+// works again (it looked like "account doesn't exist" the whole time).
 export async function sendAccountReinstatedEmail(input: { to: string; name?: string }) {
   await sendEmail({
     to: input.to,

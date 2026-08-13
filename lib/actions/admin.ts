@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountSuspendedEmail, sendAccountReinstatedEmail, sendAccountFraudBlockedEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountReinstatedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -540,13 +540,18 @@ export async function adminAdjustBalance(
 // this account the next time it loads a protected page (see
 // lib/data/profile.ts). Admins can't suspend themselves or another admin,
 // to avoid a mistaken click locking every admin out at once.
+//
+// Deliberately silent: the account gets NO email/push/in-app notice that
+// it was suspended — signIn() and getCurrentUserAndProfile() both make it
+// look like the account simply doesn't exist (same as a wrong password),
+// rather than confirming to whoever's behind it that they've been caught.
 export async function suspendUser(userId: string, reason: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };
   if (userId === admin.user.id) return { error: "Não pode suspender a sua própria conta." };
 
   const supabase = createAdminClient();
-  const { data: target } = await supabase.from("profiles").select("role, name, email").eq("id", userId).single();
+  const { data: target } = await supabase.from("profiles").select("role").eq("id", userId).single();
   if (!target) return { error: "Utilizador não encontrado." };
   if (target.role === "admin") return { error: "Não é possível suspender outra conta de administrador." };
 
@@ -560,10 +565,6 @@ export async function suspendUser(userId: string, reason: string) {
     .eq("id", userId);
   if (error) return { error: error.message };
 
-  if (target.email) {
-    await sendAccountSuspendedEmail({ to: target.email, name: target.name, reason: reason.trim() || undefined });
-  }
-
   return { ok: true };
 }
 
@@ -575,7 +576,8 @@ export async function suspendUser(userId: string, reason: string) {
 // true forever (even across a later unsuspendUser()) as a historical
 // record for reporting. Reactivation (restoring login access, never the
 // balance) still goes through the same unsuspendUser() as a plain
-// suspension.
+// suspension. Same silence policy as suspendUser() — no email/push/in-app
+// notice, so nothing tips off whoever's behind the account.
 export async function markUserAsFraud(userId: string, reason: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };
@@ -585,7 +587,7 @@ export async function markUserAsFraud(userId: string, reason: string) {
   const supabase = createAdminClient();
   const { data: target } = await supabase
     .from("profiles")
-    .select("role, name, email, currency, balance_available, balance_available_dev, balance_available_cto")
+    .select("role, currency, balance_available, balance_available_dev, balance_available_cto")
     .eq("id", userId)
     .single();
   if (!target) return { error: "Utilizador não encontrado." };
@@ -626,16 +628,6 @@ export async function markUserAsFraud(userId: string, reason: string) {
       },
     },
   });
-
-  if (target.email) {
-    await sendAccountFraudBlockedEmail({
-      to: target.email,
-      name: target.name,
-      reason: reason.trim(),
-      forfeitedAmount,
-      currency: target.currency,
-    });
-  }
 
   return { ok: true };
 }

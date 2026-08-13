@@ -111,18 +111,14 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: "Email ou palavra-passe incorretos." };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("suspended_at, suspension_reason")
-    .eq("id", data.user.id)
-    .single();
+  // A suspended/fraud-flagged account never gets to know it was detected —
+  // this deliberately looks identical to "this account doesn't exist"
+  // rather than confirming the suspension (see suspendUser()/
+  // markUserAsFraud() in lib/actions/admin.ts, which never notify either).
+  const { data: profile } = await supabase.from("profiles").select("suspended_at").eq("id", data.user.id).single();
   if (profile?.suspended_at) {
     await supabase.auth.signOut();
-    return {
-      error: profile.suspension_reason
-        ? `A sua conta foi suspensa: ${profile.suspension_reason}. Contacte o suporte: +258 84 931 1757.`
-        : "A sua conta foi suspensa. Contacte o suporte: +258 84 931 1757.",
-    };
+    return { error: "Esta conta não existe." };
   }
 
   redirect(next);
