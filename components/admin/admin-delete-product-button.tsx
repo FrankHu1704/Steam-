@@ -18,14 +18,39 @@ export function AdminDeleteProductButton({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const paused = status === "paused";
 
+  async function handlePauseToggle() {
+    setBusy(true);
+    const res = await adminSetProductStatus(productId, paused ? "approved" : "paused");
+    if (res.error) toast.error(res.error);
+    else toast.success(paused ? "Produto reativado." : "Produto pausado — deixou de estar disponível para compra.");
+    router.refresh();
+    setBusy(false);
+  }
+
+  // sales_count only counts CONFIRMED sales — a product can still have
+  // failed/pending order attempts behind it (0 vendas) that the database's
+  // foreign key won't let a hard-delete past, since deleting those orders
+  // too would erase real records. So even at salesCount === 0 the delete
+  // can come back rejected; when that happens, offer pausing instead of
+  // just failing silently.
   async function handleDelete() {
     if (!confirm("Apagar este produto como administrador? Esta ação não pode ser desfeita.")) return;
     setBusy(true);
     const res = await adminDeleteProduct(productId);
-    if (res.error) toast.error(res.error);
-    router.refresh();
     setBusy(false);
+    if (!res.error) {
+      router.refresh();
+      return;
+    }
+    if (res.error.includes("pedidos associados")) {
+      if (confirm(`${res.error}\n\nPausar este produto em vez de apagar?`)) {
+        await handlePauseToggle();
+      }
+      return;
+    }
+    toast.error(res.error);
   }
 
   // A product with any order history (even failed/pending) can't be
@@ -36,19 +61,8 @@ export function AdminDeleteProductButton({
   // useful right after suspending a producer who can no longer pause it
   // themselves.
   if (salesCount > 0) {
-    const paused = status === "paused";
-
-    async function handleToggle() {
-      setBusy(true);
-      const res = await adminSetProductStatus(productId, paused ? "approved" : "paused");
-      if (res.error) toast.error(res.error);
-      else toast.success(paused ? "Produto reativado." : "Produto pausado — deixou de estar disponível para compra.");
-      router.refresh();
-      setBusy(false);
-    }
-
     return (
-      <Button variant={paused ? "outline" : "destructive"} size="sm" disabled={busy} onClick={handleToggle}>
+      <Button variant={paused ? "outline" : "destructive"} size="sm" disabled={busy} onClick={handlePauseToggle}>
         {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
         {paused ? "Reativar" : "Pausar"}
       </Button>
