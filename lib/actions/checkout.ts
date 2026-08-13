@@ -102,7 +102,7 @@ interface CreateOrderInput {
   customPrice?: number;
   upsellOfOrderId?: string;
   // Which wallet this sale credits: "marketplace" (default, the hosted
-  // PagaJá checkout) or "api" (charged through the developer/Pagar API by
+  // PayNow checkout) or "api" (charged through the developer/Pagar API by
   // the producer's own external app) — see lib/order-fulfillment.ts.
   source?: "marketplace" | "api";
   // Facebook's own first-party cookies, read client-side from document.cookie

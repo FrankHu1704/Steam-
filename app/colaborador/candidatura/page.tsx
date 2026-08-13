@@ -57,7 +57,7 @@ export default function EmployeeApplicationPage() {
         <div className="flex flex-col items-center gap-4 text-center">
           <CheckCircle2 className="h-12 w-12 text-emerald-600" />
           <p className="text-sm text-muted-foreground">
-            A equipa PagaJá vai rever a sua candidatura. Se tiver dúvidas entretanto, contacte-nos pelo WhatsApp.
+            A equipa PayNow vai rever a sua candidatura. Se tiver dúvidas entretanto, contacte-nos pelo WhatsApp.
           </p>
           <a
             href={SUPPORT_WHATSAPP}
@@ -75,7 +75,7 @@ export default function EmployeeApplicationPage() {
   return (
     <AuthCard
       title="Candidatura a Colaborador"
-      subtitle="Recrute produtores para a PagaJá e ganhe comissão sobre as vendas deles"
+      subtitle="Recrute produtores para a PayNow e ganhe comissão sobre as vendas deles"
       footer={
         <>
           Já é colaborador?{" "}
@@ -136,7 +136,7 @@ export default function EmployeeApplicationPage() {
         <p className="-mt-2 text-xs text-muted-foreground">Indique pelo menos um número, para receber o pagamento.</p>
 
         <div className="space-y-1.5">
-          <Label htmlFor="message">Porque quer ser colaborador PagaJá? (opcional)</Label>
+          <Label htmlFor="message">Porque quer ser colaborador PayNow? (opcional)</Label>
           <Textarea id="message" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} />
         </div>
 

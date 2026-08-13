@@ -65,7 +65,7 @@ export function Shell({
     <div className="flex min-h-screen bg-muted/30">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-border bg-card md:flex">
         <Link href="/" className="flex items-center gap-2 px-6 py-5 text-lg font-bold">
-          Paga<span className="text-gradient">Já</span>
+          Pay<span className="text-gradient">Now</span>
           {badge && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
               {badge}
@@ -90,7 +90,7 @@ export function Shell({
           <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-card shadow-xl">
             <div className="flex items-center justify-between px-6 py-5">
               <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-                Paga<span className="text-gradient">Já</span>
+                Pay<span className="text-gradient">Now</span>
                 {badge && (
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
                     {badge}

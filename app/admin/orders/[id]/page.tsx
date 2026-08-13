@@ -56,7 +56,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <Field label="Criado em" value={new Date(order.created_at).toLocaleString("pt-MZ")} />
           <Field label="Pago em" value={order.paid_at ? new Date(order.paid_at).toLocaleString("pt-MZ") : "—"} />
           <Field label="Creditado em" value={order.credited_at ? new Date(order.credited_at).toLocaleString("pt-MZ") : "—"} />
-          <Field label="Taxa da PagaJá" value={order.platform_fee_amount != null ? formatCurrency(order.platform_fee_amount, currency) : "—"} />
+          <Field label="Taxa da PayNow" value={order.platform_fee_amount != null ? formatCurrency(order.platform_fee_amount, currency) : "—"} />
           {order.product_slug && (
             <div>
               <p className="text-xs text-muted-foreground">Produto</p>

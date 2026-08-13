@@ -77,7 +77,7 @@ const DIFFERENTIATORS = [
     icon: Sparkles,
     title: "LunaAI — a sua assistente de vendas",
     text: "Somos a única plataforma moçambicana com uma inteligência artificial própria dedicada a quem vende infoprodutos. A LunaAI analisa os seus produtos e dá dicas concretas sobre título, descrição e preço, e tira dúvidas em tempo real — como escalar anúncios, que preço cobrar, ou como vender mais — tudo em português.",
-    bullets: ["Análise automática de cada produto", "Chat aberto para qualquer dúvida de marketing", "Feita pela FRANK AI SOLUTIONS, dona da PagaJá"],
+    bullets: ["Análise automática de cada produto", "Chat aberto para qualquer dúvida de marketing", "Feita pela FRANK AI SOLUTIONS, dona da PayNow"],
   },
   {
     icon: Zap,
@@ -105,7 +105,7 @@ const FEATURES = [
   { icon: BarChart3, title: "Dashboard Completo", text: "Acompanhe vendas, clientes e afiliados em tempo real." },
   { icon: Users2, title: "Programa de Afiliados", text: "Deixe outras pessoas venderem por si e pague comissão só quando vender." },
   { icon: ShieldCheck, title: "Pagamentos Seguros", text: "Checkout protegido, entrega automática após confirmação do pagamento." },
-  { icon: Code2, title: "API para Programadores", text: "Integre a PagaJá no seu próprio sistema com checkout personalizado — comece em modo teste, avance para produção." },
+  { icon: Code2, title: "API para Programadores", text: "Integre a PayNow no seu próprio sistema com checkout personalizado — comece em modo teste, avance para produção." },
   { icon: Star, title: "Avaliações Verificadas", text: "Os seus clientes deixam avaliações reais que aumentam a confiança na compra." },
   { icon: Megaphone, title: "Campanhas & Pixels", text: "Rastreie as suas campanhas com UTMs e adicione pixels do Meta, Google ou TikTok ao seu produto." },
   { icon: Smartphone, title: "100% Responsivo", text: "Gerencie o seu negócio do telemóvel, instale como aplicativo (PWA)." },
@@ -148,11 +148,11 @@ const TESTIMONIALS = [
 ];
 
 const FAQS = [
-  { q: "É realmente gratuito começar?", a: "Sim. Não há mensalidade — a PagaJá fica com 10% sobre cada venda (você recebe 90%) e 5% sobre cada saque solicitado." },
+  { q: "É realmente gratuito começar?", a: "Sim. Não há mensalidade — a PayNow fica com 10% sobre cada venda (você recebe 90%) e 5% sobre cada saque solicitado." },
   { q: "Como recebo o dinheiro das vendas?", a: "O valor fica disponível no seu saldo e pode ser sacado via M-Pesa, e-Mola ou transferência bancária." },
   { q: "Posso vender cursos com vídeo?", a: "Sim, pode adicionar vídeos, PDFs, templates e outros ficheiros digitais ao seu produto." },
   { q: "Existe programa de afiliados?", a: "Sim — ative a afiliação no seu produto e qualquer pessoa pode promovê-lo por comissão." },
-  { q: "Posso integrar a PagaJá no meu próprio sistema?", a: "Sim — disponibilizamos uma API para programadores com checkout personalizado, chaves de teste e produção." },
+  { q: "Posso integrar a PayNow no meu próprio sistema?", a: "Sim — disponibilizamos uma API para programadores com checkout personalizado, chaves de teste e produção." },
 ];
 
 export function Features() {
@@ -264,7 +264,7 @@ export function Benefits() {
             Feito para quem quer <span className="text-gradient">crescer</span>, não só vender.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            A PagaJá cuida da parte técnica — pagamentos, entrega, afiliados — para você focar em
+            A PayNow cuida da parte técnica — pagamentos, entrega, afiliados — para você focar em
             criar o próximo infoproduto.
           </p>
           <div className="mt-8 grid grid-cols-3 gap-3">
@@ -308,11 +308,11 @@ export function HumanTouch() {
             🇲🇿
           </motion.span>
           <p className="text-lg font-medium leading-relaxed">
-            &ldquo;Construímos a PagaJá porque sabemos como é difícil vender um infoproduto em Moçambique —
+            &ldquo;Construímos a PayNow porque sabemos como é difícil vender um infoproduto em Moçambique —
             taxas transparentes, sem burocracia, com o dinheiro a cair direto no seu M-Pesa. É a plataforma
             que gostaríamos de ter tido quando começámos.&rdquo;
           </p>
-          <p className="text-sm font-semibold text-muted-foreground">— Equipa PagaJá</p>
+          <p className="text-sm font-semibold text-muted-foreground">— Equipa PayNow</p>
         </div>
       </Reveal>
     </section>
@@ -352,7 +352,7 @@ export function Testimonials() {
     <section className="container py-24">
       <Reveal>
         <div className="mx-auto max-w-xl text-center">
-          <h2 className="text-3xl font-bold md:text-4xl">Quem já vende com a PagaJá</h2>
+          <h2 className="text-3xl font-bold md:text-4xl">Quem já vende com a PayNow</h2>
         </div>
       </Reveal>
       <div className="mt-14 grid gap-6 md:grid-cols-3">

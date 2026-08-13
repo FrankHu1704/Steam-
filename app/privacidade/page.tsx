@@ -2,8 +2,8 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-  title: "Política de Privacidade — PagaJá",
-  description: "Como a PagaJá recolhe, usa e protege os seus dados pessoais.",
+  title: "Política de Privacidade — PayNow",
+  description: "Como a PayNow recolhe, usa e protege os seus dados pessoais.",
 };
 
 export default function PrivacidadePage() {
@@ -27,7 +27,7 @@ export default function PrivacidadePage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground">2. Dados de pagamento</h2>
             <p className="mt-2">
-              A PagaJá não armazena dados de cartões ou credenciais de dinheiro móvel. Os pagamentos são processados
+              A PayNow não armazena dados de cartões ou credenciais de dinheiro móvel. Os pagamentos são processados
               pela Debito Pay (M-Pesa, e-Mola, mKesh, cartão), que trata diretamente essas informações sob as suas
               próprias medidas de segurança.
             </p>

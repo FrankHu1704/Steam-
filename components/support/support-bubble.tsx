@@ -53,7 +53,7 @@ export function SupportBubble() {
         type="button"
         onClick={() => setOpen(true)}
         className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-gradient text-white shadow-lg shadow-primary/30 transition-transform hover:scale-105"
-        aria-label="Suporte PagaJá"
+        aria-label="Suporte PayNow"
       >
         <MessageCircleQuestion className="h-6 w-6" />
       </button>
@@ -64,7 +64,7 @@ export function SupportBubble() {
     <div className="fixed bottom-5 right-5 z-50 flex h-[520px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
       <div className="flex items-center justify-between gap-2 bg-brand-gradient px-4 py-3 text-white">
         <div>
-          <p className="text-sm font-semibold">Suporte PagaJá</p>
+          <p className="text-sm font-semibold">Suporte PayNow</p>
           <p className="text-xs text-white/80">Assistente IA · Online</p>
         </div>
         <div className="flex items-center gap-1">
@@ -80,7 +80,7 @@ export function SupportBubble() {
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="rounded-xl bg-muted p-3 text-sm">
-            Olá! Sou o assistente de suporte da PagaJá. Se tiveres sessão iniciada, consigo ver o teu saldo e ajudar
+            Olá! Sou o assistente de suporte da PayNow. Se tiveres sessão iniciada, consigo ver o teu saldo e ajudar
             com saques, produtos e vendas. O que precisas?
           </div>
         )}

@@ -11,11 +11,11 @@ export interface AchievementTier {
 // Lifetime paid-sales count decides the tier — simple, hard to game, and
 // visible progress the producer can chase. Ordered ascending by threshold.
 export const ACHIEVEMENT_TIERS: AchievementTier[] = [
-  { key: "iniciante", label: "Iniciante", icon: "🌱", threshold: 0, perk: "Bem-vindo à PagaJá!" },
+  { key: "iniciante", label: "Iniciante", icon: "🌱", threshold: 0, perk: "Bem-vindo à PayNow!" },
   { key: "bronze", label: "Bronze", icon: "🥉", threshold: 1, perk: "Primeira venda confirmada." },
   { key: "prata", label: "Prata", icon: "🥈", threshold: 10, perk: "10 vendas — já é um vendedor de confiança." },
   { key: "ouro", label: "Ouro", icon: "🥇", threshold: 50, perk: "50 vendas — entre os melhores da plataforma." },
-  { key: "diamante", label: "Diamante", icon: "💎", threshold: 200, perk: "200 vendas — nível elite da PagaJá." },
+  { key: "diamante", label: "Diamante", icon: "💎", threshold: 200, perk: "200 vendas — nível elite da PayNow." },
 ];
 
 export interface AchievementProgress {

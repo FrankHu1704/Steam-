@@ -13,7 +13,7 @@ export interface TrustScore {
   categories: TrustScoreCategory[];
 }
 
-// No KYC step in PagaJá, so the 100 points are split across the three
+// No KYC step in PayNow, so the 100 points are split across the three
 // signals we can actually measure: sales history, account age, and the
 // refund/dispute rate.
 const SALES_HISTORY_MAX = 40;

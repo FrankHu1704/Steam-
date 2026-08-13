@@ -101,7 +101,7 @@ export default function DeveloperDocsPage() {
         <div className="mt-3">
           <h1 className="text-2xl font-bold">Documentação da API</h1>
           <p className="text-sm text-muted-foreground">
-            Referência completa da API pública da PagaJá — autenticação, endpoints, webhooks e erros.
+            Referência completa da API pública da PayNow — autenticação, endpoints, webhooks e erros.
           </p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function DeveloperDocsPage() {
 
       <Section id="intro" title="Introdução">
         <p className="text-sm text-muted-foreground">
-          A API da PagaJá deixa integrar a sua própria aplicação ou site com a sua conta de produtor: criar cobranças
+          A API da PayNow deixa integrar a sua própria aplicação ou site com a sua conta de produtor: criar cobranças
           num checkout personalizado, gerir produtos, e receber avisos automáticos de vendas por webhook. É acesso à
           sua própria conta — não é um processador de pagamentos genérico, e não pode aceder a dados de outros
           produtores.
@@ -217,7 +217,7 @@ export default function DeveloperDocsPage() {
           Cria uma cobrança para um dos seus produtos, a partir do checkout personalizado da sua própria app. Com uma
           chave de teste, devolve sempre sucesso instantâneo sem mover dinheiro real. Com uma chave live, cria uma
           venda real — as mesmas taxas, notificações e webhook de <code>payment.completed</code> aplicam-se como no
-          checkout normal da PagaJá.
+          checkout normal da PayNow.
         </p>
         <p className="text-xs font-semibold text-muted-foreground">Corpo do pedido</p>
         <FieldsTable
@@ -253,7 +253,7 @@ export default function DeveloperDocsPage() {
               field: "payment_method",
               type: '"mpesa" | "emola" | "mkesh" | "visa_mastercard"',
               required: "Não",
-              note: 'Padrão "mpesa". Nem todos os métodos estão sempre disponíveis — depende do processador de pagamento ativo da PagaJá nesse momento.',
+              note: 'Padrão "mpesa". Nem todos os métodos estão sempre disponíveis — depende do processador de pagamento ativo da PayNow nesse momento.',
             },
           ]}
         />
@@ -362,7 +362,7 @@ export default function DeveloperDocsPage() {
           <Endpoint method="POST" path="/api/v1/products" />
           <p className="text-sm text-muted-foreground">
             Cria um novo produto (fica com estado <code>pending</code> — precisa de aprovação manual da equipa
-            PagaJá antes de poder vender, tal como um produto criado pelo painel). Não é possível enviar o ficheiro
+            PayNow antes de poder vender, tal como um produto criado pelo painel). Não é possível enviar o ficheiro
             digital do produto por esta API — faça isso no painel depois de criar o registo.
           </p>
           <p className="text-xs font-semibold text-muted-foreground">Corpo do pedido</p>
@@ -555,7 +555,7 @@ export default function DeveloperDocsPage() {
 
       <Section id="webhooks-events" title="Webhooks — eventos recebidos">
         <p className="text-sm text-muted-foreground">
-          Quando uma venda sua é confirmada, a PagaJá envia um <code>POST</code> ao seu endpoint com este corpo:
+          Quando uma venda sua é confirmada, a PayNow envia um <code>POST</code> ao seu endpoint com este corpo:
         </p>
         <Code>{`{
   "event": "payment.completed",

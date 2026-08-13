@@ -88,7 +88,7 @@ export default async function AdminRevenuePage() {
         </div>
         <p className="relative mt-3 text-3xl font-bold">{formatCurrency(revenue.allTime.grossVolume, "MZN")}</p>
         <p className="relative mt-1 text-xs text-white/70">
-          Volume total processado, incluindo o que fica com os produtores — não é lucro da PagaJá.
+          Volume total processado, incluindo o que fica com os produtores — não é lucro da PayNow.
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export default async function AdminRevenuePage() {
           <BadgeMinus className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             "Faturamento total" soma o <code>total_amount</code> de toda venda paga desde sempre — é o volume bruto
-            processado pela plataforma, não o lucro da PagaJá. "Taxas de vendas" soma o{" "}
+            processado pela plataforma, não o lucro da PayNow. "Taxas de vendas" soma o{" "}
             <code>platform_fee_amount</code> guardado em cada encomenda paga (calculado a partir de{" "}
             <code>settings.platform_fee_percent</code> no momento em que foi creditada). "Taxas de saques" soma o{" "}
             <code>fee_amount</code> de cada levantamento já pago ou confirmado. "Comissões de colaboradores" soma o

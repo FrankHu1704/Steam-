@@ -8,12 +8,12 @@ import type { PaymentMethod } from "@/lib/debito-pay";
 const MANUAL_CHARGE_MIN_AMOUNT = 50;
 
 // Lets a producer build their own custom checkout (on their own site/app)
-// instead of using the hosted PagaJá checkout page. Test-mode keys
+// instead of using the hosted PayNow checkout page. Test-mode keys
 // simulate a charge instantly with no real money movement; live-mode keys
 // (require the one-time 300 MZN production unlock, or a free 24h trial)
 // create a real order through the same pipeline as our own checkout, so
 // fees, notifications and the producer's own outgoing webhook all still
-// apply. Pass either "product_id" (charges one of your PagaJá products) or
+// apply. Pass either "product_id" (charges one of your PayNow products) or
 // "amount" (a manual charge with no product behind it, for arbitrary
 // amounts — most external payment-gateway APIs work this way too).
 export async function POST(req: Request) {

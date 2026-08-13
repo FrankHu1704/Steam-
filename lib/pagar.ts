@@ -22,7 +22,7 @@ import type { PaymentMethod } from "@/lib/debito-pay";
 //     deduped (webhooks can be redelivered).
 //   - Payouts (B2C): POST /payouts. Pagar deducts its own fee (documented
 //     example: 8%) from the GROSS amount before the recipient gets it — see
-//     createPayout() below for how PagaJá absorbs that instead of shorting
+//     createPayout() below for how PayNow absorbs that instead of shorting
 //     the recipient.
 
 function baseUrl() {
@@ -79,7 +79,7 @@ function toLocalPhone(raw: string): string {
 }
 
 // Pagar's `reference` only accepts safe ASCII (alphanumeric/hyphen/
-// underscore) — free text like "Levantamento PagaJá" or a producer's name
+// underscore) — free text like "Levantamento PayNow" or a producer's name
 // has accents and other characters that get rejected outright ("reference
 // contém caracteres inválidos"). Strips accents (NFD-decompose then drop
 // the combining marks) before collapsing anything else non-ASCII to "-".
@@ -144,7 +144,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     "/payments",
     {
       reference: input.sourceId,
-      title: "Compra PagaJá",
+      title: "Compra PayNow",
       amountMzn,
       method: input.paymentMethod.toUpperCase(),
       payerPhone: toLocalPhone(input.customerPhone),
@@ -256,11 +256,11 @@ interface PayoutResult {
   error?: string;
 }
 
-/** Sends money OUT from PagaJá's Pagar wallet. Unlike the other providers'
+/** Sends money OUT from PayNow's Pagar wallet. Unlike the other providers'
  * createPayout(), `input.amount` here is treated as the amount the
  * RECIPIENT should net (matching what producers/employees/the CTO are
  * already promised elsewhere in the app) — this grosses the request up so
- * Pagar's own 8% cut comes out of PagaJá's margin, not the recipient's
+ * Pagar's own 8% cut comes out of PayNow's margin, not the recipient's
  * payout. Pagar rounds its fee up to the nearest MZN, so the actual net can
  * land up to ~1 MZN above target; that small slack is absorbed too rather
  * than corrected with a second payout. */
@@ -269,7 +269,7 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
     return { success: false, error: `A Pagar só suporta M-Pesa e e-Mola diretamente (pedido: ${input.method}).` };
   }
 
-  // For very small withdrawals, netting PagaJá's fee then grossing the 8%
+  // For very small withdrawals, netting PayNow's fee then grossing the 8%
   // back up can land under Pagar's own 20 MZN payout floor — clamp up to
   // that floor instead of failing outright, so the recipient gets slightly
   // MORE than promised (never less) and the payout still auto-dispatches.
@@ -283,10 +283,10 @@ export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
     "/payouts",
     {
       reference,
-      description: input.notes || "Levantamento PagaJá",
+      description: input.notes || "Levantamento PayNow",
       amountMzn: grossAmountMzn,
       method: input.method.toUpperCase(),
-      recipient: { phone: toLocalPhone(input.destination), name: input.recipientName || "Destinatário PagaJá" },
+      recipient: { phone: toLocalPhone(input.destination), name: input.recipientName || "Destinatário PayNow" },
     },
     `payout:${reference}`
   );

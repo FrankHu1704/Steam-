@@ -16,7 +16,7 @@ export async function saveSubscription(subscription: PushSubscriptionInput): Pro
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
 
-  // A push endpoint belongs to this browser/device, not to one PagaJá
+  // A push endpoint belongs to this browser/device, not to one PayNow
   // account — if the same device previously enabled notifications under a
   // different account (e.g. tested as producer, now enabling as admin),
   // the row already exists owned by that other user_id, and RLS's USING

@@ -1,4 +1,4 @@
-# PagaJá — Venda os seus infoprodutos em minutos
+# PayNow — Venda os seus infoprodutos em minutos
 
 Plataforma SaaS moçambicana para venda de infoprodutos (eBooks, cursos,
 templates, presets, software, scripts, mentorias, documentos), construída

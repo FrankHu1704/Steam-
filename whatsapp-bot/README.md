@@ -1,13 +1,13 @@
-# Assistente PagaJá no WhatsApp
+# Assistente PayNow no WhatsApp
 
 Bot standalone (Baileys + Groq) que responde a quem escrever ao número de
-WhatsApp da PagaJá. Corre como um processo separado — **não faz parte do
+WhatsApp da PayNow. Corre como um processo separado — **não faz parte do
 deploy do site na Vercel**, porque precisa de manter uma ligação aberta ao
 WhatsApp e uma sessão gravada em disco, o que a Vercel não suporta.
 
 As conversas ficam gravadas no mesmo Supabase do site, na tabela
 `whatsapp_bot_messages`, e aparecem em **Admin → Assistente WhatsApp** no
-painel da PagaJá.
+painel da PayNow.
 
 ## Configurar (Termux)
 
@@ -29,7 +29,7 @@ npm start
 ```
 
 Na primeira vez, o script mostra um **QR code** no terminal. No telemóvel
-que vai ser o número oficial da PagaJá:
+que vai ser o número oficial da PayNow:
 
 1. WhatsApp → Configurações → Aparelhos conectados
 2. Conectar aparelho
@@ -55,6 +55,6 @@ pm2 save
 
 ## Âmbito
 
-Este assistente responde só sobre a PagaJá (o que é, taxas, como
+Este assistente responde só sobre a PayNow (o que é, taxas, como
 vender/comprar, links do site) — não faz música, imagens ou transcrição de
 áudio. Nunca menciona por trás de que tecnologia de IA corre.

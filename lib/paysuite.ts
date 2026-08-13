@@ -98,7 +98,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
     amount: Math.round(input.amount * 100) / 100,
     method,
     reference: input.sourceId.slice(0, 50),
-    description: "Compra PagaJá",
+    description: "Compra PayNow",
     ...(input.returnUrl ? { return_url: input.returnUrl } : {}),
     ...(webhookUrl ? { webhook_url: webhookUrl } : {}),
   });

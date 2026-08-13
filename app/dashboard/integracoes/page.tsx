@@ -53,7 +53,7 @@ export default async function IntegrationsPage() {
       iconClass: "bg-primary/10 text-primary",
       name: "Campanhas & UTMs",
       description: "Veja de onde vêm as suas vendas: origem, meio e campanha.",
-      status: "Sistema próprio da PagaJá",
+      status: "Sistema próprio da PayNow",
       active: true,
       href: "/dashboard/campaigns",
     },

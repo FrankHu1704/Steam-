@@ -25,7 +25,7 @@ export function ProductCardActions({ slug, title }: { slug: string; title: strin
     const link = getLink();
     if (navigator.share) {
       try {
-        await navigator.share({ title, text: `Confira "${title}" na PagaJá:`, url: link });
+        await navigator.share({ title, text: `Confira "${title}" na PayNow:`, url: link });
       } catch {
         // user cancelled — no-op
       }

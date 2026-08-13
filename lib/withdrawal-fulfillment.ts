@@ -8,7 +8,7 @@ import { sendWithdrawalRequestedEmail } from "@/lib/email";
 // this returns ok:false without touching the withdrawal's status, so it
 // stays "pending" for the admin to pay manually. Uses whichever payment
 // provider is currently active, since that's whichever one actually holds
-// PagaJá's merchant wallet balance.
+// PayNow's merchant wallet balance.
 export async function payWithdrawalB2C(
   withdrawalId: string
 ): Promise<{ ok: boolean; error?: string; reference?: string }> {
@@ -60,7 +60,7 @@ export async function payWithdrawalB2C(
     method: withdrawal.payout_method as "mpesa" | "emola",
     amount: withdrawal.net_amount,
     destination: withdrawal.destination,
-    notes: `Levantamento PagaJá ${withdrawal.id}`,
+    notes: `Levantamento PayNow ${withdrawal.id}`,
     recipientName: producerName,
     autoDispatch: true,
   });
@@ -73,7 +73,7 @@ export async function payWithdrawalB2C(
 
   const reference = result.providerReference ?? result.reference;
   // Only populated when the provider tells us it took an extra cut beyond
-  // what the recipient received (currently just Pagar's B2C fee) — PagaJá
+  // what the recipient received (currently just Pagar's B2C fee) — PayNow
   // absorbed it already by grossing up the request, so this is purely for
   // the profit calculation to count it as a real cost instead of it
   // silently vanishing.

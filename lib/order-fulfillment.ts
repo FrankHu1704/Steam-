@@ -73,7 +73,7 @@ export async function creditOrder(orderId: string): Promise<void> {
 
     // Employee/collaborator recruiter commission — 5% of the sale for the
     // first 3 months after the producer signed up via their link, capped at
-    // what PagaJá actually earned as its own platform fee on this order so
+    // what PayNow actually earned as its own platform fee on this order so
     // this can never push the platform's own take on the sale negative.
     if (producer?.recruited_by_employee_id) {
       const recruitedUntil = new Date(producer.created_at);
@@ -132,7 +132,7 @@ export async function creditOrder(orderId: string): Promise<void> {
 
         // Producer/affiliate-recruiter reward — 3% of the sale for the first
         // month after this affiliate signed up via a producer's referral
-        // link, capped at what PagaJá earned as its own platform fee on this
+        // link, capped at what PayNow earned as its own platform fee on this
         // order (same safety cap as the employee recruiter commission above),
         // so it's always funded by the platform's own take, never by the
         // affiliate or the selling producer.
@@ -187,7 +187,7 @@ export async function creditOrder(orderId: string): Promise<void> {
   }
 
   // Recorded unconditionally, even if the block above partly failed — a
-  // sale PagaJá actually processed must always show up in platform revenue.
+  // sale PayNow actually processed must always show up in platform revenue.
   // A failure logged above still needs a human to check the producer's
   // balance/downloads for this order, but it must never also hide the sale
   // from Admin -> Receita (platform_fee_amount used to be written last,
@@ -342,7 +342,7 @@ export async function creditOrder(orderId: string): Promise<void> {
 
 // Called whenever a paid order is refunded or charged back by the payment
 // processor — claws back whatever creditOrder() paid out, so a producer's
-// balance can't silently stay inflated by money PagaJá no longer actually
+// balance can't silently stay inflated by money PayNow no longer actually
 // holds. Idempotent via refunded_at, mirroring credited_at on creditOrder.
 export async function refundOrder(orderId: string): Promise<void> {
   const supabase = createAdminClient();

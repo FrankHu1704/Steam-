@@ -30,7 +30,7 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
         <div className="bg-brand-gradient px-6 py-8 text-center text-white">
           <p className="text-lg font-bold">
-            Paga<span className="opacity-90">Já</span>
+            Pay<span className="opacity-90">Now</span>
           </p>
         </div>
 

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chatCompletion, type ChatMessage } from "@/lib/groq";
 
-const SYSTEM_PROMPT = `Você é o assistente de suporte da PagaJá, plataforma moçambicana de venda de infoprodutos digitais (eBooks, cursos, mentorias, ficheiros). Fale sempre em português, tom simpático e direto. Responde em no máximo 120 palavras, sem markdown (sem ** ou #).
+const SYSTEM_PROMPT = `Você é o assistente de suporte da PayNow, plataforma moçambicana de venda de infoprodutos digitais (eBooks, cursos, mentorias, ficheiros). Fale sempre em português, tom simpático e direto. Responde em no máximo 120 palavras, sem markdown (sem ** ou #).
 
 O que sabe sobre a plataforma:
 - Saldo e saques: em "Financeiro" ou "Saques" no menu — o produtor guarda uma carteira M-Pesa/e-Mola e pede levantamento; normalmente processado em minutos (B2C automático) ou até 48h se for manual.

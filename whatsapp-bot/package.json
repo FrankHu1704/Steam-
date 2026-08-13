@@ -2,7 +2,7 @@
   "name": "pagaja-whatsapp-bot",
   "version": "1.0.0",
   "private": true,
-  "description": "Assistente da PagaJá no WhatsApp — liga via Baileys, responde com Groq, grava o histórico no Supabase.",
+  "description": "Assistente da PayNow no WhatsApp — liga via Baileys, responde com Groq, grava o histórico no Supabase.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

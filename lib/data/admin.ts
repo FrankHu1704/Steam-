@@ -366,7 +366,7 @@ export async function getPlatformRevenue(): Promise<PlatformRevenue> {
   }
 
   // Extra cut a payout processor takes on top (currently only Pagar's 8%
-  // e-Mola B2C fee) — PagaJá absorbed it already so the recipient wasn't
+  // e-Mola B2C fee) — PayNow absorbed it already so the recipient wasn't
   // shorted, so it belongs here as a real cost, same bucket as the
   // withdrawal fees above.
   for (const ep of employeePayouts ?? []) {

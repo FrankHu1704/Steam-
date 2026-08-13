@@ -210,7 +210,7 @@ function WalletModal({
             <X className="h-5 w-5" />
           </button>
           <p className="font-bold">{existingWallet ? "Editar Carteira" : "Nova Carteira de Saque"}</p>
-          <p className="mt-0.5 text-xs text-white/70">Guardada com segurança na sua conta PagaJá.</p>
+          <p className="mt-0.5 text-xs text-white/70">Guardada com segurança na sua conta PayNow.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 p-6">

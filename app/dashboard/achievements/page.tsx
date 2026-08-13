@@ -175,7 +175,7 @@ export default async function AchievementsPage() {
       <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
         <Gift className="h-4 w-4 shrink-0 text-primary" />
         <p>
-          Os prémios físicos são enviados manualmente pela equipa PagaJá depois de atingir cada valor de
+          Os prémios físicos são enviados manualmente pela equipa PayNow depois de atingir cada valor de
           faturamento — entraremos em contacto para combinar a entrega.
         </p>
       </div>

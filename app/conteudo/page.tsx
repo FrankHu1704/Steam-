@@ -3,8 +3,8 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-  title: "Política de Conteúdo — PagaJá",
-  description: "Regras sobre o que pode e não pode ser vendido na PagaJá.",
+  title: "Política de Conteúdo — PayNow",
+  description: "Regras sobre o que pode e não pode ser vendido na PayNow.",
 };
 
 const PROHIBITED_ITEMS = [
@@ -27,7 +27,7 @@ export default function ConteudoPage() {
       <main className="container max-w-3xl py-16">
         <h1 className="text-3xl font-bold">Política de Conteúdo</h1>
         <p className="mt-3 text-muted-foreground">
-          A PagaJá existe para democratizar o acesso ao conhecimento e gerar oportunidades de rendimento de forma
+          A PayNow existe para democratizar o acesso ao conhecimento e gerar oportunidades de rendimento de forma
           ética. Para isso, todo o conteúdo vendido na plataforma deve respeitar a lei moçambicana e os direitos de
           terceiros.
         </p>
@@ -60,7 +60,7 @@ export default function ConteudoPage() {
         </div>
 
         <p className="mt-8 text-sm text-muted-foreground">
-          Se encontrar um produto que viole esta política, contacte o suporte da PagaJá para que possamos analisar.
+          Se encontrar um produto que viole esta política, contacte o suporte da PayNow para que possamos analisar.
         </p>
       </main>
       <SiteFooter />

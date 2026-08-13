@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 // Server-only module — never import from a "use client" file.
-// Reused lessons from the earlier PagaJá build: each Debito Pay wallet is
+// Reused lessons from the earlier PayNow build: each Debito Pay wallet is
 // bound to one payment_method, and mobile-money charges need a plain
 // "phone" field (not just customer_phone) or they fail with
 // "Phone number required".
@@ -126,7 +126,7 @@ function mozPhoneWithCountryCode(raw: string): string {
   return `258${digits.slice(-9)}`;
 }
 
-/** Sends money OUT from PagaJá's Debito Pay M-Pesa wallet to a producer's
+/** Sends money OUT from PayNow's Debito Pay M-Pesa wallet to a producer's
  * phone — per their docs, payouts only support M-Pesa, debit the wallet's
  * matured (D+1) balance, and are reverted automatically by Debito Pay if
  * the provider (Vodacom) rejects the request. */
@@ -173,7 +173,7 @@ export interface WalletBalance {
 }
 
 /** GET /wallet-balance — returns every wallet belonging to the merchant
- * behind the configured API key; filtered down to the two methods PagaJá
+ * behind the configured API key; filtered down to the two methods PayNow
  * cares about. */
 export async function getWalletBalances(): Promise<WalletBalance[]> {
   const res = await fetch(`${baseUrl()}/wallet-balance`, {

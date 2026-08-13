@@ -126,12 +126,12 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
   // Card (Visa/Mastercard): hosted checkout (3DS/OTP).
   const { status, body } = await request("POST", "/payments", {
     type: "link",
-    title: "PagaJá",
+    title: "PayNow",
     amount: input.amount,
     currency: input.currency,
     channels: ["card"],
     wallet_id: walletId,
-    description: "Compra na PagaJá",
+    description: "Compra na PayNow",
     source: "pagaja",
     source_id: input.sourceId,
     return_url: input.returnUrl,
@@ -203,9 +203,9 @@ interface PayoutResult {
   error?: string;
 }
 
-/** Sends money OUT from PagaJá's own ZumboPay wallet to a producer's phone
+/** Sends money OUT from PayNow's own ZumboPay wallet to a producer's phone
  * — the payout side, used to automate withdrawal payouts. Real money
- * movement: requires the PagaJá merchant account to have passed KYC. */
+ * movement: requires the PayNow merchant account to have passed KYC. */
 export async function createPayout(input: PayoutInput): Promise<PayoutResult> {
   const walletId =
     input.method === "mpesa" ? process.env.ZUMBOPAY_WALLET_MPESA : process.env.ZUMBOPAY_WALLET_EMOLA;

@@ -14,10 +14,10 @@ export interface PrizeTier {
 // producer_prize_deliveries), not auto-granted like the sales-count badges
 // in lib/data/achievements.ts.
 export const PRIZE_TIERS: PrizeTier[] = [
-  { key: "agenda_25k", label: "25 mil MT", threshold: 25_000, prize: "Agenda PagaJá", icon: "📔" },
-  { key: "placa_100k", label: "100 mil MT", threshold: 100_000, prize: "Placa PagaJá", icon: "🏅" },
-  { key: "placa_500k", label: "500 mil MT", threshold: 500_000, prize: "Placa PagaJá", icon: "🏆" },
-  { key: "placa_1m", label: "1 milhão MT", threshold: 1_000_000, prize: "Placa PagaJá", icon: "👑" },
+  { key: "agenda_25k", label: "25 mil MT", threshold: 25_000, prize: "Agenda PayNow", icon: "📔" },
+  { key: "placa_100k", label: "100 mil MT", threshold: 100_000, prize: "Placa PayNow", icon: "🏅" },
+  { key: "placa_500k", label: "500 mil MT", threshold: 500_000, prize: "Placa PayNow", icon: "🏆" },
+  { key: "placa_1m", label: "1 milhão MT", threshold: 1_000_000, prize: "Placa PayNow", icon: "👑" },
 ];
 
 export interface PrizeProgress {

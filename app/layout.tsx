@@ -8,16 +8,16 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const SITE_URL = "https://pagaja.site";
-const TITLE = "PagaJá — Venda os seus infoprodutos em minutos";
+const TITLE = "PayNow — Venda os seus infoprodutos em minutos";
 const DESCRIPTION =
-  "PagaJá é a plataforma moçambicana para vender eBooks, cursos online, mentorias, ficheiros digitais e muito mais. Pagamentos via M-Pesa e e-Mola, saques instantâneos.";
+  "PayNow é a plataforma moçambicana para vender eBooks, cursos online, mentorias, ficheiros digitais e muito mais. Pagamentos via M-Pesa e e-Mola, saques instantâneos.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: TITLE, template: "%s — PagaJá" },
+  title: { default: TITLE, template: "%s — PayNow" },
   description: DESCRIPTION,
   keywords: [
-    "PagaJá",
+    "PayNow",
     "pagaja.site",
     "infoprodutos Moçambique",
     "vender eBooks Moçambique",
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_MZ",
     url: SITE_URL,
-    siteName: "PagaJá",
+    siteName: "PayNow",
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "PagaJá" }],
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "PayNow" }],
   },
   twitter: {
     card: "summary",
@@ -47,9 +47,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PagaJá",
+    title: "PayNow",
   },
   icons: {
+    icon: "/icons/icon-192.png",
     apple: "/icons/apple-touch-icon.png",
   },
   verification: {

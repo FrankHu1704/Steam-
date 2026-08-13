@@ -56,7 +56,7 @@ export default async function DashboardAffiliatesPage() {
         <div>
           <h2 className="text-lg font-semibold">Traga afiliados</h2>
           <p className="text-sm text-muted-foreground">
-            Partilhe o seu link e ganhe 3% de cada venda que a pessoa fizer como afiliado na PagaJá — de qualquer
+            Partilhe o seu link e ganhe 3% de cada venda que a pessoa fizer como afiliado na PayNow — de qualquer
             produto, de qualquer produtor — durante o primeiro mês depois de se registar.
           </p>
         </div>

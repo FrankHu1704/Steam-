@@ -51,7 +51,7 @@ export function PixelCapiTokenField({
     <div className="mt-3 rounded-xl border border-border p-3">
       <Label htmlFor="fbCapiToken">Facebook Access Token (API de Conversões)</Label>
       <p className="mb-2 mt-0.5 text-xs text-muted-foreground">
-        Envia o evento &quot;Compra&quot; também pelo servidor, confirmado pela PagaJá — não só pelo navegador do
+        Envia o evento &quot;Compra&quot; também pelo servidor, confirmado pela PayNow — não só pelo navegador do
         cliente — para o Facebook aprender melhor quem realmente compra e atrair mais pessoas parecidas. Gere em
         Gestor de Eventos → esta fonte de dados → API de Conversões → Gerar token de acesso.
       </p>

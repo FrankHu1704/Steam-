@@ -19,7 +19,7 @@ export function AuthCard({
       <div className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-secondary opacity-10 blur-3xl" />
       <div className="relative w-full max-w-md">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-bold">
-          Paga<span className="text-gradient">Já</span>
+          Pay<span className="text-gradient">Now</span>
         </Link>
         <div className="glass rounded-2xl p-8 shadow-xl">
           <h1 className="text-2xl font-bold">{title}</h1>

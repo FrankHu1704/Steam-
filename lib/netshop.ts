@@ -187,7 +187,7 @@ interface PayoutResult {
   error?: string;
 }
 
-/** Sends money OUT from PagaJá's NetShop wallet to a producer's phone — per
+/** Sends money OUT from PayNow's NetShop wallet to a producer's phone — per
  * NetShop's docs this is the only one of our three processors whose B2C
  * supports both M-Pesa AND e-Mola, with no minimum amount. Debits only the
  * wallet's settled balance; over-the-balance requests are rejected with

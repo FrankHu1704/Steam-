@@ -27,11 +27,11 @@ export function ApiLogTerminal({
         <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
         <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
         <span className="ml-2 truncate text-[11px] text-zinc-500">
-          {producerName.toLowerCase().replace(/\s+/g, "-")}@pagaja-api:~$
+          {producerName.toLowerCase().replace(/\s+/g, "-")}@paynow-api:~$
         </span>
       </div>
       <div className="max-h-[560px] space-y-1 overflow-y-auto p-4 leading-relaxed text-zinc-300">
-        <p className="text-zinc-500"># tail -n {logs.length} /var/log/pagaja/api/{producerId}.log</p>
+        <p className="text-zinc-500"># tail -n {logs.length} /var/log/paynow/api/{producerId}.log</p>
         {logs.length === 0 ? (
           <p className="text-zinc-600">-- sem chamadas registadas --</p>
         ) : (

@@ -161,7 +161,7 @@ export async function requestProductionUnlock(
       amount: PRODUCTION_UNLOCK_AMOUNT,
       currency: "MZN",
       sourceId: unlock.id,
-      customerName: profile?.name ?? "Produtor PagaJá",
+      customerName: profile?.name ?? "Produtor PayNow",
       customerEmail: profile?.email ?? "",
       customerPhone: phone,
     });

@@ -7,7 +7,7 @@ import { creditMonthlyCtoShare } from "@/lib/cto";
 // employee's accrued recruiter commission automatically via B2C. M-Pesa is
 // preferred (auto-dispatchable on every processor); e-Mola-only employees
 // route through Pagar specifically, which absorbs its own payout fee into
-// PagaJá's margin (see PAGAR_PAYOUT_FEE_RATE in lib/pagar.ts) so the
+// PayNow's margin (see PAGAR_PAYOUT_FEE_RATE in lib/pagar.ts) so the
 // employee still gets their full accrued balance. An employee with neither
 // number set gets a "failed" record so an admin can pay them manually.
 export async function GET(request: Request) {
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
         method,
         amount,
         destination,
-        notes: `Comissão PagaJá — colaborador ${employee.name}`,
+        notes: `Comissão PayNow — colaborador ${employee.name}`,
         recipientName: employee.name,
         autoDispatch: true,
       });

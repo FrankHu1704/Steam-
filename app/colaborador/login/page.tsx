@@ -86,7 +86,7 @@ export default function EmployeeLoginPage() {
   return (
     <AuthCard
       title="Área de Colaboradores"
-      subtitle="Acesso exclusivo para colaboradores PagaJá"
+      subtitle="Acesso exclusivo para colaboradores PayNow"
       footer={
         <>
           Ainda não é colaborador?{" "}

@@ -90,7 +90,7 @@ export async function sendPaymentConfirmedSms(input: {
   currency: string;
 }) {
   const amountLabel = `${input.amount % 1 === 0 ? input.amount : input.amount.toFixed(2)} ${input.currency}`;
-  const body = `🎉 VENDA CONFIRMADA! +${amountLabel} foram adicionados à sua conta PagaJá. 💰 Continue vendendo e aumente seus ganhos! 🚀`;
+  const body = `🎉 VENDA CONFIRMADA! +${amountLabel} foram adicionados à sua conta PayNow. 💰 Continue vendendo e aumente seus ganhos! 🚀`;
 
   await sendEasyhostSms(input.phone, body);
 }

@@ -159,10 +159,10 @@ export async function improveDescriptionWithGroq(
   currentDescription: string
 ): Promise<{ description?: string; error?: string }> {
   const prompt = currentDescription.trim()
-    ? `Você é a LunaAI, assistente de vendas da PagaJá. Reescreva a descrição abaixo do produto "${title}" para ser mais persuasiva e clara, mantendo as informações reais que o produtor já deu (não invente factos, números ou promessas que não estão lá). Português, tom direto, para o mercado moçambicano. Responde APENAS com o texto da nova descrição, sem markdown, sem aspas, sem comentários.
+    ? `Você é a LunaAI, assistente de vendas da PayNow. Reescreva a descrição abaixo do produto "${title}" para ser mais persuasiva e clara, mantendo as informações reais que o produtor já deu (não invente factos, números ou promessas que não estão lá). Português, tom direto, para o mercado moçambicano. Responde APENAS com o texto da nova descrição, sem markdown, sem aspas, sem comentários.
 
 Descrição atual: """${currentDescription.trim()}"""`
-    : `Você é a LunaAI, assistente de vendas da PagaJá. Escreva uma descrição de vendas persuasiva (3-5 frases) para um infoproduto chamado "${title}", vendido no mercado moçambicano. Como não há mais detalhes, mantenha-a genérica mas convincente, sem inventar factos específicos (números, resultados, prazos). Responde APENAS com o texto da descrição, sem markdown, sem aspas.`;
+    : `Você é a LunaAI, assistente de vendas da PayNow. Escreva uma descrição de vendas persuasiva (3-5 frases) para um infoproduto chamado "${title}", vendido no mercado moçambicano. Como não há mais detalhes, mantenha-a genérica mas convincente, sem inventar factos específicos (números, resultados, prazos). Responde APENAS com o texto da descrição, sem markdown, sem aspas.`;
 
   const result = await chatCompletion([{ role: "user", content: prompt }], { temperature: 0.7, maxTokens: 350 });
   if (result.error || !result.text) return { error: result.error ?? GENERIC_ERROR };
@@ -182,7 +182,7 @@ export interface CheckoutCopyResult {
 export async function generateCheckoutCopyWithGroq(
   rawDescription: string
 ): Promise<{ result?: CheckoutCopyResult; error?: string }> {
-  const prompt = `Você é a LunaAI, assistente de vendas da PagaJá (plataforma moçambicana de infoprodutos). Um produtor descreveu, nas próprias palavras, o que está a vender através de um link de pagamento direto. Escreva uma versão persuasiva para a página de checkout.
+  const prompt = `Você é a LunaAI, assistente de vendas da PayNow (plataforma moçambicana de infoprodutos). Um produtor descreveu, nas próprias palavras, o que está a vender através de um link de pagamento direto. Escreva uma versão persuasiva para a página de checkout.
 
 Descrição do produtor: """${rawDescription}"""
 

@@ -49,7 +49,7 @@ export function TrustScoreCard({ score }: { score: TrustScore }) {
           <ScoreRing percent={score.total} />
           <div>
             <p className="font-semibold">{qualification}</p>
-            <p className="text-sm text-muted-foreground">Score calculado com base na sua atividade na PagaJá.</p>
+            <p className="text-sm text-muted-foreground">Score calculado com base na sua atividade na PayNow.</p>
           </div>
         </div>
 

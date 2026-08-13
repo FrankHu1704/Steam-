@@ -3,8 +3,8 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-  title: "Termos de Serviço — PagaJá",
-  description: "Termos e condições de utilização da plataforma PagaJá.",
+  title: "Termos de Serviço — PayNow",
+  description: "Termos e condições de utilização da plataforma PayNow.",
 };
 
 export default function TermosPage() {
@@ -17,9 +17,9 @@ export default function TermosPage() {
 
         <div className="mt-8 space-y-8 text-sm leading-relaxed text-muted-foreground">
           <section>
-            <h2 className="text-lg font-semibold text-foreground">1. Sobre a PagaJá</h2>
+            <h2 className="text-lg font-semibold text-foreground">1. Sobre a PayNow</h2>
             <p className="mt-2">
-              A PagaJá é uma plataforma moçambicana que permite a produtores criar, vender e entregar infoprodutos
+              A PayNow é uma plataforma moçambicana que permite a produtores criar, vender e entregar infoprodutos
               digitais (eBooks, cursos, mentorias, templates, software e outros ficheiros digitais) a compradores,
               com pagamento por M-Pesa, e-Mola, mKesh, cartão e outros métodos suportados.
             </p>
@@ -28,7 +28,7 @@ export default function TermosPage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground">2. Contas e elegibilidade</h2>
             <p className="mt-2">
-              Para vender na PagaJá é necessário criar uma conta com dados verdadeiros. É responsável por manter a
+              Para vender na PayNow é necessário criar uma conta com dados verdadeiros. É responsável por manter a
               confidencialidade da sua password e por toda a atividade realizada através da sua conta.
             </p>
           </section>
@@ -36,7 +36,7 @@ export default function TermosPage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground">3. Moderação de produtos</h2>
             <p className="mt-2">
-              Todo o produto submetido passa por revisão antes de ficar disponível para venda. A PagaJá reserva-se
+              Todo o produto submetido passa por revisão antes de ficar disponível para venda. A PayNow reserva-se
               o direito de rejeitar, pausar ou remover qualquer produto que viole estes Termos ou a nossa{" "}
               <Link href="/conteudo" className="font-medium text-primary hover:underline">
                 Política de Conteúdo
@@ -48,7 +48,7 @@ export default function TermosPage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground">4. Pagamentos, taxas e saques</h2>
             <p className="mt-2">
-              A PagaJá cobra uma percentagem sobre cada venda e sobre cada levantamento, detalhadas na nossa página
+              A PayNow cobra uma percentagem sobre cada venda e sobre cada levantamento, detalhadas na nossa página
               de{" "}
               <Link href="/taxas" className="font-medium text-primary hover:underline">
                 Taxas
@@ -83,7 +83,7 @@ export default function TermosPage() {
           <section>
             <h2 className="text-lg font-semibold text-foreground">7. Isenção de responsabilidade</h2>
             <p className="mt-2">
-              A PagaJá atua como intermediária entre produtores e compradores. Não somos responsáveis pelo conteúdo,
+              A PayNow atua como intermediária entre produtores e compradores. Não somos responsáveis pelo conteúdo,
               qualidade ou veracidade dos produtos vendidos por terceiros na plataforma.
             </p>
           </section>

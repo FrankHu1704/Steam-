@@ -17,7 +17,7 @@ export default async function DeveloperPage() {
         <div>
           <h1 className="text-2xl font-bold">Programador</h1>
           <p className="text-sm text-muted-foreground">
-            Integre a sua conta PagaJá com as suas próprias ferramentas via API.
+            Integre a sua conta PayNow com as suas próprias ferramentas via API.
           </p>
         </div>
         <Link

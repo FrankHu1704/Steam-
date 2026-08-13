@@ -35,7 +35,7 @@ export default async function AdminOverviewPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Painel Administrativo</h1>
-        <p className="text-sm text-muted-foreground">Visão geral da plataforma PagaJá.</p>
+        <p className="text-sm text-muted-foreground">Visão geral da plataforma PayNow.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

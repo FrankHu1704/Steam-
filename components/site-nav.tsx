@@ -5,7 +5,7 @@ import { InstallAppButton } from "@/components/install-app-button";
 
 const LINKS = [
   { href: "#recursos", label: "Recursos" },
-  { href: "#diferenciais", label: "Porque a PagaJá" },
+  { href: "#diferenciais", label: "Porque a PayNow" },
   { href: "#como-funciona", label: "Como Funciona" },
   { href: "#beneficios", label: "Benefícios" },
   { href: "#metodos", label: "Métodos de Pagamento" },
@@ -17,7 +17,7 @@ export function SiteNav() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <nav className="container flex items-center justify-between py-4">
         <Link href="/" className="text-lg font-bold">
-          Paga<span className="text-gradient">Já</span>
+          Pay<span className="text-gradient">Now</span>
         </Link>
         <div className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
           {LINKS.map((l) =>

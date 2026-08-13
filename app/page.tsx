@@ -15,12 +15,12 @@ import {
 const ORGANIZATION_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "PagaJá",
-  alternateName: "PagaJá Moçambique",
+  name: "PayNow",
+  alternateName: "PayNow Moçambique",
   url: "https://pagaja.site",
   logo: "https://pagaja.site/icons/icon-512.png",
   description:
-    "PagaJá é a plataforma moçambicana para vender infoprodutos digitais — eBooks, cursos online, mentorias e ficheiros digitais — com pagamentos via M-Pesa e e-Mola.",
+    "PayNow é a plataforma moçambicana para vender infoprodutos digitais — eBooks, cursos online, mentorias e ficheiros digitais — com pagamentos via M-Pesa e e-Mola.",
   areaServed: "MZ",
   sameAs: [
     "https://www.instagram.com/pagaja.co.mz",

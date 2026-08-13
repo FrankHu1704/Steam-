@@ -45,7 +45,7 @@ export default async function AdminPrizesPage() {
         <h1 className="text-2xl font-bold">Premiações</h1>
         <p className="text-sm text-muted-foreground">
           Resumo de tudo já conquistado na plataforma, e produtores que ainda aguardam o prémio físico (agenda ou
-          placa PagaJá).
+          placa PayNow).
         </p>
       </div>
 

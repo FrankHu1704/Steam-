@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order } from "@/types/database";
 
 // Outgoing webhook fired to a producer's own configured endpoint when one
-// of their sales is confirmed — lets them integrate PagaJá with their own
+// of their sales is confirmed — lets them integrate PayNow with their own
 // tools, same shape as the /api/v1/webhooks the producer registers via the
 // developer API. Best-effort: a failure here must never break order
 // crediting, but a failed delivery is now queued into webhook_deliveries

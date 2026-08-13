@@ -12,7 +12,7 @@ export default async function AdminWhatsappBotPage() {
       <div>
         <h1 className="text-2xl font-bold">Assistente WhatsApp</h1>
         <p className="text-sm text-muted-foreground">
-          Conversas com o assistente automático da PagaJá no WhatsApp.
+          Conversas com o assistente automático da PayNow no WhatsApp.
         </p>
       </div>
 
@@ -23,7 +23,7 @@ export default async function AdminWhatsappBotPage() {
               <MessageCircle className="h-8 w-8 text-muted-foreground" />
               <p className="font-medium">Ainda sem conversas</p>
               <p className="text-sm text-muted-foreground">
-                Assim que alguém escrever ao número de WhatsApp da PagaJá, a conversa aparece aqui.
+                Assim que alguém escrever ao número de WhatsApp da PayNow, a conversa aparece aqui.
               </p>
             </div>
           ) : (

@@ -56,9 +56,9 @@ export async function sendBuyerWhatsappReceipt(input: {
 }) {
   const sellerLabel = input.supportName ?? "o vendedor";
   const disclaimer =
-    `\n\nA PagaJá é apenas o sistema de pagamentos usado por ${sellerLabel} para processar esta compra. Não somos donos nem responsáveis pelo produto ou serviço vendido — para dúvidas sobre o conteúdo, contacte diretamente o vendedor. Contacte a PagaJá apenas para reclamações relacionadas com o pagamento, ou para reportar fraude.` +
+    `\n\nA PayNow é apenas o sistema de pagamentos usado por ${sellerLabel} para processar esta compra. Não somos donos nem responsáveis pelo produto ou serviço vendido — para dúvidas sobre o conteúdo, contacte diretamente o vendedor. Contacte a PayNow apenas para reclamações relacionadas com o pagamento, ou para reportar fraude.` +
     (input.supportContact ? `\nContacto do vendedor: ${input.supportContact}` : "");
 
-  const message = `Pagamento Confirmado!\n\nProduto: ${input.productTitle}\n\nAcesse o seu conteúdo pelo link abaixo:\n${input.accessUrl}\n\nObrigado pela sua compra!\n— PagaJá${disclaimer}`;
+  const message = `Pagamento Confirmado!\n\nProduto: ${input.productTitle}\n\nAcesse o seu conteúdo pelo link abaixo:\n${input.accessUrl}\n\nObrigado pela sua compra!\n— PayNow${disclaimer}`;
   await sendWhatsapp(input.phone, message);
 }

@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Server-only. Backs the public /api/v1/* developer API: OAuth
 // client-credentials keys exchanged for short-lived opaque bearer tokens.
 // Modeled after external gateway APIs (products/offers/orders/webhooks)
-// so producers can integrate PagaJá with their own tools — this is
+// so producers can integrate PayNow with their own tools — this is
 // read/manage access to a producer's own data, not a payment processor.
 
 // Producers kept hitting "token inválido ou expirado" from integrations

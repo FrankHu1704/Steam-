@@ -38,7 +38,7 @@ export function BroadcastForm({ userCount }: { userCount: number }) {
         <Label htmlFor="broadcast-subject">Assunto</Label>
         <Input
           id="broadcast-subject"
-          placeholder="Novidades na PagaJá"
+          placeholder="Novidades na PayNow"
           required
           value={subject}
           onChange={(e) => setSubject(e.target.value)}

@@ -37,7 +37,7 @@ export default async function AdminWithdrawalsPage() {
           <CardContent className="flex flex-wrap items-center gap-4 p-6">
             <ProcessorSelect active={providerName} />
             <p className="text-xs text-muted-foreground">
-              Define qual processador é usado no checkout e nos levantamentos automáticos (B2C) da PagaJá.
+              Define qual processador é usado no checkout e nos levantamentos automáticos (B2C) da PayNow.
             </p>
           </CardContent>
         </Card>

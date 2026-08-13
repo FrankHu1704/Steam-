@@ -96,9 +96,9 @@ export default async function ColaboradorOverviewPage() {
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div>
-            <p className="font-semibold">Siga as redes sociais da PagaJá</p>
+            <p className="font-semibold">Siga as redes sociais da PayNow</p>
             <p className="text-sm text-muted-foreground">
-              É obrigatório seguir o Instagram e o TikTok oficiais da PagaJá.
+              É obrigatório seguir o Instagram e o TikTok oficiais da PayNow.
             </p>
           </div>
           <div className="flex gap-2">
@@ -139,7 +139,7 @@ export default async function ColaboradorOverviewPage() {
             </p>
             <p>• O saldo acumulado é pago automaticamente todo dia 1 do mês, via M-Pesa.</p>
             <p>• "A produzir" conta produtores recrutados que já têm pelo menos um produto aprovado.</p>
-            <p>• É obrigatório seguir o Instagram e o TikTok oficiais da PagaJá.</p>
+            <p>• É obrigatório seguir o Instagram e o TikTok oficiais da PayNow.</p>
           </CardContent>
         </Card>
 
@@ -167,7 +167,7 @@ export default async function ColaboradorOverviewPage() {
                 .join(" · ") || "—"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Encontrou algum dado errado? Contacte o administrador da PagaJá para corrigir.
+              Encontrou algum dado errado? Contacte o administrador da PayNow para corrigir.
             </p>
           </CardContent>
         </Card>

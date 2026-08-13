@@ -19,7 +19,7 @@ export function SiteFooter() {
       <div className="container grid gap-8 md:grid-cols-5">
         <div>
           <p className="text-lg font-bold">
-            Paga<span className="text-gradient">Já</span>
+            Pay<span className="text-gradient">Now</span>
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             A plataforma moçambicana para vender infoprodutos.
@@ -91,7 +91,7 @@ export function SiteFooter() {
       </div>
 
       <p className="container mt-8 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} PagaJá. Todos os direitos reservados.
+        © {new Date().getFullYear()} PayNow. Todos os direitos reservados.
       </p>
     </footer>
   );

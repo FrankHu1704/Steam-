@@ -33,7 +33,7 @@ export function ShareLinkCard({ productTitle, slug }: { productTitle: string; sl
     try {
       await navigator.share({
         title: productTitle,
-        text: `Confira "${productTitle}" na PagaJá:`,
+        text: `Confira "${productTitle}" na PayNow:`,
         url: link,
       });
     } catch {
