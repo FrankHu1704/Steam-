@@ -23,6 +23,7 @@ export async function getEasyhostBalance(): Promise<EasyhostBalance | null> {
   try {
     const res = await fetch(`${EASYHOST_BASE_URL}/wallet`, {
       headers: { "X-API-Key": apiKey },
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return null;
     const json = await res.json().catch(() => null);

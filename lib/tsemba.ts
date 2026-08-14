@@ -16,6 +16,7 @@ export async function getTsembaBalance(): Promise<TsembaBalance | null> {
   try {
     const res = await fetch(`${TSEMBA_BASE_URL}/balance`, {
       headers: { "x-api-key": apiKey },
+      signal: AbortSignal.timeout(10_000),
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.success) return null;

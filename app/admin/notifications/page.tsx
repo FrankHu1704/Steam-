@@ -4,6 +4,12 @@ import { getTsembaBalance } from "@/lib/tsemba";
 import { getEasyhostBalance } from "@/lib/easyhost-sms";
 import { formatCurrency } from "@/lib/utils";
 
+// Calls two live third-party balance APIs (Tsemba, Easyhost) on every
+// render — must never be statically prerendered at build time, or a slow/
+// unreachable provider from Vercel's build servers hangs and fails the
+// whole deploy (as it did: 3× 60s timeouts on /admin/notifications).
+export const dynamic = "force-dynamic";
+
 export default async function AdminNotificationsPage() {
   const [tsembaBalance, easyhostBalance] = await Promise.all([getTsembaBalance(), getEasyhostBalance()]);
 
