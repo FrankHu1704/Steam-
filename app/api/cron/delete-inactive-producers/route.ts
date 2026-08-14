@@ -12,9 +12,14 @@ import { sendAccountDeletedInactivityEmail } from "@/lib/email";
 // comment (0054_producer_inactivity_deletion.sql) for why
 // became_producer_at (not the original signup date) is the clock these
 // run from. is_cto producers are exempt outright (admin-appointed, not a
-// dormant test account). Deletion is a real supabase.auth.admin.deleteUser
-// call — cascades through profiles → products → orders per the schema, so
-// this only ever runs against accounts confirmed to have zero sales.
+// dormant test account). Developers integrating via the API (api_keys —
+// see /api/v1) are exempt from the "no product" rule specifically: the
+// /api/v1/charges "amount" path is a legitimate way to sell without ever
+// creating a PayNow product, so requiring one would kill real API usage —
+// the "no sale in 14 days" rule still applies to them like anyone else.
+// Deletion is a real supabase.auth.admin.deleteUser call — cascades
+// through profiles → products → orders per the schema, so this only ever
+// runs against accounts confirmed to have zero sales.
 const PRODUCT_GRACE_MS = 3 * 24 * 60 * 60 * 1000;
 const SALE_GRACE_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -38,13 +43,16 @@ export async function GET(request: Request) {
     .eq("is_cto", false)
     .not("became_producer_at", "is", null);
 
+  const { data: apiKeyRows } = await supabase.from("api_keys").select("producer_id");
+  const producerIdsWithApiKey = new Set((apiKeyRows ?? []).map((r) => r.producer_id as string));
+
   const results: { id: string; reason: string }[] = [];
 
   for (const producer of producers ?? []) {
     const becameProducerAt = new Date(producer.became_producer_at as string).getTime();
     let reason: string | null = null;
 
-    if (now - becameProducerAt > PRODUCT_GRACE_MS) {
+    if (!producerIdsWithApiKey.has(producer.id) && now - becameProducerAt > PRODUCT_GRACE_MS) {
       const { count: productCount } = await supabase
         .from("products")
         .select("id", { count: "exact", head: true })
