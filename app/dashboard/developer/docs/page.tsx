@@ -214,37 +214,31 @@ export default function DeveloperDocsPage() {
       <Section id="charges" title="Cobranças — criar uma venda">
         <Endpoint method="POST" path="/api/v1/charges" />
         <p className="text-sm text-muted-foreground">
-          Cria uma cobrança para um dos seus produtos, a partir do checkout personalizado da sua própria app. Com uma
-          chave de teste, devolve sempre sucesso instantâneo sem mover dinheiro real. Com uma chave live, cria uma
-          venda real — as mesmas taxas, notificações e webhook de <code>payment.completed</code> aplicam-se como no
-          checkout normal da PayNow.
+          Cria uma cobrança de valor livre, a partir do checkout personalizado da sua própria app — não existe
+          associação a um produto da PayNow, nem é preciso ter nenhum criado. Com uma chave de teste, devolve sempre
+          sucesso instantâneo sem mover dinheiro real. Com uma chave live, cria uma venda real — as mesmas taxas,
+          notificações e webhook de <code>payment.completed</code> aplicam-se como no checkout normal da PayNow.
         </p>
         <p className="text-xs font-semibold text-muted-foreground">Corpo do pedido</p>
         <FieldsTable
           rows={[
             {
-              field: "product_id",
-              type: "string (uuid)",
-              required: "Sim, ou amount",
-              note: "Id de um produto seu já aprovado. Use isto OU amount, nunca os dois.",
-            },
-            {
               field: "amount",
               type: "número",
-              required: "Sim, ou product_id",
-              note: "Cobrança sem produto associado. Mínimo 50.",
+              required: "Sim",
+              note: "Valor a cobrar. Mínimo 50.",
             },
             {
               field: "currency",
               type: '"MZN" | "ZAR"',
               required: "Não",
-              note: 'Só usado com amount. Padrão "MZN".',
+              note: 'Padrão "MZN".',
             },
             {
               field: "description",
               type: "string",
               required: "Não",
-              note: "Só usado com amount — aparece nos seus registos internos.",
+              note: "Aparece nos seus registos internos.",
             },
             { field: "customer_name", type: "string", required: "Sim", note: "Nome do cliente final." },
             { field: "customer_email", type: "string", required: "Sim", note: "Email do cliente final." },
@@ -257,18 +251,7 @@ export default function DeveloperDocsPage() {
             },
           ]}
         />
-        <p className="text-xs font-semibold text-muted-foreground">Exemplo — cobrar um produto seu</p>
-        <Code>{`curl -X POST ${baseUrl}/api/v1/charges \\
-  -H "Authorization: Bearer SEU_ACCESS_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "product_id": "...",
-    "customer_name": "Maria João",
-    "customer_email": "maria@exemplo.com",
-    "customer_phone": "841234567",
-    "payment_method": "mpesa"
-  }'`}</Code>
-        <p className="text-xs font-semibold text-muted-foreground">Exemplo — cobrança sem produto (valor livre)</p>
+        <p className="text-xs font-semibold text-muted-foreground">Exemplo</p>
         <Code>{`curl -X POST ${baseUrl}/api/v1/charges \\
   -H "Authorization: Bearer SEU_ACCESS_TOKEN" \\
   -H "Content-Type: application/json" \\
@@ -353,9 +336,8 @@ export default function DeveloperDocsPage() {
   ]
 }`}</Code>
         <p className="text-xs text-muted-foreground">
-          Só produtos com <code>status: "approved"</code> podem ser cobrados via <code>POST /api/v1/charges</code>{" "}
-          usando <code>product_id</code> — um produto <code>pending</code> ou <code>rejected</code> devolve{" "}
-          <code>404</code> nesse endpoint.
+          Este endpoint é independente de <code>POST /api/v1/charges</code>, que não usa produtos — é útil para
+          sincronizar o seu catálogo PayNow com o seu próprio sistema, sem precisar de olhar para o painel.
         </p>
 
         <div className="border-t border-border pt-3">
@@ -476,8 +458,9 @@ export default function DeveloperDocsPage() {
   "next_cursor": "id da última venda desta página"
 }`}</Code>
         <p className="text-xs text-muted-foreground">
-          <code>product</code> é <code>&#123; "id": null, "name": "Produto" &#125;</code> para cobranças manuais
-          (criadas com <code>amount</code> em vez de <code>product_id</code>), já que não têm um produto associado.{" "}
+          <code>product</code> é <code>&#123; "id": null, "name": "Produto" &#125;</code> para toda a venda criada
+          por <code>POST /api/v1/charges</code>, já que essas cobranças não têm um produto associado — só aparece
+          preenchido em vendas feitas pelo checkout normal da PayNow (produto real vendido pelo painel).{" "}
           <code>status</code> é sempre <code>"paid"</code> nesta lista. Para percorrer todas as vendas, chame o
           endpoint outra vez passando <code>cursor=next_cursor</code> até <code>has_more</code> vir{" "}
           <code>false</code>.
@@ -635,12 +618,6 @@ function verify(rawBody, signatureHeader, secret) {
               <td className="py-2">
                 Modo produção não desbloqueado (chave live sem os 300 MT pagos, e sem teste grátis de 24h ativo).
                 Só acontece em <code>POST /api/v1/charges</code> com uma chave live.
-              </td>
-            </tr>
-            <tr className="border-b border-border/60">
-              <td className="py-2 pr-4 font-mono">404</td>
-              <td className="py-2">
-                Produto não encontrado, não aprovado, ou não pertence à conta da chave usada.
               </td>
             </tr>
             <tr>
