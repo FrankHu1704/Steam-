@@ -88,6 +88,8 @@ export interface Profile {
   sponsor_share_percent: number | null;
   sponsor_contract_started_at: string | null;
   balance_available_sponsor: number;
+  producer_status: "pending" | "approved" | "rejected" | null;
+  producer_rejection_reason: string | null;
 }
 
 export interface CtoMonthlyCredit {

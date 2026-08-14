@@ -296,10 +296,10 @@ export async function sendEmployeeWelcomeEmail(input: {
 
 const PRODUCER_WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/FBTIjh6wx5YAQX2Sgffv2A?s=cl&p=a&ilr=1";
 
-// Sent once, from becomeProducer() (lib/actions/profile.ts), the moment
-// an account switches from buyer to producer — never on plain signup,
-// since the WhatsApp group and "start selling" framing only make sense
-// once someone actually has a producer account to use.
+// Sent once, from approveProducerAccount() (lib/actions/admin.ts), the
+// moment an admin approves a pending producer request — never on plain
+// signup, since the WhatsApp group and "start selling" framing only make
+// sense once someone actually has an approved producer account to use.
 export async function sendProducerWelcomeEmail(input: { email: string; name: string }) {
   await sendEmail({
     to: input.email,
@@ -317,6 +317,26 @@ export async function sendProducerWelcomeEmail(input: { email: string; name: str
         ) +
         emailButton("Entrar no grupo WhatsApp", PRODUCER_WHATSAPP_GROUP_URL, "#22C55E") +
         emailButton("Abrir o meu painel", `${siteUrl()}/dashboard`),
+    }),
+  });
+}
+
+export async function sendProducerApplicationRejectedEmail(input: { email: string; name: string; reason: string }) {
+  await sendEmail({
+    to: input.email,
+    subject: "O seu pedido de conta de produtor PayNow não foi aprovado",
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "⚠️",
+      title: "Pedido não aprovado",
+      bodyHtml:
+        emailParagraph(
+          `Olá, <strong>${input.name}</strong>. O seu pedido para vender na PayNow foi analisado e não foi aprovado desta vez.`
+        ) +
+        emailReasonBox("Motivo", input.reason) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Se acha que isto foi um engano, contacte o suporte: +258 84 931 1757.</span>`
+        ),
     }),
   });
 }

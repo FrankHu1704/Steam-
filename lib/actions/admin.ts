@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountReinstatedEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountReinstatedEmail, sendProducerWelcomeEmail, sendProducerApplicationRejectedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -429,6 +429,95 @@ export async function adminRevokeProductionAccess(userId: string) {
     target_table: "profiles",
     target_id: userId,
   });
+
+  return { ok: true };
+}
+
+// Called from app/dashboard/layout.tsx (a Server Component, not a client
+// form) the first time a buyer account requests to become a producer —
+// tells every admin there's a new request waiting in Admin -> Utilizadores.
+export async function notifyAdminsOfPendingProducer(userId: string, name: string, email: string) {
+  const supabase = createAdminClient();
+  const { data: admins } = await supabase.from("profiles").select("id, email").eq("role", "admin");
+  for (const adminProfile of admins ?? []) {
+    await supabase.from("notifications").insert({
+      user_id: adminProfile.id,
+      type: "producer_request",
+      title: "Novo pedido de conta de produtor",
+      message: `${name} (${email}) pediu para vender na PayNow — precisa da sua aprovação.`,
+    });
+    await sendPushToUser(adminProfile.id, {
+      title: "Novo pedido de produtor ⏳",
+      body: name,
+      url: `/admin/users/${userId}`,
+    });
+  }
+}
+
+// Approving/rejecting a pending producer request — see
+// app/dashboard/layout.tsx, which sets producer_status="pending" (role
+// stays "buyer") the first time an account tries to reach the dashboard,
+// instead of promoting it to producer instantly. Anti-fraud measure: an
+// admin has to look at the account before it can list products or
+// receive payments.
+export async function approveProducerAccount(userId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("name, email, role, producer_status")
+    .eq("id", userId)
+    .single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.role !== "buyer" || target.producer_status !== "pending") {
+    return { error: "Este pedido já foi avaliado." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      role: "producer",
+      producer_status: "approved",
+      producer_rejection_reason: null,
+      became_producer_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  if (target.email) {
+    await sendProducerWelcomeEmail({ email: target.email, name: target.name });
+  }
+
+  return { ok: true };
+}
+
+export async function rejectProducerAccount(userId: string, reason: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (!reason.trim()) return { error: "Indique o motivo da rejeição." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("name, email, role, producer_status")
+    .eq("id", userId)
+    .single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.role !== "buyer" || target.producer_status !== "pending") {
+    return { error: "Este pedido já foi avaliado." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ producer_status: "rejected", producer_rejection_reason: reason.trim() })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  if (target.email) {
+    await sendProducerApplicationRejectedEmail({ email: target.email, name: target.name, reason: reason.trim() });
+  }
 
   return { ok: true };
 }

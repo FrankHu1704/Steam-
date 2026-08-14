@@ -1,7 +1,8 @@
-import { Users2, Store, ShieldCheck } from "lucide-react";
+import { Users2, Store, ShieldCheck, UserCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UsersTable } from "@/components/admin/users-table";
-import { getAllUsers } from "@/lib/data/admin";
+import { ProducerApprovalReview } from "@/components/admin/producer-approval-review";
+import { getAllUsers, getPendingProducerAccounts } from "@/lib/data/admin";
 import { cn } from "@/lib/utils";
 
 export default async function AdminUsersPage({
@@ -10,9 +11,12 @@ export default async function AdminUsersPage({
   searchParams: Promise<{ role?: string }>;
 }) {
   const { role } = await searchParams;
+  const [allUsers, pendingProducers] = await Promise.all([getAllUsers(), getPendingProducerAccounts()]);
   // Compradores não aparecem aqui — esta página é só para gerir contas de
-  // produtores e admin.
-  const users = (await getAllUsers()).filter((u) => u.role !== "buyer");
+  // produtores e admin. Os pedidos pendentes de aprovação têm a sua
+  // própria secção acima, mesmo continuando com role="buyer" até serem
+  // aprovados (ver app/dashboard/layout.tsx).
+  const users = allUsers.filter((u) => u.role !== "buyer");
 
   const producers = users.filter((u) => u.role === "producer").length;
   const admins = users.filter((u) => u.role === "admin").length;
@@ -28,6 +32,7 @@ export default async function AdminUsersPage({
   const tiles = [
     { label: "Total", value: users.length, icon: Users2, style: "bg-primary/10 text-primary" },
     { label: "Produtores", value: producers, icon: Store, style: "bg-amber-500/10 text-amber-600" },
+    { label: "Pendentes de aprovação", value: pendingProducers.length, icon: UserCheck, style: "bg-red-500/10 text-red-600" },
     { label: "Admins", value: admins, icon: ShieldCheck, style: "bg-emerald-500/10 text-emerald-600" },
   ];
 
@@ -38,7 +43,20 @@ export default async function AdminUsersPage({
         <p className="text-sm text-muted-foreground">{users.length} contas registadas (produtores e admin).</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {pendingProducers.length > 0 && (
+        <div>
+          <h2 className="mb-3 font-semibold text-destructive">
+            Pedidos de conta de produtor pendentes ({pendingProducers.length})
+          </h2>
+          <div className="space-y-2">
+            {pendingProducers.map((account) => (
+              <ProducerApprovalReview key={account.id} account={account} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-4">
         {tiles.map((tile) => (
           <Card key={tile.label}>
             <CardContent className="p-5">

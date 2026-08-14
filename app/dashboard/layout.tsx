@@ -19,11 +19,12 @@ import {
   Wrench,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
+import { ProducerPendingScreen } from "@/components/dashboard/producer-pending-screen";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
 import { getEmployeeByUserId } from "@/lib/data/employees";
-import { sendProducerWelcomeEmail } from "@/lib/email";
+import { notifyAdminsOfPendingProducer } from "@/lib/actions/admin";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -53,21 +54,25 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const employee = await getEmployeeByUserId(user.id);
   if (employee) redirect("/colaborador");
 
-  // This is the real (only) place a buyer account ever becomes a
-  // producer — the first time they load any /dashboard page. Runs once
-  // per account: every load after this one sees role already "producer"
-  // and skips the block entirely, so became_producer_at is set exactly
-  // once (the clock the inactivity-deletion cron and CTO/sponsor payouts
-  // key off — see lib/sponsor.ts, app/api/cron/delete-inactive-producers)
-  // and the welcome email fires exactly once too.
+  // A buyer never becomes a producer automatically anymore (anti-fraud —
+  // an admin has to approve every new selling account first). The first
+  // time a buyer reaches any /dashboard page, this opens a pending
+  // request and shows a waiting screen instead of the real dashboard;
+  // role only ever flips to "producer" (and became_producer_at gets set)
+  // in approveProducerAccount() (lib/actions/admin.ts), which is also
+  // where the welcome email fires.
   if (profile && profile.role === "buyer") {
-    const supabase = await createClient();
-    await supabase
-      .from("profiles")
-      .update({ role: "producer", became_producer_at: new Date().toISOString() })
-      .eq("id", user.id);
-    if (profile.email) {
-      await sendProducerWelcomeEmail({ email: profile.email, name: profile.name });
+    if (!profile.producer_status) {
+      const supabase = await createClient();
+      await supabase.from("profiles").update({ producer_status: "pending" }).eq("id", user.id);
+      await notifyAdminsOfPendingProducer(user.id, profile.name, profile.email);
+      return <ProducerPendingScreen status="pending" />;
+    }
+    if (profile.producer_status === "pending") {
+      return <ProducerPendingScreen status="pending" />;
+    }
+    if (profile.producer_status === "rejected") {
+      return <ProducerPendingScreen status="rejected" reason={profile.producer_rejection_reason} />;
     }
   }
 

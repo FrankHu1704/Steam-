@@ -76,6 +76,19 @@ export async function getAllUsers(): Promise<Profile[]> {
   return (data as Profile[]) ?? [];
 }
 
+// Still role="buyer" — see app/dashboard/layout.tsx, which only flips
+// role to "producer" once approveProducerAccount() runs.
+export async function getPendingProducerAccounts(): Promise<Profile[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "buyer")
+    .eq("producer_status", "pending")
+    .order("created_at", { ascending: true });
+  return (data as Profile[]) ?? [];
+}
+
 export interface AdminProduct extends Product {
   producer_name: string;
   producer_created_at: string | null;
