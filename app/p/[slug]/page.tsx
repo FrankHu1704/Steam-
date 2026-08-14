@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { StarRating } from "@/components/reviews/star-rating";
 import { TrackingScriptInjector } from "@/components/products/tracking-script-injector";
+import { CheckoutBlocks } from "@/components/checkout/checkout-blocks";
 import { buildPixelScripts } from "@/lib/pixels";
 import { getActivePaymentProvider, methodsForProvider } from "@/lib/payments";
 import { getProductReviews, getProductRatingSummary } from "@/lib/data/reviews";
@@ -97,6 +98,8 @@ export default async function ProductSalePage({
               )}
             </div>
           </div>
+
+          <CheckoutBlocks blocks={product.checkout_blocks} />
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card p-6">
             <div className="flex items-center gap-3">

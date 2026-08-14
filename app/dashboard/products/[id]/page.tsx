@@ -8,6 +8,8 @@ import { ProductActions } from "@/components/products/product-actions";
 import { ShareLinkCard } from "@/components/products/share-link-card";
 import { AiAnalysisCard } from "@/components/products/ai-analysis-card";
 import { CourseBuilder } from "@/components/courses/course-builder";
+import { CheckoutBlocksEditor } from "@/components/products/checkout-blocks-editor";
+import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { getProducerCourseStructure } from "@/lib/data/courses";
 import type { ProductFile } from "@/types/database";
@@ -70,6 +72,15 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           initialAnalysis={product.ai_analysis}
           initialAnalysisAt={product.ai_analysis_at}
         />
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-3 font-semibold">Personalizar página de checkout</h2>
+        <Card>
+          <CardContent className="p-6">
+            <CheckoutBlocksEditor productId={id} initialBlocks={product.checkout_blocks} />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mt-8">

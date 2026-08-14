@@ -216,3 +216,54 @@ Tom direto, para o mercado moçambicano, sem exageros nem promessas irreais.`;
     return { error: "A LunaAI não conseguiu gerar o texto agora. Tente novamente." };
   }
 }
+
+// Drafts the CONTENT of one checkout block (see lib/checkout-blocks.ts) —
+// the producer picks the block type and arrangement themselves in the
+// editor; this only fills in the text for whichever one they're editing,
+// same non-automatic "draft for review" pattern as the rest of LunaAI.
+// The shape returned is untyped JSON on purpose — the caller always runs
+// it through sanitizeCheckoutBlocks() before it touches the database, so
+// a malformed/unexpected AI response just gets dropped, never trusted
+// directly.
+type CheckoutBlockTypeForPrompt = "benefits" | "testimonials" | "guarantee" | "countdown" | "faq";
+
+const BLOCK_PROMPT_INSTRUCTIONS: Record<CheckoutBlockTypeForPrompt, string> = {
+  benefits:
+    'Responde APENAS com JSON: {"title": "título curto (máx 60 caracteres)", "items": ["benefício 1", "benefício 2", ...]} — entre 4 e 6 benefícios concretos e específicos do produto, cada um curto (máx 100 caracteres), sem inventar números ou resultados que não constam na descrição.',
+  testimonials:
+    'Responde APENAS com JSON: {"title": "título curto (máx 60 caracteres)", "items": [{"name": "nome moçambicano comum", "text": "depoimento curto e realista (máx 150 caracteres)"}, ...]} — 3 depoimentos fictícios mas plausíveis para este tipo de produto (deixa claro no texto do depoimento que é um exemplo a ser substituído por depoimentos reais).',
+  guarantee:
+    'Responde APENAS com JSON: {"days": 7, "text": "texto de garantia persuasivo (máx 180 caracteres)"}.',
+  countdown:
+    'Responde APENAS com JSON: {"text": "texto curto de urgência (máx 80 caracteres)"} — não inclua datas, só o texto.',
+  faq:
+    'Responde APENAS com JSON: {"title": "título curto (máx 60 caracteres)", "items": [{"question": "pergunta comum de um comprador", "answer": "resposta curta e tranquilizadora (máx 300 caracteres)"}, ...]} — 4 perguntas frequentes relevantes para este tipo de produto (entrega, pagamento, garantia, suporte).',
+};
+
+export async function generateCheckoutBlockWithGroq(
+  blockType: CheckoutBlockTypeForPrompt,
+  productTitle: string,
+  productDescription: string
+): Promise<{ result?: Record<string, unknown>; error?: string }> {
+  const prompt = `Você é a LunaAI, assistente de vendas da PayNow (plataforma moçambicana de infoprodutos). Um produtor está a personalizar a página de checkout do produto abaixo e pediu para gerar o conteúdo de um bloco de "${blockType}".
+
+Produto: ${productTitle}
+Descrição: """${productDescription || "(sem descrição)"}"""
+
+${BLOCK_PROMPT_INSTRUCTIONS[blockType]}
+
+Sem markdown, sem texto antes ou depois do JSON, tom direto para o mercado moçambicano, sem promessas irreais.`;
+
+  const result = await chatCompletion([{ role: "user", content: prompt }], { temperature: 0.7, maxTokens: 500 });
+  if (result.error || !result.text) return { error: result.error ?? GENERIC_ERROR };
+
+  try {
+    const cleaned = result.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+    const parsed = JSON.parse(cleaned);
+    if (!parsed || typeof parsed !== "object") throw new Error("unexpected shape");
+    return { result: parsed };
+  } catch {
+    await logAiDebug({ note: "checkout_block_parse_failed", blockType, raw: result.text });
+    return { error: "A LunaAI não conseguiu gerar o conteúdo agora. Tente novamente." };
+  }
+}

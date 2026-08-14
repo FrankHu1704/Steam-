@@ -240,6 +240,7 @@ export interface Product {
   google_analytics_id: string | null;
   ai_analysis: string | null;
   ai_analysis_at: string | null;
+  checkout_blocks: import("@/lib/checkout-blocks").CheckoutBlock[];
 }
 
 export interface ProductFile {

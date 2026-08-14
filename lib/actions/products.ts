@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
-import { improveDescriptionWithGroq } from "@/lib/groq";
+import { improveDescriptionWithGroq, generateCheckoutBlockWithGroq } from "@/lib/groq";
+import { sanitizeCheckoutBlocks, CHECKOUT_BLOCK_TYPES, type CheckoutBlockType } from "@/lib/checkout-blocks";
 import type { ActionResult } from "@/lib/actions/auth";
 
 export async function improveProductDescription(
@@ -182,6 +183,54 @@ export async function toggleProductStatus(productId: string, status: "approved" 
 
 export async function redirectToProduct(id: string) {
   redirect(`/dashboard/products/${id}`);
+}
+
+// Producer-customizable checkout page content — structured blocks only
+// (see lib/checkout-blocks.ts), never raw HTML. sanitizeCheckoutBlocks()
+// re-validates everything server-side regardless of what the client sent,
+// since this ends up rendered on a real payment page.
+export async function updateCheckoutBlocks(productId: string, blocks: unknown): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const clean = sanitizeCheckoutBlocks(blocks);
+  const { error } = await supabase
+    .from("products")
+    .update({ checkout_blocks: clean })
+    .eq("id", productId)
+    .eq("producer_id", user.id);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/products/${productId}`);
+  return {};
+}
+
+// Drafts the content of a single block with AI — the producer reviews and
+// can edit before saving via updateCheckoutBlocks() above; nothing is
+// applied automatically.
+export async function generateCheckoutBlockContent(
+  productId: string,
+  blockType: CheckoutBlockType
+): Promise<{ result?: Record<string, unknown>; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+  if (!CHECKOUT_BLOCK_TYPES.includes(blockType)) return { error: "Tipo de bloco inválido." };
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, description")
+    .eq("id", productId)
+    .eq("producer_id", user.id)
+    .single();
+  if (!product) return { error: "Produto não encontrado." };
+
+  return generateCheckoutBlockWithGroq(blockType, product.title, product.description ?? "");
 }
 
 export async function setBumpOffers(productId: string, bumpProductIds: string[]): Promise<ActionResult> {

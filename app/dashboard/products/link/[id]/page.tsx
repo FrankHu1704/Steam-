@@ -4,6 +4,8 @@ import { getProductForOwner } from "@/lib/data/products";
 import { createClient } from "@/lib/supabase/server";
 import { PaymentLinkForm } from "@/components/products/payment-link-form";
 import { ShareLinkCard } from "@/components/products/share-link-card";
+import { CheckoutBlocksEditor } from "@/components/products/checkout-blocks-editor";
+import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import type { ProductFile } from "@/types/database";
 
@@ -38,6 +40,15 @@ export default async function EditPaymentLinkPage({ params }: { params: Promise<
           product={product}
           existingFile={(files as ProductFile[])?.[0] ?? null}
         />
+      </div>
+
+      <div className="mt-6">
+        <h2 className="mb-3 font-semibold">Personalizar página de checkout</h2>
+        <Card>
+          <CardContent className="p-6">
+            <CheckoutBlocksEditor productId={id} initialBlocks={product.checkout_blocks} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
