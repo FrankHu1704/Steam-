@@ -594,10 +594,11 @@ function verify(rawBody, signatureHeader, secret) {
           <code>JSON.parse</code>) — qualquer diferença de espaçamento ou ordem de campos muda o hash calculado.
         </p>
         <p className="text-xs text-muted-foreground">
-          O seu endpoint deve responder com um estado 2xx dentro de 10 segundos — se falhar ou demorar, a entrega é
-          registada como falhada. <strong>Não há reenvio automático</strong> no momento: se o seu servidor estiver
-          em baixo quando o evento é enviado, esse evento não será repetido — use{" "}
-          <code>GET /api/v1/orders</code> periodicamente como rede de segurança se isto for crítico para si.
+          O seu endpoint deve responder com um estado 2xx dentro de 10 segundos — se falhar, demorar, ou o seu
+          servidor estiver em baixo, a entrega é reagendada automaticamente: até <strong>5 tentativas</strong>, uma
+          por dia, durante 5 dias. Depois disso a entrega é marcada como falhada em definitivo e não há mais
+          tentativas — use <code>GET /api/v1/orders</code> periodicamente como rede de segurança se isto for
+          crítico para si.
         </p>
       </Section>
 
