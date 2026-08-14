@@ -44,21 +44,3 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
   revalidatePath("/dashboard");
   return {};
 }
-
-export async function becomeProducer(): Promise<ActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessão expirada, entre novamente." };
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ role: "producer", became_producer_at: new Date().toISOString() })
-    .eq("id", user.id)
-    .eq("role", "buyer");
-
-  if (error) return { error: error.message };
-  revalidatePath("/dashboard");
-  return {};
-}

@@ -23,6 +23,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import { getMyNotifications } from "@/lib/data/notifications";
 import { getEmployeeByUserId } from "@/lib/data/employees";
+import { sendProducerWelcomeEmail } from "@/lib/email";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -52,9 +53,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const employee = await getEmployeeByUserId(user.id);
   if (employee) redirect("/colaborador");
 
+  // This is the real (only) place a buyer account ever becomes a
+  // producer — the first time they load any /dashboard page. Runs once
+  // per account: every load after this one sees role already "producer"
+  // and skips the block entirely, so became_producer_at is set exactly
+  // once (the clock the inactivity-deletion cron and CTO/sponsor payouts
+  // key off — see lib/sponsor.ts, app/api/cron/delete-inactive-producers)
+  // and the welcome email fires exactly once too.
   if (profile && profile.role === "buyer") {
     const supabase = await createClient();
-    await supabase.from("profiles").update({ role: "producer" }).eq("id", user.id);
+    await supabase
+      .from("profiles")
+      .update({ role: "producer", became_producer_at: new Date().toISOString() })
+      .eq("id", user.id);
+    if (profile.email) {
+      await sendProducerWelcomeEmail({ email: profile.email, name: profile.name });
+    }
   }
 
   const notifications = await getMyNotifications(user.id);

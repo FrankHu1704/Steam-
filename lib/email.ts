@@ -108,12 +108,12 @@ function emailHighlight(text: string): string {
   `;
 }
 
-function emailButton(text: string, url: string): string {
+function emailButton(text: string, url: string, background = "linear-gradient(135deg,#2563EB 0%,#7C3AED 100%)"): string {
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
       <tr>
         <td align="center">
-          <a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#2563EB 0%,#7C3AED 100%);color:#ffffff;font-weight:700;font-size:14px;text-decoration:none;padding:13px 28px;border-radius:10px;">
+          <a href="${url}" style="display:inline-block;background:${background};color:#ffffff;font-weight:700;font-size:14px;text-decoration:none;padding:13px 28px;border-radius:10px;">
             ${text}
           </a>
         </td>
@@ -290,6 +290,33 @@ export async function sendEmployeeWelcomeEmail(input: {
         emailParagraph(
           `<span style="color:#9ca3af;font-size:12px;">Recomendamos que troque a palavra-passe assim que entrar pela primeira vez.</span>`
         ),
+    }),
+  });
+}
+
+const PRODUCER_WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/FBTIjh6wx5YAQX2Sgffv2A?s=cl&p=a&ilr=1";
+
+// Sent once, from becomeProducer() (lib/actions/profile.ts), the moment
+// an account switches from buyer to producer — never on plain signup,
+// since the WhatsApp group and "start selling" framing only make sense
+// once someone actually has a producer account to use.
+export async function sendProducerWelcomeEmail(input: { email: string; name: string }) {
+  await sendEmail({
+    to: input.email,
+    subject: "A sua conta de produtor PayNow foi criada com sucesso",
+    html: emailBannerCard({
+      bannerColor: "#2563EB",
+      icon: "🎉",
+      title: "Bem-vindo à PayNow",
+      bodyHtml:
+        emailParagraph(
+          `Olá, <strong>${input.name}</strong>! A sua conta de produtor na PayNow foi criada com sucesso — já pode publicar produtos e começar a vender.`
+        ) +
+        emailParagraph(
+          "Junte-se ao grupo de produtores no WhatsApp para suporte direto, novidades da plataforma e trocar experiências com outros vendedores."
+        ) +
+        emailButton("Entrar no grupo WhatsApp", PRODUCER_WHATSAPP_GROUP_URL, "#22C55E") +
+        emailButton("Abrir o meu painel", `${siteUrl()}/dashboard`),
     }),
   });
 }
