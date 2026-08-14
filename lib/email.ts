@@ -786,6 +786,47 @@ export async function sendProductDeletedEmail(input: {
   });
 }
 
+// Sent by the abandoned-cart cron (app/api/cron/abandoned-carts/route.ts)
+// once per order, ~30min after checkout was started without completing
+// payment — mirrors the "carrinho abandonado" recovery email pattern seen
+// on other checkout platforms (BridgePay, etc).
+export async function sendAbandonedCartEmail(input: {
+  buyerEmail: string;
+  buyerName: string;
+  productTitle: string;
+  amount: number;
+  currency: "MZN" | "ZAR";
+  productUrl: string;
+}) {
+  const firstName = input.buyerName?.split(" ")[0] || "";
+  const money = `${input.amount.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+
+  await sendEmail({
+    to: input.buyerEmail,
+    subject: `${firstName ? `${firstName}, seu` : "Seu"} pedido está à sua espera 👋`,
+    html: emailBannerCard({
+      bannerColor: "#2563EB",
+      icon: "👋",
+      title: "Seu pedido está à sua espera",
+      bodyHtml:
+        emailParagraph(
+          `Olá${firstName ? `, <strong>${firstName}</strong>` : ""}! Notámos que iniciou a compra de <strong>"${input.productTitle}"</strong>, mas por algum motivo a transação não foi finalizada.`
+        ) +
+        emailInfoBox([
+          { label: "Resumo da sua reserva", value: input.productTitle },
+          { label: "Valor", value: money, emphasize: true },
+        ]) +
+        emailParagraph(
+          `Garantimos o valor combinado e o seu acesso liberado imediatamente por email assim que o pagamento for concluído.`
+        ) +
+        emailButton("Finalizar Meu Pedido Agora →", input.productUrl) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Se o botão acima não funcionar, copie e cole este link no seu navegador:<br/>${input.productUrl}</span>`
+        ),
+    }),
+  });
+}
+
 export async function sendProductRejectedEmail(input: {
   producerEmail: string;
   producerName?: string;
