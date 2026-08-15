@@ -133,8 +133,13 @@ export default async function AdminOrdersPage({
                       <td className="p-4">
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="p-4 text-muted-foreground">
-                        {new Date(order.created_at).toLocaleDateString("pt-MZ")}
+                      <td className="p-4 whitespace-nowrap text-muted-foreground">
+                        {new Date(order.created_at).toLocaleDateString("pt-MZ", { timeZone: "Africa/Maputo" })}{" "}
+                        {new Date(order.created_at).toLocaleTimeString("pt-MZ", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "Africa/Maputo",
+                        })}
                       </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-2">
