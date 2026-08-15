@@ -12,6 +12,8 @@ import {
   getWithdrawalFeePercent,
   getWithdrawalMinimumAmount,
   getWithdrawalsEnabled,
+  isWithinWithdrawalHours,
+  WITHDRAWAL_HOURS_LABEL,
 } from "@/lib/data/withdrawals";
 import { getPayoutWallets } from "@/lib/data/payout-wallets";
 import { getActivePaymentProvider, b2cMethodsForProvider } from "@/lib/payments";
@@ -35,6 +37,7 @@ export default async function WithdrawalsPage() {
   const instantMethods = b2cMethodsForProvider(providerName);
   const canUseB2C = instantMethods.length > 0;
   const defaultWallet = wallets.find((w) => w.is_default) ?? null;
+  const withinHours = isWithinWithdrawalHours();
 
   const b2cBanner = (
     <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950">
@@ -114,7 +117,7 @@ export default async function WithdrawalsPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-border rounded-2xl border border-border p-4">
+      <div className="grid grid-cols-2 divide-x divide-border rounded-2xl border border-border p-4 sm:grid-cols-4">
         <div className="flex items-center gap-2 pr-3">
           <TrendingUp className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div>
@@ -129,11 +132,18 @@ export default async function WithdrawalsPage() {
             <p className="text-sm font-semibold">{canUseB2C ? "Instantâneo" : "Até 24h"}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 pl-3">
+        <div className="flex items-center gap-2 px-3">
           <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div>
             <p className="text-[11px] text-muted-foreground">Padrão</p>
             <p className="text-sm font-semibold">{defaultWallet ? METHOD_LABEL[defaultWallet.method] : "Nenhuma"}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 pl-3">
+          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div>
+            <p className="text-[11px] text-muted-foreground">Horário</p>
+            <p className="text-sm font-semibold">Seg-Sex 8h-18h30</p>
           </div>
         </div>
       </div>
@@ -141,18 +151,7 @@ export default async function WithdrawalsPage() {
       <Card>
         <CardContent className="p-6">
           <h2 className="mb-4 font-semibold">Solicitar Saque</h2>
-          {withdrawalsEnabled ? (
-            <WithdrawalForm
-              balanceAvailable={profile.balance_available}
-              balanceAvailableDev={profile.balance_available_dev}
-              balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
-              balanceAvailableSponsor={profile.is_sponsor ? profile.balance_available_sponsor : undefined}
-              currency={profile.currency}
-              feePercent={feePercent}
-              minimumAmount={minimumAmount}
-              wallets={wallets}
-            />
-          ) : (
+          {!withdrawalsEnabled ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-900 dark:bg-amber-950">
               <Wrench className="h-8 w-8 text-amber-600" />
               <div>
@@ -171,6 +170,28 @@ export default async function WithdrawalsPage() {
                 <MessageCircle className="h-4 w-4" /> Falar com o suporte
               </a>
             </div>
+          ) : !withinHours ? (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-900 dark:bg-amber-950">
+              <Clock className="h-8 w-8 text-amber-600" />
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200">Fora do horário de atendimento</p>
+                <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+                  Os levantamentos só são processados: {WITHDRAWAL_HOURS_LABEL}. O seu saldo continua seguro — tente
+                  novamente dentro desse horário.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <WithdrawalForm
+              balanceAvailable={profile.balance_available}
+              balanceAvailableDev={profile.balance_available_dev}
+              balanceAvailableCto={profile.is_cto ? profile.balance_available_cto : undefined}
+              balanceAvailableSponsor={profile.is_sponsor ? profile.balance_available_sponsor : undefined}
+              currency={profile.currency}
+              feePercent={feePercent}
+              minimumAmount={minimumAmount}
+              wallets={wallets}
+            />
           )}
         </CardContent>
       </Card>

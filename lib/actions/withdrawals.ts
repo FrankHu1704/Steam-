@@ -6,11 +6,13 @@ import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import { sendWithdrawalRequestedEmail, sendAdminWithdrawalRequestedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { sendWithdrawalOtp, verifyAndConsumeWithdrawalOtp } from "@/lib/withdrawal-otp";
-import { getWithdrawalsEnabled } from "@/lib/data/withdrawals";
+import { getWithdrawalsEnabled, isWithinWithdrawalHours, WITHDRAWAL_HOURS_LABEL } from "@/lib/data/withdrawals";
 import type { PayoutMethod } from "@/types/database";
 
 const WITHDRAWALS_MAINTENANCE_MESSAGE =
   "Os levantamentos estão temporariamente em manutenção. Contacte o suporte: +258 84 931 1757.";
+
+const WITHDRAWALS_OUTSIDE_HOURS_MESSAGE = `Os levantamentos só são processados neste horário: ${WITHDRAWAL_HOURS_LABEL}. Tente novamente dentro desse período.`;
 
 export async function sendWithdrawalOtpCode() {
   const authClient = await createClient();
@@ -19,6 +21,7 @@ export async function sendWithdrawalOtpCode() {
   } = await authClient.auth.getUser();
   if (!user) return { ok: false as const, error: "Precisa de iniciar sessão." };
   if (!(await getWithdrawalsEnabled())) return { ok: false as const, error: WITHDRAWALS_MAINTENANCE_MESSAGE };
+  if (!isWithinWithdrawalHours()) return { ok: false as const, error: WITHDRAWALS_OUTSIDE_HOURS_MESSAGE };
 
   const supabase = createAdminClient();
   const { data: profile } = await supabase.from("profiles").select("email, name").eq("id", user.id).single();
@@ -131,6 +134,7 @@ export async function requestWithdrawal(input: {
   } = await authClient.auth.getUser();
   if (!user) return { error: "Precisa de iniciar sessão." };
   if (!(await getWithdrawalsEnabled())) return { error: WITHDRAWALS_MAINTENANCE_MESSAGE };
+  if (!isWithinWithdrawalHours()) return { error: WITHDRAWALS_OUTSIDE_HOURS_MESSAGE };
 
   const otpResult = await verifyAndConsumeWithdrawalOtp(user.id, input.otpCode);
   if (!otpResult.ok) return { error: otpResult.error };
@@ -256,6 +260,7 @@ export async function requestSelfServiceB2CPayout(withdrawalId: string) {
     data: { user },
   } = await authClient.auth.getUser();
   if (!user) return { error: "Precisa de iniciar sessão." };
+  if (!isWithinWithdrawalHours()) return { error: WITHDRAWALS_OUTSIDE_HOURS_MESSAGE };
 
   const supabase = createAdminClient();
   const { data: withdrawal } = await supabase
