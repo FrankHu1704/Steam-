@@ -21,6 +21,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   if (!order) notFound();
 
   const currency = order.currency as "MZN" | "ZAR";
+  // The payment that actually decided this order's fate — prefer a paid
+  // one (there can be a failed attempt followed by a successful retry),
+  // otherwise the most recent attempt (payments are already newest-first).
+  const primaryPayment = order.payments.find((p) => p.status === "paid") ?? order.payments[0] ?? null;
   const utmEntries = [
     { label: "Fonte (utm_source)", value: order.utm_source },
     { label: "Meio (utm_medium)", value: order.utm_medium },
@@ -53,19 +57,31 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Valor" value={formatCurrency(order.total_amount, currency)} />
           <Field label="Método" value={order.payment_method?.replace(/_/g, " ") ?? "—"} />
-          <Field label="Criado em" value={new Date(order.created_at).toLocaleString("pt-MZ")} />
-          <Field label="Pago em" value={order.paid_at ? new Date(order.paid_at).toLocaleString("pt-MZ") : "—"} />
-          <Field label="Creditado em" value={order.credited_at ? new Date(order.credited_at).toLocaleString("pt-MZ") : "—"} />
+          <Field
+            label="Processador (origem do pagamento)"
+            value={primaryPayment ? primaryPayment.provider.replace(/_/g, " ") : "—"}
+          />
+          <Field
+            label="Id da transação"
+            value={
+              <span className="font-mono text-xs">
+                {primaryPayment?.provider_payment_id ?? primaryPayment?.reference ?? "—"}
+              </span>
+            }
+          />
+          <Field label="Criado em" value={new Date(order.created_at).toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" })} />
+          <Field label="Pago em" value={order.paid_at ? new Date(order.paid_at).toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" }) : "—"} />
+          <Field label="Creditado em" value={order.credited_at ? new Date(order.credited_at).toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" }) : "—"} />
           <Field label="Taxa da PayNow" value={order.platform_fee_amount != null ? formatCurrency(order.platform_fee_amount, currency) : "—"} />
           {order.product_slug && (
             <div>
-              <p className="text-xs text-muted-foreground">Produto</p>
+              <p className="text-xs text-muted-foreground">Link do checkout</p>
               <Link
                 href={`/p/${order.product_slug}`}
                 target="_blank"
                 className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
               >
-                Ver produto <ExternalLink className="h-3 w-3" />
+                Ver checkout <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
           )}
@@ -126,7 +142,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <StatusBadge status={p.status} />
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(p.created_at).toLocaleString("pt-MZ")}
+                    {new Date(p.created_at).toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" })}
                   </span>
                 </div>
                 <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
