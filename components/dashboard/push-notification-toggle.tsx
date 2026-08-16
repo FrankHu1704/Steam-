@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, Loader2, Share } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { saveSubscription, removeSubscription } from "@/lib/actions/push";
@@ -15,13 +15,27 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
+// iOS only allows Web Push for a PWA installed via "Adicionar ao Ecrã
+// Inicial" (Safari's own tab is never enough, even on iOS 16.4+) —
+// pushManager.subscribe() just rejects there, which used to surface as
+// the same generic "Falha ao ativar notificações." as any other error.
+function isIosNotInstalled(): boolean {
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true;
+  return isIos && !isStandalone;
+}
+
 export function PushNotificationToggle({ initiallySubscribed }: { initiallySubscribed: boolean }) {
   const [subscribed, setSubscribed] = useState(initiallySubscribed);
   const [pending, setPending] = useState(false);
   const [supported, setSupported] = useState(true);
+  const [needsIosInstall, setNeedsIosInstall] = useState(false);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) setSupported(false);
+    setNeedsIosInstall(isIosNotInstalled());
   }, []);
 
   async function handleEnable() {
@@ -53,8 +67,12 @@ export function PushNotificationToggle({ initiallySubscribed }: { initiallySubsc
         setSubscribed(true);
         toast.success("Notificações push ativadas!");
       }
-    } catch {
-      toast.error("Falha ao ativar notificações.");
+    } catch (err) {
+      toast.error(
+        isIosNotInstalled()
+          ? "No iPhone, adicione a PayNow ao ecrã inicial primeiro (veja as instruções abaixo)."
+          : `Falha ao ativar notificações${err instanceof Error && err.message ? `: ${err.message}` : "."}`
+      );
     } finally {
       setPending(false);
     }
@@ -81,6 +99,21 @@ export function PushNotificationToggle({ initiallySubscribed }: { initiallySubsc
       <Button size="sm" variant="outline" disabled className="w-full">
         Não suportado neste navegador
       </Button>
+    );
+  }
+
+  if (needsIosInstall && !subscribed) {
+    return (
+      <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <p className="flex items-center gap-1.5 font-medium text-foreground">
+          <Share className="h-3.5 w-3.5" /> Adicione ao ecrã inicial primeiro
+        </p>
+        <p>
+          No iPhone, as notificações só funcionam depois de instalar a PayNow: toque em{" "}
+          <strong>Partilhar</strong> → <strong>Adicionar ao Ecrã Inicial</strong>, depois abra a PayNow a partir
+          desse ícone (não do Safari) e volte aqui para ativar.
+        </p>
+      </div>
     );
   }
 
