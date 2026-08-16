@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff, Loader2, Share } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { saveSubscription, removeSubscription } from "@/lib/actions/push";
+import { saveSubscription, removeSubscription, logPushClientError } from "@/lib/actions/push";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -13,6 +13,16 @@ function urlBase64ToUint8Array(base64String: string) {
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
   return outputArray;
+}
+
+// A valid VAPID public key decodes to an uncompressed P-256 EC point: 65
+// bytes starting with 0x04. Catching a malformed key here (stray
+// whitespace/newline pasted into the Vercel env var, mismatched pair, wrong
+// value entirely) gives a specific, actionable message instead of letting it
+// reach pushManager.subscribe(), where WebKit just reports the opaque
+// "Failed due to internal service error" no matter what's actually wrong.
+function isValidVapidKey(key: Uint8Array): boolean {
+  return key.length === 65 && key[0] === 0x04;
 }
 
 // iOS only allows Web Push for a PWA installed via "Adicionar ao Ecrã
@@ -51,10 +61,19 @@ export function PushNotificationToggle({ initiallySubscribed }: { initiallySubsc
         toast.error("Permissão de notificações negada.");
         return;
       }
+      const applicationServerKey = urlBase64ToUint8Array(publicKey);
+      if (!isValidVapidKey(applicationServerKey)) {
+        toast.error("Chave de notificações mal configurada (contacte o suporte).");
+        await logPushClientError({
+          message: `invalid VAPID key shape: length=${applicationServerKey.length}`,
+          userAgent: navigator.userAgent,
+        });
+        return;
+      }
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
+        applicationServerKey,
       });
       const json = subscription.toJSON();
       const res = await saveSubscription({
@@ -68,11 +87,13 @@ export function PushNotificationToggle({ initiallySubscribed }: { initiallySubsc
         toast.success("Notificações push ativadas!");
       }
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       toast.error(
         isIosNotInstalled()
           ? "No iPhone, adicione a PayNow ao ecrã inicial primeiro (veja as instruções abaixo)."
-          : `Falha ao ativar notificações${err instanceof Error && err.message ? `: ${err.message}` : "."}`
+          : `Falha ao ativar notificações${message ? `: ${message}` : "."}`
       );
+      await logPushClientError({ message, userAgent: navigator.userAgent });
     } finally {
       setPending(false);
     }

@@ -48,6 +48,22 @@ export async function removeSubscription(endpoint: string): Promise<ActionResult
   return {};
 }
 
+// Fire-and-forget diagnostic trail for client-side subscribe failures — the
+// browser side has no dashboard to check, so without this the only trace of
+// a WebKit/Chrome push error is whatever the user happens to screenshot.
+export async function logPushClientError(input: { message: string; userAgent: string }): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const admin = createAdminClient();
+  await admin.from("logs").insert({
+    action: "push_client_error",
+    metadata: { userId: user?.id ?? null, message: input.message, userAgent: input.userAgent },
+  });
+}
+
 export async function hasPushSubscription(): Promise<boolean> {
   const supabase = await createClient();
   const {
