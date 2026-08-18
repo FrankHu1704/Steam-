@@ -522,6 +522,87 @@ export async function rejectProducerAccount(userId: string, reason: string) {
   return { ok: true };
 }
 
+const KYC_SIGNED_URL_TTL_SECONDS = 60 * 10; // short-lived — only needed for the admin to view once while reviewing
+
+// Documents are only ever exposed through these short-lived signed URLs,
+// minted with the service-role client — the storage bucket itself has no
+// policy granting admins direct read access (see 0060_kyc_verification.sql).
+export async function getKycDocumentUrls(userId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("kyc_document_front_path, kyc_document_back_path")
+    .eq("id", userId)
+    .single();
+  if (!target?.kyc_document_front_path || !target?.kyc_document_back_path) {
+    return { error: "Documentos não encontrados." };
+  }
+
+  const [front, back] = await Promise.all([
+    supabase.storage.from("kyc-documents").createSignedUrl(target.kyc_document_front_path, KYC_SIGNED_URL_TTL_SECONDS),
+    supabase.storage.from("kyc-documents").createSignedUrl(target.kyc_document_back_path, KYC_SIGNED_URL_TTL_SECONDS),
+  ]);
+
+  return { frontUrl: front.data?.signedUrl ?? null, backUrl: back.data?.signedUrl ?? null };
+}
+
+export async function approveKycSubmission(userId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase.from("profiles").select("kyc_status").eq("id", userId).single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.kyc_status !== "pending") return { error: "Este pedido já foi avaliado." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      kyc_status: "approved",
+      kyc_reviewed_at: new Date().toISOString(),
+      kyc_reviewed_by: admin.user.id,
+      kyc_rejection_reason: null,
+    })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  await sendPushToUser(userId, {
+    title: "Verificação aprovada ✅",
+    body: "A tua identidade foi verificada. Já podes solicitar saques.",
+    url: "/dashboard/withdrawals",
+  });
+
+  return { ok: true };
+}
+
+export async function rejectKycSubmission(userId: string, reason: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (!reason.trim()) return { error: "Indique o motivo da rejeição." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase.from("profiles").select("kyc_status").eq("id", userId).single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.kyc_status !== "pending") return { error: "Este pedido já foi avaliado." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ kyc_status: "rejected", kyc_reviewed_at: new Date().toISOString(), kyc_reviewed_by: admin.user.id, kyc_rejection_reason: reason.trim() })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  await sendPushToUser(userId, {
+    title: "Verificação rejeitada",
+    body: `A tua verificação de identidade foi rejeitada: ${reason.trim()}`,
+    url: "/dashboard/verificacao",
+  });
+
+  return { ok: true };
+}
+
 export async function updateUserRole(userId: string, role: UserRole) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

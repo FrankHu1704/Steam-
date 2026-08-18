@@ -90,6 +90,13 @@ export interface Profile {
   balance_available_sponsor: number;
   producer_status: "pending" | "approved" | "rejected" | null;
   producer_rejection_reason: string | null;
+  kyc_status: "not_submitted" | "pending" | "approved" | "rejected";
+  kyc_document_front_path: string | null;
+  kyc_document_back_path: string | null;
+  kyc_submitted_at: string | null;
+  kyc_reviewed_at: string | null;
+  kyc_reviewed_by: string | null;
+  kyc_rejection_reason: string | null;
 }
 
 export interface CtoMonthlyCredit {

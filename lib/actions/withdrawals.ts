@@ -14,6 +14,8 @@ const WITHDRAWALS_MAINTENANCE_MESSAGE =
 
 const WITHDRAWALS_OUTSIDE_HOURS_MESSAGE = `Os levantamentos só são processados neste horário: ${WITHDRAWAL_HOURS_LABEL}. Tente novamente dentro desse período.`;
 
+const KYC_REQUIRED_MESSAGE = "É preciso completar a verificação de identidade (KYC) antes de solicitar saques.";
+
 export async function sendWithdrawalOtpCode() {
   const authClient = await createClient();
   const {
@@ -24,7 +26,8 @@ export async function sendWithdrawalOtpCode() {
   if (!isWithinWithdrawalHours()) return { ok: false as const, error: WITHDRAWALS_OUTSIDE_HOURS_MESSAGE };
 
   const supabase = createAdminClient();
-  const { data: profile } = await supabase.from("profiles").select("email, name").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("email, name, kyc_status").eq("id", user.id).single();
+  if (profile?.kyc_status !== "approved") return { ok: false as const, error: KYC_REQUIRED_MESSAGE };
 
   return sendWithdrawalOtp(user.id, profile?.email ?? null, profile?.name);
 }
@@ -156,10 +159,11 @@ export async function requestWithdrawal(input: {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, email, balance_available, balance_available_dev, balance_available_cto, balance_available_sponsor, currency")
+    .select("name, email, balance_available, balance_available_dev, balance_available_cto, balance_available_sponsor, currency, kyc_status")
     .eq("id", user.id)
     .single();
   if (!profile) return { error: "Perfil não encontrado." };
+  if (profile.kyc_status !== "approved") return { error: KYC_REQUIRED_MESSAGE };
   const currentBalance = profile[walletField];
 
   const { data: minSetting } = await supabase

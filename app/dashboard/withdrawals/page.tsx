@@ -1,4 +1,5 @@
-import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle, Wrench, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle, Wrench, MessageCircle, IdCard } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
@@ -151,7 +152,29 @@ export default async function WithdrawalsPage() {
       <Card>
         <CardContent className="p-6">
           <h2 className="mb-4 font-semibold">Solicitar Saque</h2>
-          {!withdrawalsEnabled ? (
+          {profile.kyc_status !== "approved" ? (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-900 dark:bg-amber-950">
+              <IdCard className="h-8 w-8 text-amber-600" />
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200">
+                  {profile.kyc_status === "pending" ? "Verificação em análise" : "Verificação de identidade necessária"}
+                </p>
+                <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+                  {profile.kyc_status === "pending"
+                    ? "Os teus documentos estão a ser revistos por um administrador. Assim que forem aprovados, já podes solicitar saques."
+                    : "Antes de solicitar um saque, precisa de confirmar a sua identidade anexando o documento de identidade."}
+                </p>
+              </div>
+              {profile.kyc_status !== "pending" && (
+                <Link
+                  href="/dashboard/verificacao"
+                  className="mt-1 flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+                >
+                  <IdCard className="h-4 w-4" /> Verificar identidade
+                </Link>
+              )}
+            </div>
+          ) : !withdrawalsEnabled ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-900 dark:bg-amber-950">
               <Wrench className="h-8 w-8 text-amber-600" />
               <div>

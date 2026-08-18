@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Gift,
   MessagesSquare,
+  IdCard,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { requireAdminUser } from "@/lib/data/admin";
@@ -32,6 +33,7 @@ const NAV: ShellNavItem[] = [
   { href: "/admin", label: "Visão Geral", icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
   { href: "/admin/products", label: "Produtos", icon: <Package className="h-4 w-4" /> },
   { href: "/admin/orders", label: "Pedidos", icon: <ShoppingCart className="h-4 w-4" /> },
+  { href: "/admin/kyc", label: "Verificação KYC", icon: <IdCard className="h-4 w-4" /> },
   { href: "/admin/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
   { href: "/admin/revenue", label: "Receita", icon: <BarChart3 className="h-4 w-4" /> },
   { href: "/admin/users", label: "Utilizadores", icon: <Users2 className="h-4 w-4" /> },

@@ -17,6 +17,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Wrench,
+  IdCard,
 } from "lucide-react";
 import { Shell, type ShellNavItem } from "@/components/shell";
 import { ProducerPendingScreen } from "@/components/dashboard/producer-pending-screen";
@@ -42,6 +43,7 @@ const NAV: ShellNavItem[] = [
   { href: "/dashboard/chat", label: "Chat", icon: <MessageCircle className="h-4 w-4" /> },
   { href: "/dashboard/achievements", label: "Premiações", icon: <Trophy className="h-4 w-4" /> },
   { href: "/dashboard/ferramentas", label: "Ferramentas", icon: <Wrench className="h-4 w-4" /> },
+  { href: "/dashboard/verificacao", label: "Verificação", icon: <IdCard className="h-4 w-4" /> },
   { href: "/dashboard/withdrawals", label: "Saques", icon: <Wallet className="h-4 w-4" /> },
   { href: "/dashboard/developer", label: "Programador", icon: <Code2 className="h-4 w-4" /> },
   { href: "/dashboard/settings", label: "Definições", icon: <Settings className="h-4 w-4" /> },
