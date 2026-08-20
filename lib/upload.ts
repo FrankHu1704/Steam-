@@ -41,21 +41,3 @@ export async function uploadProductFile(userId: string, productSlug: string, fil
   return { name: file.name, storage_path: path, external_url: null, size_bytes: file.size };
 }
 
-const MAX_KYC_DOCUMENT_BYTES = 10 * 1024 * 1024;
-
-/** Private bucket — only the signed-in user can read/write their own prefix
- * (see supabase/migrations/0060_kyc_verification.sql). The admin review UI
- * reads these via signed URLs minted server-side, never directly. */
-export async function uploadKycDocument(userId: string, side: "front" | "back", file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error("O ficheiro precisa de ser uma imagem.");
-  if (file.size > MAX_KYC_DOCUMENT_BYTES) throw new Error("A imagem deve ter no máximo 10MB.");
-
-  const supabase = createClient();
-  const path = `${userId}/${side}-${Date.now()}-${file.name}`;
-  const { error } = await supabase.storage.from("kyc-documents").upload(path, file, {
-    contentType: file.type,
-    upsert: true,
-  });
-  if (error) throw error;
-  return path;
-}

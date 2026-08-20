@@ -89,16 +89,6 @@ export async function getPendingProducerAccounts(): Promise<Profile[]> {
   return (data as Profile[]) ?? [];
 }
 
-export async function getPendingKycSubmissions(): Promise<Profile[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("kyc_status", "pending")
-    .order("kyc_submitted_at", { ascending: true });
-  return (data as Profile[]) ?? [];
-}
-
 export interface AdminProduct extends Product {
   producer_name: string;
   producer_created_at: string | null;
