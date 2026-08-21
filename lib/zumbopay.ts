@@ -273,15 +273,12 @@ export async function getWalletBalances(): Promise<WalletBalance[]> {
     });
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string | undefined | null, timestamp: string | undefined | null): boolean {
-  if (!signature || !timestamp) return false;
+export function verifyWebhookSignature(rawBody: string, signature: string | undefined | null): boolean {
+  if (!signature) return false;
   const secret = process.env.ZUMBOPAY_WEBHOOK_SECRET?.trim();
   if (!secret) return false;
 
-  const tsNum = Number(timestamp);
-  if (!tsNum || Math.abs(Date.now() - tsNum) > 5 * 60 * 1000) return false;
-
-  const expected = crypto.createHmac("sha256", secret).update(`${timestamp}.${rawBody}`).digest("hex");
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
   const cleanSignature = signature.trim().replace(/^sha256=/i, "");
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(cleanSignature));

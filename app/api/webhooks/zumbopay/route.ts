@@ -19,10 +19,9 @@ interface WebhookBody {
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const signature = request.headers.get("x-signature");
-  const timestamp = request.headers.get("x-timestamp");
+  const signature = request.headers.get("x-zumbopay-signature");
 
-  if (!verifyWebhookSignature(rawBody, signature, timestamp)) {
+  if (!verifyWebhookSignature(rawBody, signature)) {
     return NextResponse.json({ ok: false, error: "invalid_signature" }, { status: 401 });
   }
 
