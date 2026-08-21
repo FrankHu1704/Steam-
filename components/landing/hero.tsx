@@ -94,14 +94,9 @@ export function Hero() {
             A plataforma moçambicana de infoprodutos
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="mx-auto mt-6 max-w-xl text-4xl font-bold leading-tight tracking-tight md:text-6xl lg:mx-0"
-          >
+          <h1 className="mx-auto mt-6 max-w-xl text-4xl font-bold leading-tight tracking-tight md:text-6xl lg:mx-0">
             Venda os seus <span className="text-gradient">infoprodutos</span> em minutos.
-          </motion.h1>
+          </h1>
 
           <motion.p
             initial={{ opacity: 0, y: 18 }}
