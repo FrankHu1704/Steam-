@@ -26,6 +26,7 @@ export default async function AdminSettingsPage() {
       | "netshop"
       | "debito_pay"
       | "paysuite"
+      | "paymoz"
       | "active"
       | undefined) ?? "pagar";
   const emolaEnabled = settings.find((s) => s.key === "emola_enabled")?.value !== false;

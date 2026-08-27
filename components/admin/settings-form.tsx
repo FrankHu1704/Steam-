@@ -27,7 +27,7 @@ export function SettingsForm({
   platformFixedFeeAmount: number;
   withdrawalMinimumAmount: number;
   paymentProvider: "debito_pay" | "zumbopay" | "netshop";
-  emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active";
+  emolaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "paymoz" | "active";
   emolaEnabled: boolean;
   mpesaChargeProvider: "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paymoz" | "active";
   withdrawalsEnabled: boolean;
@@ -150,7 +150,7 @@ export function SettingsForm({
             disabled={!emolaOn}
             onChange={(e) =>
               setEmolaProvider(
-                e.target.value as "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active"
+                e.target.value as "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "paymoz" | "active"
               )
             }
           >
@@ -159,11 +159,18 @@ export function SettingsForm({
             <option value="netshop">NetShop</option>
             <option value="debito_pay">Debito Pay</option>
             <option value="paysuite">PaySuite</option>
+            <option value="paymoz">PayMoz</option>
             <option value="active">Processador ativo (acima)</option>
           </Select>
           {emolaProvider === "paysuite" && (
             <p className="text-xs text-amber-600">
               A PaySuite ainda não tem levantamento automático (B2C) documentado — os saques em e-Mola ficam
+              pendentes para pagamento manual pelo admin enquanto estiver selecionada.
+            </p>
+          )}
+          {emolaProvider === "paymoz" && (
+            <p className="text-xs text-amber-600">
+              O PayMoz ainda não tem levantamento automático (B2C) documentado — os saques em e-Mola ficam
               pendentes para pagamento manual pelo admin enquanto estiver selecionada.
             </p>
           )}

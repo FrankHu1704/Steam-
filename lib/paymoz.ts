@@ -2,21 +2,22 @@ import crypto from "node:crypto";
 import type { PaymentMethod } from "@/lib/debito-pay";
 import { siteUrl } from "@/lib/email";
 
-// Server-only module — PayMoz (paymozapi.saphirat.co.mz), used ONLY for
-// M-Pesa charges via resolveChargeProvider() in lib/payments.ts (like
-// Pagar for e-Mola), not as a globally selectable "active processor" — no
-// payout/withdrawal endpoint is documented, so it can't fund B2C
-// withdrawals (see createPayout() below). Mirrors the PayMoz API docs
-// pasted directly by the user:
+// Server-only module — PayMoz (paymozapi.saphirat.co.mz), used for M-Pesa
+// AND e-Mola charges via resolveChargeProvider() in lib/payments.ts (like
+// Pagar), not as a globally selectable "active processor" — no payout/
+// withdrawal endpoint is documented, so it can't fund B2C withdrawals (see
+// createPayout() below). Mirrors the PayMoz API docs pasted directly by
+// the user:
 //   - Auth: `Authorization: Bearer <api key>`.
 //   - Charges: POST /payments/direct — immediate/synchronous (no hosted
 //     checkout page), requires customerPhone (full 258-prefixed number).
-//     `reference` must be EXACTLY 11 alphanumeric characters and unique —
-//     our own order.id (a UUID) doesn't fit that, so this generates its
-//     own random 11-char token per charge and stores it as both
-//     payments.reference and payments.provider_payment_id, since status
-//     lookups (GET /payments/reference/:ref) only work by that reference,
-//     never by PayMoz's own internal `id`.
+//     Same endpoint and shape for both methods — only `method` differs
+//     ("MPESA" vs "EMOLA"). `reference` must be EXACTLY 11 alphanumeric
+//     characters and unique — our own order.id (a UUID) doesn't fit that,
+//     so this generates its own random 11-char token per charge and
+//     stores it as both payments.reference and payments.provider_payment_id,
+//     since status lookups (GET /payments/reference/:ref) only work by
+//     that reference, never by PayMoz's own internal `id`.
 //   - Response includes platformFee/gatewayFee/totalFee/netAmount —
 //     totalFee is what PayMoz actually deducts, captured as processorFee.
 //   - Webhook: POST body `{ event, data }` (payment.created/success/
@@ -99,14 +100,30 @@ interface ChargeResult {
   raw?: unknown;
 }
 
-export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
-  if (input.paymentMethod !== "mpesa") {
-    throw new Error(`O PayMoz só suporta M-Pesa diretamente (pedido: ${input.paymentMethod}).`);
+// M-Pesa: 84/85 · e-Mola: 86/87 — same convention as every other
+// provider in this codebase (see ZumboPay's channel inference). PayMoz's
+// API doesn't infer the channel itself — it trusts whatever `method` is
+// sent — so this catches a checkout bug (e.g. an e-Mola number charged as
+// M-Pesa) before it reaches PayMoz with real money on the line.
+function validatePhonePrefix(method: "mpesa" | "emola", phone: string) {
+  const prefix = phone.replace(/\D/g, "").slice(-9, -7);
+  const expected = method === "mpesa" ? ["84", "85"] : ["86", "87"];
+  if (!expected.includes(prefix)) {
+    const label = method === "mpesa" ? "M-Pesa (84/85)" : "e-Mola (86/87)";
+    throw new Error(`Número inválido para ${label}: ${phone}`);
   }
-  if (!input.customerPhone) throw new Error("Número de telemóvel é obrigatório para M-Pesa.");
+}
+
+export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
+  if (input.paymentMethod !== "mpesa" && input.paymentMethod !== "emola") {
+    throw new Error(`O PayMoz só suporta M-Pesa e e-Mola diretamente (pedido: ${input.paymentMethod}).`);
+  }
+  if (!input.customerPhone) throw new Error("Número de telemóvel é obrigatório.");
   if (input.currency !== "MZN") throw new Error("O PayMoz só processa MZN.");
+  validatePhonePrefix(input.paymentMethod, input.customerPhone);
 
   const reference = generateReference();
+  const providerMethod = input.paymentMethod === "emola" ? "EMOLA" : "MPESA";
 
   // Deliberately never sends the real product title or the customer's
   // name/email — only what /payments/direct strictly needs — same
@@ -114,7 +131,7 @@ export async function createCharge(input: ChargeInput): Promise<ChargeResult> {
   const { status, json } = await request("POST", "/payments/direct", {
     amount: input.amount,
     reference,
-    method: "MPESA",
+    method: providerMethod,
     customerPhone: toFullPhone(input.customerPhone),
     callbackUrl: `${siteUrl()}/api/webhooks/paymoz`,
     description: "Compra PayNow",

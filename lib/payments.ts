@@ -82,7 +82,7 @@ function isPagarConfigured(): boolean {
   return Boolean(process.env.PAGAR_API_KEY?.trim() && process.env.PAGAR_SIGNING_SECRET?.trim());
 }
 
-export type EmolaChargeProviderSetting = "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "active";
+export type EmolaChargeProviderSetting = "pagar" | "zumbopay" | "netshop" | "debito_pay" | "paysuite" | "paymoz" | "active";
 
 // Which processor e-Mola charges use, independent of the "active
 // processor" setting used for every other method — e.g. keep M-Pesa on
@@ -93,7 +93,7 @@ export async function getEmolaChargeProviderSetting(): Promise<EmolaChargeProvid
   const supabase = createAdminClient();
   const { data } = await supabase.from("settings").select("value").eq("key", "emola_charge_provider").single();
   const value = data?.value;
-  if (value === "zumbopay" || value === "netshop" || value === "debito_pay" || value === "paysuite" || value === "active")
+  if (value === "zumbopay" || value === "netshop" || value === "debito_pay" || value === "paysuite" || value === "paymoz" || value === "active")
     return value;
   return "pagar";
 }
@@ -124,7 +124,7 @@ export async function resolveChargeProvider(method: PaymentMethod, currency: str
   if (method === "emola" && currency === "MZN") {
     const setting = await getEmolaChargeProviderSetting();
     if (setting === "pagar" && isPagarConfigured()) return "pagar";
-    if (setting === "zumbopay" || setting === "netshop" || setting === "debito_pay" || setting === "paysuite") return setting;
+    if (setting === "zumbopay" || setting === "netshop" || setting === "debito_pay" || setting === "paysuite" || setting === "paymoz") return setting;
   }
   if (method === "mpesa" && currency === "MZN") {
     const setting = await getMpesaChargeProviderSetting();
