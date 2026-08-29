@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Flame, ImageOff } from "lucide-react";
+import { Flame, ImageOff, ShieldCheck } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { StarRating } from "@/components/reviews/star-rating";
@@ -41,28 +41,31 @@ export default async function ProductSalePage({
 
   if (!product) notFound();
 
-  await supabase.rpc("increment_product_views", { p_id: product.id });
-  if (ref) await supabase.rpc("increment_affiliate_clicks", { affiliate_code: ref });
+  // Analytics writes — never block the page on these, they don't affect
+  // what's rendered and a slow/failed write shouldn't cost every visitor
+  // a slower checkout.
+  void supabase.rpc("increment_product_views", { p_id: product.id });
+  if (ref) void supabase.rpc("increment_affiliate_clicks", { affiliate_code: ref });
 
-  const providerName = await getActivePaymentProvider();
-  const paymentMethods = await methodsForProvider(providerName, product.currency);
-
-  let bumps: Product[] = [];
-  if (product.bump_enabled) {
-    const { data: bumpOffers } = await supabase
-      .from("product_bump_offers")
-      .select("sort_order, bump_product:bump_product_id(*)")
-      .eq("product_id", product.id)
-      .order("sort_order");
-    bumps = ((bumpOffers ?? []) as unknown as { bump_product: Product | null }[])
-      .map((o) => o.bump_product)
-      .filter((p): p is Product => p != null && p.status === "approved");
-  }
-
-  const [reviews, ratingSummary] = await Promise.all([
-    getProductReviews(product.id),
-    getProductRatingSummary(product.id),
+  const [providerName, bumps, [reviews, ratingSummary]] = await Promise.all([
+    getActivePaymentProvider(),
+    product.bump_enabled
+      ? supabase
+          .from("product_bump_offers")
+          .select("sort_order, bump_product:bump_product_id(*)")
+          .eq("product_id", product.id)
+          .order("sort_order")
+          .then(
+            ({ data }) =>
+              ((data ?? []) as unknown as { bump_product: Product | null }[])
+                .map((o) => o.bump_product)
+                .filter((p): p is Product => p != null && p.status === "approved")
+          )
+      : Promise.resolve([] as Product[]),
+    Promise.all([getProductReviews(product.id), getProductRatingSummary(product.id)]),
   ]);
+
+  const paymentMethods = await methodsForProvider(providerName, product.currency);
 
   const hasPromo = product.promo_price != null;
   const accentColor = product.is_payment_link ? resolveAccentColor(product.checkout_accent_color) : null;
@@ -137,6 +140,10 @@ export default async function ProductSalePage({
 
         <div className="lg:col-span-2">
           <div className="sticky top-6 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            <div className="flex items-center justify-center gap-1.5 bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Compra 100% segura
+            </div>
             {product.checkout_banner_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={product.checkout_banner_url} alt="" className="aspect-[3/1] w-full object-cover" />

@@ -225,15 +225,48 @@ export function AuthToggleCard({ initialTab }: { initialTab: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6 py-16">
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-gradient opacity-20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-secondary opacity-10 blur-3xl" />
-      <div className="relative w-full max-w-md">
-        <Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-bold">
-          Pay<span className="text-gradient">Now</span>
+    <main className="relative flex min-h-screen items-stretch overflow-hidden bg-background lg:grid lg:grid-cols-2">
+      {/* Branding panel — desktop only. On mobile the gradient blobs behind
+          the form card already carry the same visual weight, so this whole
+          panel would just be redundant empty space below the fold. */}
+      <div className="relative hidden overflow-hidden bg-brand-gradient lg:flex lg:flex-col lg:justify-between lg:p-12 lg:text-white">
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+        <Link href="/" className="relative text-2xl font-bold">
+          PayNow
         </Link>
+        <div className="relative max-w-md">
+          <h2 className="text-3xl font-bold leading-tight">
+            Venda os seus infoprodutos em minutos, receba em M-Pesa, e-Mola ou cartão.
+          </h2>
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <p className="text-sm text-white/90">Pagamentos seguros, verificados a cada transação</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+                <Zap className="h-4 w-4" />
+              </span>
+              <p className="text-sm text-white/90">Saques instantâneos direto para a sua carteira</p>
+            </div>
+          </div>
+        </div>
+        <p className="relative text-xs text-white/60">© {new Date().getFullYear()} PayNow. Todos os direitos reservados.</p>
+      </div>
 
-        <div className="glass rounded-2xl p-8 shadow-xl">
+      {/* Form panel */}
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden px-6 py-16">
+        <div className="pointer-events-none absolute -top-40 left-1/2 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-gradient opacity-20 blur-3xl lg:hidden" />
+        <div className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-secondary opacity-10 blur-3xl lg:hidden" />
+        <div className="relative w-full max-w-md">
+          <Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-bold lg:hidden">
+            Pay<span className="text-gradient">Now</span>
+          </Link>
+
+          <div className="glass rounded-2xl p-8 shadow-xl">
           {/* Sliding pill toggle — animates between Entrar / Criar conta */}
           <div className="relative grid grid-cols-2 rounded-full bg-muted p-1">
             <span
@@ -299,6 +332,7 @@ export function AuthToggleCard({ initialTab }: { initialTab: Tab }) {
           <span className="flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5 text-amber-500" /> Saques instantâneos
           </span>
+        </div>
         </div>
       </div>
     </main>
