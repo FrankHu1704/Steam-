@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle, Wrench, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { WalletManager } from "@/components/withdrawals/wallet-manager";
 import { WithdrawalsTabs } from "@/components/withdrawals/withdrawals-tabs";
 import { ConfirmReceiptButton } from "@/components/withdrawals/confirm-receipt-button";
 import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
+import { WithdrawalDetailsToggle } from "@/components/withdrawals/withdrawal-details-toggle";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import {
   getMyWithdrawals,
@@ -223,24 +225,40 @@ export default async function WithdrawalsPage() {
               </thead>
               <tbody>
                 {withdrawals.map((w) => (
-                  <tr key={w.id} className="border-b border-border/60 last:border-0">
-                    <td className="p-4 text-muted-foreground">{walletSourceLabel(w.wallet_source)}</td>
-                    <td className="p-4">{formatCurrency(w.amount, currency)}</td>
-                    <td className="p-4 font-medium">{formatCurrency(w.net_amount, currency)}</td>
-                    <td className="p-4 capitalize text-muted-foreground">{w.payout_method.replace(/_/g, " ")}</td>
-                    <td className="p-4">
-                      <StatusBadge status={w.status} />
-                    </td>
-                    <td className="p-4 text-muted-foreground">
-                      {new Date(w.requested_at).toLocaleDateString("pt-MZ")}
-                    </td>
-                    <td className="p-4">
-                      {w.status === "paid" && <ConfirmReceiptButton withdrawalId={w.id} />}
-                      {w.status === "pending" && (instantMethods as readonly string[]).includes(w.payout_method) && (
-                        <B2CPayoutButton withdrawalId={w.id} />
-                      )}
-                    </td>
-                  </tr>
+                  <Fragment key={w.id}>
+                    <tr className="border-b border-border/60">
+                      <td className="p-4 text-muted-foreground">{walletSourceLabel(w.wallet_source)}</td>
+                      <td className="p-4">{formatCurrency(w.amount, currency)}</td>
+                      <td className="p-4 font-medium">{formatCurrency(w.net_amount, currency)}</td>
+                      <td className="p-4 capitalize text-muted-foreground">{w.payout_method.replace(/_/g, " ")}</td>
+                      <td className="p-4">
+                        <StatusBadge status={w.status} />
+                      </td>
+                      <td className="p-4 text-muted-foreground">
+                        {new Date(w.requested_at).toLocaleDateString("pt-MZ")}
+                      </td>
+                      <td className="p-4">
+                        {w.status === "paid" && <ConfirmReceiptButton withdrawalId={w.id} />}
+                        {w.status === "pending" && (instantMethods as readonly string[]).includes(w.payout_method) && (
+                          <B2CPayoutButton withdrawalId={w.id} />
+                        )}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/60 last:border-0">
+                      <td colSpan={7} className="px-4 pb-3 pt-0">
+                        <WithdrawalDetailsToggle
+                          withdrawalId={w.id}
+                          amount={w.amount}
+                          feeAmount={w.fee_amount}
+                          netAmount={w.net_amount}
+                          currency={currency}
+                          payoutMethod={w.payout_method}
+                          destination={w.destination}
+                          payoutReference={w.payout_reference}
+                        />
+                      </td>
+                    </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
