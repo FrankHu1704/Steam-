@@ -12,7 +12,7 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
 
   const { data: order } = await supabase
     .from("orders")
-    .select("id, status, total_amount, currency, buyer_name, products(title, cover_image_url)")
+    .select("id, status, total_amount, currency, buyer_name, products(title, cover_image_url, producer_id, profiles:producer_id(name, email, phone))")
     .eq("id", id)
     .single();
 
@@ -23,7 +23,12 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
   // the customer left and came back later.
   const status = order.status === "pending" ? (await getOrderStatus(id)).status ?? order.status : order.status;
 
-  const product = order.products as unknown as { title: string; cover_image_url: string | null } | null;
+  const product = order.products as unknown as {
+    title: string;
+    cover_image_url: string | null;
+    profiles: { name: string; email: string; phone: string | null } | null;
+  } | null;
+  const producer = product?.profiles ?? null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
@@ -36,7 +41,7 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
 
         <div className="p-6">
           {status === "paid" ? (
-            <PaidState orderId={order.id} productTitle={product?.title ?? "o seu produto"} />
+            <PaidState orderId={order.id} productTitle={product?.title ?? "o seu produto"} producer={producer} />
           ) : status === "pending" ? (
             <div className="text-center">
               <Clock className="mx-auto h-10 w-10 text-amber-500" />
@@ -61,9 +66,18 @@ export default async function OrderAccessPage({ params }: { params: Promise<{ id
   );
 }
 
-async function PaidState({ orderId, productTitle }: { orderId: string; productTitle: string }) {
+async function PaidState({
+  orderId,
+  productTitle,
+  producer,
+}: {
+  orderId: string;
+  productTitle: string;
+  producer: { name: string; email: string; phone: string | null } | null;
+}) {
   const result = await getDownloadLinks(orderId);
   const files = result.files ?? [];
+  const whatsappNumber = producer?.phone ? producer.phone.replace(/\D/g, "") : null;
 
   return (
     <div className="text-center">
@@ -86,6 +100,33 @@ async function PaidState({ orderId, productTitle }: { orderId: string; productTi
         ))}
       </div>
       <UpsellOfferCard orderId={orderId} />
+      {producer && (
+        <div className="mt-6 rounded-xl border border-border bg-muted/30 p-4 text-left">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Precisa de ajuda com este produto?</p>
+          <p className="mt-1 text-sm">
+            Suporte e reclamações diretamente com <span className="font-medium">{producer.name}</span>, o
+            vendedor deste produto.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {whatsappNumber && (
+              <a
+                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Olá! Comprei "${productTitle}" e preciso de suporte.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              >
+                WhatsApp
+              </a>
+            )}
+            <a
+              href={`mailto:${producer.email}?subject=${encodeURIComponent(`Suporte — ${productTitle}`)}`}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:border-primary"
+            >
+              Email: {producer.email}
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
