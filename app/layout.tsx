@@ -8,9 +8,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const SITE_URL = "https://pagaja.site";
-const TITLE = "PayNow — Venda os seus infoprodutos em minutos";
+const TITLE = "PayNow (PagaJá) — Venda os seus infoprodutos em minutos";
 const DESCRIPTION =
-  "PayNow é a plataforma moçambicana para vender eBooks, cursos online, mentorias, ficheiros digitais e muito mais. Pagamentos via M-Pesa e e-Mola, saques instantâneos.";
+  "PayNow, também conhecido como PagaJá, é a plataforma moçambicana para vender eBooks, cursos online, mentorias, ficheiros digitais e muito mais. Pagamentos via M-Pesa e e-Mola, saques instantâneos.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   keywords: [
     "PayNow",
+    "PagaJá",
+    "Paga Já",
     "pagaja.site",
     "infoprodutos Moçambique",
     "vender eBooks Moçambique",
@@ -65,9 +67,33 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "PayNow",
+        alternateName: "PagaJá",
+        url: SITE_URL,
+        logo: `${SITE_URL}/icons/icon-512.png`,
+      },
+      {
+        "@type": "WebSite",
+        name: "PayNow",
+        alternateName: "PagaJá",
+        url: SITE_URL,
+      },
+    ],
+  };
+
   return (
     <html lang="pt" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         <ThemeProvider>
           {children}
           <Toaster richColors position="top-right" />
