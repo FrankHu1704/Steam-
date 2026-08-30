@@ -225,7 +225,7 @@ export function AuthToggleCard({ initialTab }: { initialTab: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
   return (
-    <main className="relative flex min-h-screen items-stretch overflow-hidden bg-background lg:grid lg:grid-cols-2">
+    <main className="relative flex min-h-screen items-stretch overflow-x-hidden bg-background lg:grid lg:grid-cols-2">
       {/* Branding panel — desktop only. On mobile the gradient blobs behind
           the form card already carry the same visual weight, so this whole
           panel would just be redundant empty space below the fold. */}
@@ -258,7 +258,7 @@ export function AuthToggleCard({ initialTab }: { initialTab: Tab }) {
       </div>
 
       {/* Form panel */}
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden px-6 py-16">
+      <div className="relative flex flex-1 items-center justify-center overflow-x-hidden px-6 py-16">
         <div className="pointer-events-none absolute -top-40 left-1/2 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-gradient opacity-20 blur-3xl lg:hidden" />
         <div className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-secondary opacity-10 blur-3xl lg:hidden" />
         <div className="relative w-full max-w-md">
