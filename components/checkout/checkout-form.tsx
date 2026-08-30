@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Loader2,
   CheckCircle2,
-  Download,
   Tag,
   ExternalLink,
   Landmark,
@@ -34,7 +34,6 @@ import {
   type CouponPreview,
   type UpsellOfferPreview,
 } from "@/lib/actions/checkout";
-import { getDownloadLinks } from "@/lib/actions/downloads";
 import { resolveAccentColor } from "@/lib/checkout-theme";
 import type { PaymentMethod } from "@/lib/debito-pay";
 import type { Product } from "@/types/database";
@@ -221,6 +220,7 @@ interface CheckoutFormProps {
 type Step = "form" | "pending" | "paid" | "failed";
 
 export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm }: CheckoutFormProps) {
+  const router = useRouter();
   const currency = product.currency;
   const methods = paymentMethods;
   // Producer-chosen customization only applies to payment links (see
@@ -243,7 +243,6 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   const [step, setStep] = useState<Step>("form");
   const [orderId, setOrderId] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-  const [files, setFiles] = useState<{ name: string; url: string | null }[]>([]);
   const [secondsLeft, setSecondsLeft] = useState(POLL_WINDOW_SECONDS);
   const [copied, setCopied] = useState(false);
   const cancelledRef = useRef(false);
@@ -311,10 +310,8 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
       const result = await getOrderStatus(id);
       if (cancelledRef.current) return;
       if (result.status === "paid") {
-        setStep("paid");
         fireClientPurchaseEvent(id);
-        const dl = await getDownloadLinks(id);
-        setFiles(dl.files ?? []);
+        router.push(`/pedido/${id}`);
         return;
       }
       if (result.status === "failed" || result.status === "expired") {
@@ -370,10 +367,8 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
     }
 
     if (result.status === "success") {
-      setStep("paid");
       fireClientPurchaseEvent(result.orderId);
-      const dl = await getDownloadLinks(result.orderId);
-      setFiles(dl.files ?? []);
+      router.push(`/pedido/${result.orderId}`);
       return;
     }
 
@@ -382,30 +377,13 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   }
 
   if (step === "paid") {
+    // Success now redirects to /pedido/[id] (see pollOrderStatus/handleSubmit
+    // above) instead of rendering inline, so this only shows for the brief
+    // instant between status flipping to "paid" and the redirect landing.
     return (
-      <div className="mt-6">
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-900 dark:bg-emerald-950">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-          <p className="mt-3 font-semibold">Pagamento confirmado!</p>
-          <p className="text-sm text-muted-foreground">
-            Enviámos os ficheiros para {email}. Também pode transferi-los abaixo.
-          </p>
-          <div className="mt-4 space-y-2 text-left">
-            {files.map((f, i) => (
-              <a
-                key={i}
-                href={f.url ?? "#"}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:border-primary"
-              >
-                <Download className="h-4 w-4 text-primary" />
-                {f.name}
-              </a>
-            ))}
-          </div>
-        </div>
-        {orderId && <UpsellOfferCard orderId={orderId} />}
+      <div className="mt-6 animate-fade-in-up flex flex-col items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-8 text-center dark:border-emerald-900 dark:bg-emerald-950">
+        <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+        <p className="font-semibold">Pagamento confirmado! A abrir o seu acesso…</p>
       </div>
     );
   }
@@ -415,7 +393,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
     const seconds = String(secondsLeft % 60).padStart(2, "0");
 
     return (
-      <div className="mt-6 rounded-xl border border-border bg-card p-5 text-center">
+      <div className="mt-6 animate-fade-in-up rounded-xl border border-border bg-card p-5 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
         <p className="mt-3 font-semibold">A aguardar confirmação do pagamento…</p>
         <p className="text-sm text-muted-foreground">
@@ -480,7 +458,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
 
   if (step === "failed") {
     return (
-      <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center">
+      <div className="mt-6 animate-fade-in-up rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center">
         <XCircle className="mx-auto h-10 w-10 text-destructive" />
         <p className="mt-3 font-semibold text-destructive">O pagamento não foi concluído.</p>
         <p className="text-sm text-muted-foreground">
@@ -494,7 +472,7 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+    <form onSubmit={handleSubmit} className="mt-6 animate-fade-in-up space-y-5">
       {product.sales_count > 0 && (
         <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400">
           <Users2 className="h-4 w-4 shrink-0" />
@@ -577,7 +555,9 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
                 onClick={() => setPaymentMethod(m)}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-card p-3 transition-all",
-                  selected ? "border-primary shadow-md shadow-primary/10" : "border-border hover:border-primary/40 hover:shadow-sm"
+                  selected
+                    ? "scale-[1.02] border-primary shadow-md shadow-primary/10"
+                    : "border-border hover:border-primary/40 hover:shadow-sm active:scale-[0.98]"
                 )}
               >
                 {selected && (
@@ -593,22 +573,23 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
         </div>
       </div>
 
-      {requiresPhone && (
-        <div className="space-y-1.5">
-          <Label htmlFor="phone">Número {PAYMENT_LABELS[paymentMethod]}</Label>
-          <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-            <span className="flex items-center bg-muted px-3 text-sm font-medium text-muted-foreground">+258</span>
-            <Input
-              id="phone"
-              required
-              placeholder="84xxxxxxx"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="rounded-none border-0 focus:ring-0"
-            />
-          </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="phone">{requiresPhone ? `Número ${PAYMENT_LABELS[paymentMethod]}` : "WhatsApp para suporte"}</Label>
+        <div className="flex overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <span className="flex items-center bg-muted px-3 text-sm font-medium text-muted-foreground">+258</span>
+          <Input
+            id="phone"
+            required
+            placeholder="84xxxxxxx"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="rounded-none border-0 focus:ring-0"
+          />
         </div>
-      )}
+        {!requiresPhone && (
+          <p className="text-xs text-muted-foreground">Usado apenas para o vendedor lhe contactar em caso de dúvidas.</p>
+        )}
+      </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="coupon">Cupão de desconto</Label>
@@ -642,7 +623,14 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
         </p>
         <div className="flex justify-between text-muted-foreground">
           <span>Subtotal</span>
-          <span>{formatCurrency(baseAmount, currency as "MZN" | "ZAR")}</span>
+          <span className="flex items-center gap-1.5">
+            {product.promo_price != null && product.promo_price < product.price && (
+              <span className="text-xs line-through opacity-60">
+                {formatCurrency(product.price, currency as "MZN" | "ZAR")}
+              </span>
+            )}
+            {formatCurrency(baseAmount, currency as "MZN" | "ZAR")}
+          </span>
         </div>
         {bumpTotal > 0 && (
           <div className="flex justify-between text-muted-foreground">
@@ -687,6 +675,9 @@ export function CheckoutForm({ product, bumps, affiliateRef, paymentMethods, utm
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Compra 100% segura
+        </span>
+        <span className="flex items-center gap-1">
+          <Lock className="h-3.5 w-3.5 text-emerald-600" /> Dados encriptados
         </span>
         <span className="flex items-center gap-1">
           <Zap className="h-3.5 w-3.5 text-amber-500" /> Entrega imediata

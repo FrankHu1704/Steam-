@@ -9,12 +9,13 @@ import { formatCurrency } from "@/lib/utils";
 import type { ProducerOrder } from "@/lib/data/orders";
 
 function toCsv(rows: ProducerOrder[]): string {
-  const header = ["Produto", "Cliente", "Email", "Valor", "Moeda", "Método", "Estado", "Data"];
+  const header = ["Produto", "Cliente", "Email", "WhatsApp", "Valor", "Moeda", "Método", "Estado", "Data"];
   const lines = rows.map((o) =>
     [
       o.product_title,
       o.buyer_name,
       o.buyer_email,
+      o.buyer_phone ?? "",
       o.total_amount,
       o.currency,
       o.payment_method ?? "",
@@ -95,8 +96,18 @@ export function OrdersTable({ orders }: { orders: ProducerOrder[] }) {
                 <tr key={order.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
                   <td className="p-4 font-medium">{order.product_title}</td>
                   <td className="p-4 text-muted-foreground">
-                    {order.buyer_name}
+                    <div className="font-medium text-foreground">{order.buyer_name}</div>
                     <div className="text-xs">{order.buyer_email}</div>
+                    {order.buyer_phone && (
+                      <a
+                        href={`https://wa.me/258${order.buyer_phone.replace(/\D/g, "").replace(/^258/, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-0.5 flex items-center gap-1 text-xs text-emerald-600 hover:underline"
+                      >
+                        +258 {order.buyer_phone}
+                      </a>
+                    )}
                   </td>
                   <td className="p-4">{formatCurrency(order.total_amount, order.currency as "MZN" | "ZAR")}</td>
                   <td className="p-4 capitalize text-muted-foreground">
