@@ -83,7 +83,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : NAV;
 
   return (
-    <Shell navItems={navItems} notifications={notifications}>
+    <Shell
+      navItems={navItems}
+      mobileNavItems={[NAV[0], NAV[3], NAV[13], NAV[15]]}
+      notifications={notifications}
+    >
       {children}
     </Shell>
   );

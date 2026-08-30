@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, X, MoreHorizontal } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { InstallAppButton } from "@/components/install-app-button";
@@ -43,12 +43,14 @@ function NavLinks({ navItems, pathname, onNavigate }: { navItems: ShellNavItem[]
 
 export function Shell({
   navItems,
+  mobileNavItems,
   badge,
   notifications = [],
   signOutRedirect,
   children,
 }: {
   navItems: ShellNavItem[];
+  mobileNavItems?: ShellNavItem[];
   badge?: string;
   notifications?: Notification[];
   signOutRedirect?: string;
@@ -115,21 +117,43 @@ export function Shell({
       )}
 
       <div className="flex-1 md:pl-64">
-        <header className="flex items-center justify-between gap-2 border-b border-border bg-card/60 px-4 py-3 backdrop-blur md:justify-end md:px-6">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+        <header className="flex items-center justify-end gap-2 border-b border-border bg-card/60 px-4 py-3 backdrop-blur md:px-6">
           <div className="flex items-center gap-2">
             <InstallAppButton />
             <NotificationsBell notifications={notifications} />
             <ThemeToggle />
           </div>
         </header>
-        <main className="p-4 sm:p-6 md:p-8">{children}</main>
+        <main className="p-4 pb-24 sm:p-6 md:pb-8 md:p-8">{children}</main>
       </div>
+
+      {mobileNavItems && mobileNavItems.length > 0 && (
+        <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-stretch border-t border-border bg-card md:hidden">
+          {mobileNavItems.slice(0, 4).map((item) => {
+            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+            Mais
+          </button>
+        </nav>
+      )}
+
       <SupportBubble />
     </div>
   );

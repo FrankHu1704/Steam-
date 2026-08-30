@@ -58,7 +58,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const notifications = await getMyNotifications(user.id);
 
   return (
-    <Shell navItems={NAV} badge="Admin" notifications={notifications}>
+    <Shell
+      navItems={NAV}
+      mobileNavItems={[NAV[0], NAV[2], NAV[3], NAV[15]]}
+      badge="Admin"
+      notifications={notifications}
+    >
       {children}
     </Shell>
   );
