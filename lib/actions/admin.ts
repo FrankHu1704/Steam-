@@ -7,6 +7,7 @@ import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from "@/lib/payments";
+import { normalizeMozambiquePhone } from "@/lib/phone";
 import type { UserRole, WithdrawalStatus } from "@/types/database";
 
 export async function approveProduct(productId: string) {
@@ -760,6 +761,93 @@ export async function markUserAsFraud(userId: string, reason: string) {
         cto: target.balance_available_cto,
       },
     },
+  });
+
+  return { ok: true };
+}
+
+// Permanently erases a suspended account and every order/commission/review/
+// profit-share record tied to it, freeing up its email for a brand-new
+// signup (Supabase Auth otherwise refuses to register an email that's
+// still attached to an existing user). Deliberately a separate, explicit
+// admin action rather than something that fires automatically during
+// signup — deleting financial history is irreversible and shouldn't
+// happen as a side effect of someone else typing an email into a form.
+// Only ever call this on an account that's already suspended (enforced
+// again inside purge_suspended_account()); never on an active account.
+export async function purgeSuspendedAccount(userId: string) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+  if (userId === admin.user.id) return { error: "Não pode apagar a sua própria conta." };
+
+  const supabase = createAdminClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("role, name, email, suspended_at")
+    .eq("id", userId)
+    .single();
+  if (!target) return { error: "Utilizador não encontrado." };
+  if (target.role === "admin") return { error: "Não é possível apagar outra conta de administrador." };
+  if (!target.suspended_at) return { error: "Só é possível apagar contas suspensas." };
+
+  const { error: purgeError } = await supabase.rpc("purge_suspended_account", { target_id: userId });
+  if (purgeError) return { error: purgeError.message };
+
+  const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+  if (deleteError) return { error: deleteError.message };
+  // profiles.id references auth.users on delete cascade, so the profile
+  // row (and everything that already cascades from it — products,
+  // withdrawals, affiliates, employees, etc.) is gone at this point too.
+
+  await supabase.from("logs").insert({
+    action: "suspended_account_purged",
+    target_table: "profiles",
+    target_id: userId,
+    metadata: { admin_id: admin.user.id, name: target.name, email: target.email },
+  });
+
+  return { ok: true };
+}
+
+// Lets an admin create a fully-working account on a user's behalf (e.g.
+// someone who can't complete signup themselves, or a producer onboarded
+// over the phone). Uses the Admin API to create an already-confirmed auth
+// user directly — handle_new_user() then creates the profiles row exactly
+// as it would for a normal signup, from the same raw_user_meta_data shape.
+export async function createUserByAdmin(formData: FormData) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acesso negado." };
+
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const role = String(formData.get("role") ?? "buyer");
+
+  if (!name || !email || !password) return { error: "Preencha nome, email e palavra-passe." };
+  if (password.length < 6) return { error: "A palavra-passe deve ter pelo menos 6 caracteres." };
+  if (role !== "buyer" && role !== "producer") return { error: "Role inválido." };
+
+  const supabase = createAdminClient();
+  const phone = phoneRaw ? normalizeMozambiquePhone(phoneRaw) : null;
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name, phone },
+  });
+  if (error) return { error: error.message };
+
+  if (role === "producer" && data.user) {
+    await supabase.from("profiles").update({ role: "producer" }).eq("id", data.user.id);
+  }
+
+  await supabase.from("logs").insert({
+    action: "user_created_by_admin",
+    target_table: "profiles",
+    target_id: data.user?.id,
+    metadata: { admin_id: admin.user.id, name, email, role },
   });
 
   return { ok: true };

@@ -1,6 +1,7 @@
 import { Users2, Store, ShieldCheck, UserCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UsersTable } from "@/components/admin/users-table";
+import { CreateUserButton } from "@/components/admin/create-user-button";
 import { ProducerApprovalReview } from "@/components/admin/producer-approval-review";
 import { getAllUsers, getPendingProducerAccounts } from "@/lib/data/admin";
 import { cn } from "@/lib/utils";
@@ -38,9 +39,12 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Utilizadores</h1>
-        <p className="text-sm text-muted-foreground">{users.length} contas registadas (produtores e admin).</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Utilizadores</h1>
+          <p className="text-sm text-muted-foreground">{users.length} contas registadas (produtores e admin).</p>
+        </div>
+        <CreateUserButton />
       </div>
 
       {pendingProducers.length > 0 && (

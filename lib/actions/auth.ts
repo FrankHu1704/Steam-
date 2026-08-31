@@ -38,15 +38,6 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   const referralCode = String(formData.get("ref") ?? "").trim();
   const producerReferralId = String(formData.get("pref") ?? "").trim();
 
-  // Each phone number can only be used once — checked here (app level)
-  // rather than a DB unique constraint, so existing accounts with a
-  // shared/missing phone don't block this from ever being added.
-  const admin = createAdminClient();
-  const { data: existingPhone } = await admin.from("profiles").select("id").eq("phone", phone).maybeSingle();
-  if (existingPhone) {
-    return { error: "Este número de telemóvel já está associado a outra conta." };
-  }
-
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -57,6 +48,8 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   });
 
   if (error) return { error: error.message };
+
+  const admin = createAdminClient();
 
   if (referralCode && data.user) {
     const { data: employee } = await admin
@@ -88,9 +81,26 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
 }
 
 export async function signIn(formData: FormData): Promise<ActionResult> {
-  const email = String(formData.get("email") ?? "").trim();
+  const identifier = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/dashboard");
+
+  let email = identifier;
+  if (!identifier.includes("@")) {
+    // Treat as a phone number — resolve to the underlying account's email,
+    // since Supabase Auth here is keyed by email/password. Phone numbers
+    // are no longer required to be unique (an admin can share one across
+    // accounts, e.g. a family member's number), so this only works when
+    // the number maps to exactly one account.
+    const admin = createAdminClient();
+    const phone = normalizeMozambiquePhone(identifier);
+    const { data: matches } = await admin.from("profiles").select("email").eq("phone", phone);
+    if (!matches || matches.length === 0) return { error: "Email ou palavra-passe incorretos." };
+    if (matches.length > 1) {
+      return { error: "Este número está associado a mais de uma conta. Entre com o email dessa conta." };
+    }
+    email = matches[0].email;
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });

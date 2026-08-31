@@ -32,7 +32,7 @@ function LoginForm() {
     <form action={handleSubmit} className="space-y-4">
       <input type="hidden" name="next" value={next} />
       <div className="space-y-1.5">
-        <Label htmlFor="login-email">Email</Label>
+        <Label htmlFor="login-email">Email ou telemóvel</Label>
         <div className="flex items-center overflow-hidden rounded-lg border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
           <span className="flex items-center pl-3 text-muted-foreground">
             <Mail className="h-4 w-4" />
@@ -40,10 +40,10 @@ function LoginForm() {
           <Input
             id="login-email"
             name="email"
-            type="email"
+            type="text"
             required
-            autoComplete="email"
-            placeholder="seu@email.com"
+            autoComplete="username"
+            placeholder="seu@email.com ou 84xxxxxxx"
             className="border-0 focus-visible:ring-0"
           />
         </div>
@@ -142,7 +142,7 @@ function SignupForm() {
             className="rounded-none border-0 focus-visible:ring-0"
           />
         </div>
-        <p className="text-xs text-muted-foreground">Para receber notificações de vendas por SMS e WhatsApp. Só pode ser usado numa conta.</p>
+        <p className="text-xs text-muted-foreground">Para receber notificações de vendas por SMS e WhatsApp.</p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="signup-birthDate">Data de nascimento</Label>
