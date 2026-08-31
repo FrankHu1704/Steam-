@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
-import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountReinstatedEmail, sendProducerWelcomeEmail, sendProducerApplicationRejectedEmail } from "@/lib/email";
+import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountReinstatedEmail, sendProducerWelcomeEmail, sendProducerApplicationRejectedEmail, sendOrderRefundedEmail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -258,11 +258,33 @@ export async function markOrderRefunded(orderId: string) {
   if (!admin) return { error: "Acesso negado." };
 
   const supabase = createAdminClient();
-  const { data: order } = await supabase.from("orders").select("id, status").eq("id", orderId).single();
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id, status, buyer_email, buyer_name, total_amount, currency, products(title)")
+    .eq("id", orderId)
+    .single<{
+      id: string;
+      status: string;
+      buyer_email: string;
+      buyer_name: string;
+      total_amount: number;
+      currency: string;
+      products: { title: string } | null;
+    }>();
   if (!order) return { error: "Pedido não encontrado." };
   if (order.status === "refunded") return { error: "Este pedido já está marcado como reembolsado." };
 
   await refundOrder(orderId);
+
+  if (order.buyer_email) {
+    await sendOrderRefundedEmail({
+      buyerEmail: order.buyer_email,
+      buyerName: order.buyer_name,
+      productTitle: order.products?.title ?? "o seu produto",
+      amount: order.total_amount,
+      currency: order.currency as "MZN" | "ZAR",
+    });
+  }
 
   return { ok: true };
 }

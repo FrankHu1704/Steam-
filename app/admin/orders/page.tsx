@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { ShoppingCart, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ShoppingCart, CheckCircle2, Clock, XCircle, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { MarkPaidButton } from "@/components/admin/mark-paid-button";
 import { MarkFailedButton } from "@/components/admin/mark-failed-button";
 import { MarkRefundedButton } from "@/components/admin/mark-refunded-button";
-import { getAllOrders } from "@/lib/data/admin";
+import { getAllOrders, searchOrdersByPhone } from "@/lib/data/admin";
 import { cn, formatCurrency } from "@/lib/utils";
 
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; phone?: string }>;
 }) {
-  const { status } = await searchParams;
-  const orders = await getAllOrders();
+  const { status, phone } = await searchParams;
+  const phoneQuery = phone?.trim() ?? "";
+  const orders = phoneQuery ? await searchOrdersByPhone(phoneQuery) : await getAllOrders();
   const activeStatus = status ?? "";
 
   const paid = orders.filter((o) => o.status === "paid");
@@ -63,8 +64,37 @@ export default async function AdminOrdersPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Pedidos</h1>
-        <p className="text-sm text-muted-foreground">Últimas {orders.length} encomendas na plataforma.</p>
+        <p className="text-sm text-muted-foreground">
+          {phoneQuery ? `Resultados para "${phoneQuery}"` : `Últimas ${orders.length} encomendas na plataforma.`}
+        </p>
       </div>
+
+      <form action="/admin/orders" className="flex max-w-md gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            name="phone"
+            defaultValue={phoneQuery}
+            placeholder="Pesquisar por número de telemóvel do cliente"
+            className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <button
+          type="submit"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Pesquisar
+        </button>
+        {phoneQuery && (
+          <Link
+            href="/admin/orders"
+            className="flex items-center rounded-lg border border-border px-3 text-sm text-muted-foreground hover:bg-muted"
+          >
+            Limpar
+          </Link>
+        )}
+      </form>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {filters.map((f) => (
@@ -123,7 +153,10 @@ export default async function AdminOrdersPage({
                       <td className="p-4">
                         <Badge variant="secondary">{order.source === "api" ? "via API" : "Marketplace"}</Badge>
                       </td>
-                      <td className="p-4 text-muted-foreground">{order.buyer_name}</td>
+                      <td className="p-4 text-muted-foreground">
+                        <div>{order.buyer_name}</div>
+                        {order.buyer_phone && <div className="text-xs">{order.buyer_phone}</div>}
+                      </td>
                       <td className="p-4 font-semibold">
                         {formatCurrency(order.total_amount, order.currency as "MZN" | "ZAR")}
                       </td>

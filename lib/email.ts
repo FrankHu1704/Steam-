@@ -174,14 +174,14 @@ function emailReasonBox(label: string, text: string): string {
   `;
 }
 
-function emailInfoBox(rows: { label: string; value: string; emphasize?: boolean }[]): string {
+function emailInfoBox(rows: { label: string; value: string; emphasize?: boolean; color?: string }[]): string {
   const rowsHtml = rows
     .map(
       (r, i) => `
         <tr>
           <td style="padding:${i === 0 ? "0" : "12px"} 0 0;">
             <p style="margin:0;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">${r.label}</p>
-            <p style="margin:2px 0 0;font-size:${r.emphasize ? "18" : "15"}px;font-weight:700;color:${r.emphasize ? "#059669" : "#111827"};">${r.value}</p>
+            <p style="margin:2px 0 0;font-size:${r.emphasize ? "18" : "15"}px;font-weight:700;color:${r.color ?? (r.emphasize ? "#059669" : "#111827")};">${r.value}</p>
           </td>
         </tr>
       `
@@ -190,6 +190,36 @@ function emailInfoBox(rows: { label: string; value: string; emphasize?: boolean 
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border-radius:10px;padding:16px 18px;margin:16px 0;">
       ${rowsHtml}
+    </table>
+  `;
+}
+
+function emailNoteBox(text: string): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EFF6FF;border-left:3px solid #3B82F6;border-radius:8px;margin:16px 0;">
+      <tr>
+        <td style="padding:12px 16px;">
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#1E40AF;">💡 <strong>Nota:</strong> ${text}</p>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Kept in one place so the same link is used everywhere it's promoted
+// (this email, the in-app notifications bell).
+export const INSTAGRAM_URL = "https://www.instagram.com/pagaja.co.mz?igsi=MThwNXl1eWx1eGtvcA==";
+
+function emailInstagramButton(): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 4px;">
+      <tr>
+        <td align="center">
+          <a href="${INSTAGRAM_URL}" style="display:inline-block;background:linear-gradient(135deg,#833AB4 0%,#E1306C 50%,#FCAF45 100%);color:#ffffff;font-weight:700;font-size:13px;text-decoration:none;padding:11px 22px;border-radius:10px;">
+            📷 Seguir no Instagram
+          </a>
+        </td>
+      </tr>
     </table>
   `;
 }
@@ -316,7 +346,9 @@ export async function sendProducerWelcomeEmail(input: { email: string; name: str
           "Junte-se ao grupo de produtores no WhatsApp para suporte direto, novidades da plataforma e trocar experiências com outros vendedores."
         ) +
         emailButton("Entrar no grupo WhatsApp", PRODUCER_WHATSAPP_GROUP_URL, "#22C55E") +
-        emailButton("Abrir o meu painel", `${siteUrl()}/dashboard`),
+        emailButton("Abrir o meu painel", `${siteUrl()}/dashboard`) +
+        emailParagraph("Siga também o nosso Instagram para novidades, dicas de vendas e destaques de produtores.") +
+        emailInstagramButton(),
     }),
   });
 }
@@ -408,6 +440,68 @@ export async function sendWithdrawalOtpEmail(input: { email: string; name?: stri
           </tr>
         </table>` +
         emailParagraph(`<span style="color:#9ca3af;font-size:12px;">Válido por 5 minutos. Se não pediu este levantamento, ignore este email.</span>`),
+    }),
+  });
+}
+
+const PAYOUT_METHOD_LABELS: Record<string, string> = {
+  mpesa: "MPESA",
+  emola: "EMOLA",
+  mkesh: "MKESH",
+  bank_transfer: "Transferência bancária",
+};
+
+// Fires once a withdrawal actually has money moving (a real payout
+// reference exists) — whether that's an instant automated B2C dispatch or
+// an admin manually marking it paid. Distinct from
+// sendWithdrawalRequestedEmail's "pending" branch, which only says a
+// request was received, not that it was completed.
+export async function sendWithdrawalApprovedEmail(input: {
+  producerEmail: string;
+  producerName?: string;
+  withdrawalId: string;
+  amount: number;
+  feeAmount: number;
+  netAmount: number;
+  currency: string;
+  payoutMethod: string;
+  destination: string;
+  transactionId?: string | null;
+}) {
+  const methodLabel = PAYOUT_METHOD_LABELS[input.payoutMethod] ?? input.payoutMethod.toUpperCase();
+  const money = (v: number) => `${input.currency} ${Number(v).toFixed(2)}`;
+  // Short, human-readable stand-in for the internal UUID — same idea as
+  // every provider's own short alphanumeric reference.
+  const reference = input.withdrawalId.replace(/-/g, "").slice(0, 11);
+
+  await sendEmail({
+    to: input.producerEmail,
+    subject: "Levantamento Aprovado! 🎉",
+    html: emailBannerCard({
+      bannerColor: "#059669",
+      icon: "✅",
+      title: "Levantamento Aprovado!",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.producerName ? `, <strong>${input.producerName}</strong>` : ""},<br/>Seu pedido de levantamento foi aprovado e processado com sucesso! 🎉`
+        ) +
+        `<p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#111827;">Detalhes do Levantamento</p>` +
+        emailInfoBox([
+          { label: "Valor Solicitado", value: money(input.amount) },
+          ...(input.feeAmount > 0
+            ? [{ label: "Taxa de Levantamento", value: `-${money(input.feeAmount)}`, color: "#EA580C" }]
+            : []),
+          { label: "Valor Recebido", value: money(input.netAmount), emphasize: true },
+          { label: "Método", value: methodLabel },
+          { label: "Destinatário", value: input.destination },
+          { label: "Referência", value: reference },
+          ...(input.transactionId ? [{ label: "ID da Transação", value: input.transactionId }] : []),
+        ]) +
+        emailNoteBox(
+          `O valor foi enviado para o número ${input.destination}. Verifique sua conta ${methodLabel} para confirmar o recebimento.`
+        ) +
+        emailButton("Ver Meus Levantamentos", `${siteUrl()}/dashboard/withdrawals`, "#DC2626") +
+        emailInstagramButton(),
     }),
   });
 }
@@ -758,6 +852,34 @@ export async function sendProductApprovedEmail(input: {
         emailInfoBox([{ label: "Produto aprovado", value: input.productTitle }]) +
         emailButton("Ver Produto", `${siteUrl()}/p/${input.productSlug}`) +
         emailHighlight("Um bom produto merece chegar a quem precisa dele. Boa sorte com as vendas!"),
+    }),
+  });
+}
+
+export async function sendOrderRefundedEmail(input: {
+  buyerEmail: string;
+  buyerName: string;
+  productTitle: string;
+  amount: number;
+  currency: "MZN" | "ZAR";
+}) {
+  const money = `${input.amount.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+  await sendEmail({
+    to: input.buyerEmail,
+    subject: `O seu pagamento foi reembolsado — ${input.productTitle}`,
+    html: emailBannerCard({
+      bannerColor: "#2563EB",
+      icon: "💸",
+      title: "Reembolso confirmado",
+      bodyHtml:
+        emailParagraph(`Olá, <strong>${input.buyerName}</strong>! O seu pagamento foi reembolsado.`) +
+        emailInfoBox([
+          { label: "Produto", value: input.productTitle },
+          { label: "Valor reembolsado", value: money },
+        ]) +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">O reembolso pode levar alguns dias úteis a refletir-se na sua conta, dependendo do método de pagamento usado. Qualquer dúvida, contacte o vendedor deste produto.</span>`
+        ),
     }),
   });
 }

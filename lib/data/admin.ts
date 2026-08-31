@@ -182,6 +182,28 @@ export interface AdminOrder extends Order {
   product_title: string;
 }
 
+// Unlike getAllOrders (capped at the most recent 100 for the default admin
+// list view), this searches the FULL order history — a customer support
+// lookup needs to find an order regardless of how old it is.
+export async function searchOrdersByPhone(phoneQuery: string): Promise<AdminOrder[]> {
+  const digits = phoneQuery.replace(/\D/g, "");
+  if (!digits) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*, products(title)")
+    .ilike("buyer_phone", `%${digits}%`)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  const orders = (data ?? []) as (Order & { products: { title: string } | null })[];
+  return orders.map((o) => ({
+    ...o,
+    product_title: o.products?.title ?? o.description ?? "—",
+  }));
+}
+
 export async function getAllOrders(limit = 100): Promise<AdminOrder[]> {
   const supabase = await createClient();
   const { data } = await supabase
