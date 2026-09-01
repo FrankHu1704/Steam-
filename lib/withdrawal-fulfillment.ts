@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveB2CProvider, chargeProviderModule, b2cMethodsForProvider } from "@/lib/payments";
-import { sendWithdrawalRequestedEmail } from "@/lib/email";
+import { sendWithdrawalApprovedEmail } from "@/lib/email";
+import { sendWithdrawalApprovedSms } from "@/lib/easyhost-sms";
 
 // Shared B2C payout logic — used by both the admin "Pagar via B2C" action
 // and the producer self-service instant-payout action. If the active
@@ -15,11 +16,11 @@ export async function payWithdrawalB2C(
   const supabase = createAdminClient();
   const { data: withdrawal } = await supabase
     .from("withdrawals")
-    .select("*, profiles!producer_id(name, email)")
+    .select("*, profiles!producer_id(name, email, phone)")
     .eq("id", withdrawalId)
     .single();
   if (!withdrawal) return { ok: false, error: "Levantamento não encontrado." };
-  const producerProfile = (withdrawal as unknown as { profiles: { name: string; email: string } | null }).profiles;
+  const producerProfile = (withdrawal as unknown as { profiles: { name: string; email: string; phone: string | null } | null }).profiles;
   const producerName = producerProfile?.name ?? "—";
 
   async function logAttempt(input: { success: boolean; error?: string; reference?: string; provider: string }) {
@@ -93,15 +94,24 @@ export async function payWithdrawalB2C(
   await logAttempt({ success: true, reference, provider: providerName });
 
   if (producerProfile?.email) {
-    await sendWithdrawalRequestedEmail({
+    await sendWithdrawalApprovedEmail({
       producerEmail: producerProfile.email,
       producerName,
+      withdrawalId: withdrawal.id,
       amount: withdrawal.amount,
+      feeAmount: withdrawal.fee_amount,
       netAmount: withdrawal.net_amount,
       currency: withdrawal.currency,
       payoutMethod: withdrawal.payout_method,
       destination: withdrawal.destination,
-      instant: true,
+      transactionId: reference ?? null,
+    });
+  }
+  if (producerProfile?.phone) {
+    await sendWithdrawalApprovedSms({
+      phone: producerProfile.phone,
+      netAmount: withdrawal.net_amount,
+      currency: withdrawal.currency,
     });
   }
 

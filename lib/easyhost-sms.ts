@@ -112,3 +112,10 @@ export async function sendPurchaseConfirmedSms(input: {
 
   await sendEasyhostSms(input.phone, `${prefix}${title}${suffix}`);
 }
+
+export async function sendWithdrawalApprovedSms(input: { phone: string; netAmount: number; currency: string }) {
+  const amountLabel = `${input.netAmount % 1 === 0 ? input.netAmount : input.netAmount.toFixed(2)} ${input.currency}`;
+  const body = `✅ LEVANTAMENTO APROVADO! ${amountLabel} foram enviados para o seu número. Verifique a sua conta para confirmar o recebimento. — PayNow`;
+
+  await sendEasyhostSms(input.phone, body);
+}

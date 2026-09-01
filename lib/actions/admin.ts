@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminUser, requireProductModerator } from "@/lib/data/admin";
 import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedEmail, sendAdminMessageEmail, sendBulkEmail, sendWithdrawalRequestedEmail, sendInstantWithdrawalAnnouncementEmail, sendAccountReinstatedEmail, sendProducerWelcomeEmail, sendProducerApplicationRejectedEmail, sendOrderRefundedEmail } from "@/lib/email";
+import { sendWithdrawalApprovedSms } from "@/lib/easyhost-sms";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
@@ -104,7 +105,7 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
   if (status === "paid") {
     const { data: producer } = await supabase
       .from("profiles")
-      .select("name, email")
+      .select("name, email, phone")
       .eq("id", withdrawal.producer_id)
       .single();
     if (producer?.email) {
@@ -117,6 +118,13 @@ export async function updateWithdrawalStatus(withdrawalId: string, status: Withd
         payoutMethod: withdrawal.payout_method,
         destination: withdrawal.destination,
         instant: true,
+      });
+    }
+    if (producer?.phone) {
+      await sendWithdrawalApprovedSms({
+        phone: producer.phone,
+        netAmount: withdrawal.net_amount,
+        currency: withdrawal.currency,
       });
     }
   }
@@ -859,7 +867,12 @@ export async function createUserByAdmin(formData: FormData) {
     email_confirm: true,
     user_metadata: { name, phone },
   });
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.message.toLowerCase().includes("already been registered") || error.message.toLowerCase().includes("already registered")) {
+      return { error: "Já existe uma conta com este email. Procure o utilizador na lista e use \"Repor palavra-passe\" em vez de criar uma conta nova." };
+    }
+    return { error: error.message };
+  }
 
   if (role === "producer" && data.user) {
     await supabase.from("profiles").update({ role: "producer" }).eq("id", data.user.id);

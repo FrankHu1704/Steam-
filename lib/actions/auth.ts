@@ -4,6 +4,21 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizeMozambiquePhone } from "@/lib/phone";
+import { siteUrl } from "@/lib/email";
+
+export async function signInWithGoogle(next?: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next ?? "/dashboard")}`,
+    },
+  });
+  if (error || !data?.url) {
+    redirect("/login?error=google_auth_failed");
+  }
+  redirect(data.url);
+}
 
 export interface ActionResult {
   error?: string;
