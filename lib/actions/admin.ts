@@ -6,6 +6,7 @@ import { sendProductApprovedEmail, sendProductRejectedEmail, sendProductDeletedE
 import { sendWithdrawalApprovedSms } from "@/lib/easyhost-sms";
 import { sendPushToUser } from "@/lib/push";
 import { creditOrder, notifyProducerOfFailedPayment, refundOrder } from "@/lib/order-fulfillment";
+import { notifyNegativeBalance } from "@/lib/debt-fulfillment";
 import { payWithdrawalB2C } from "@/lib/withdrawal-fulfillment";
 import { getActivePaymentProvider, providerModule, b2cMethodsForProvider } from "@/lib/payments";
 import { normalizeMozambiquePhone } from "@/lib/phone";
@@ -695,20 +696,27 @@ export async function adminAdjustBalance(
     });
   }
 
+  // A debit can leave the wallet negative (the debt clawback mentioned
+  // above) — on top of the generic adjustment email/push above, this also
+  // sends the dedicated negative-balance notice with the "pay debt" link.
+  if (after < 0) {
+    await notifyNegativeBalance({ producerId: userId, walletField });
+  }
+
   return { ok: true, before, after };
 }
 
 // Suspends a user's access without touching their balance, products, or
-// order history — signIn() rejects the login outright, and
-// getCurrentUserAndProfile() signs out any session already active for
-// this account the next time it loads a protected page (see
-// lib/data/profile.ts). Admins can't suspend themselves or another admin,
-// to avoid a mistaken click locking every admin out at once.
+// order history — signIn() and getCurrentUserAndProfile() both redirect
+// the account to /conta-suspensa (see lib/actions/auth.ts and
+// lib/data/profile.ts) instead of letting it into any protected page, on
+// its very next login or next page load. Admins can't suspend themselves
+// or another admin, to avoid a mistaken click locking every admin out at
+// once.
 //
-// Deliberately silent: the account gets NO email/push/in-app notice that
-// it was suspended — signIn() and getCurrentUserAndProfile() both make it
-// look like the account simply doesn't exist (same as a wrong password),
-// rather than confirming to whoever's behind it that they've been caught.
+// No email/push is sent for the suspension itself — the account only
+// finds out via the /conta-suspensa screen it lands on, which shows the
+// reason recorded below and a way to contact support.
 export async function suspendUser(userId: string, reason: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };
@@ -740,8 +748,8 @@ export async function suspendUser(userId: string, reason: string) {
 // true forever (even across a later unsuspendUser()) as a historical
 // record for reporting. Reactivation (restoring login access, never the
 // balance) still goes through the same unsuspendUser() as a plain
-// suspension. Same silence policy as suspendUser() — no email/push/in-app
-// notice, so nothing tips off whoever's behind the account.
+// suspension. Same as suspendUser() — no dedicated email/push is sent for
+// this action; the account only learns about it via /conta-suspensa.
 export async function markUserAsFraud(userId: string, reason: string) {
   const admin = await requireAdminUser();
   if (!admin) return { error: "Acesso negado." };

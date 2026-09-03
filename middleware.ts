@@ -8,6 +8,7 @@ const PROTECTED_PREFIXES: { prefix: string; loginPath: string }[] = [
   { prefix: "/account", loginPath: "/login" },
   { prefix: "/admin", loginPath: "/login" },
   { prefix: "/colaborador", loginPath: "/colaborador/login" },
+  { prefix: "/conta-suspensa", loginPath: "/login" },
 ];
 
 const PUBLIC_EXACT_PATHS = new Set(["/colaborador/login", "/colaborador/candidatura"]);

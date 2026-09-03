@@ -11,6 +11,7 @@ import { sendBuyerWhatsappReceipt } from "@/lib/whatsapp";
 import { dispatchPaymentCompletedWebhook } from "@/lib/developer-webhooks";
 import { sendPushToUser } from "@/lib/push";
 import { sendPurchaseEvent } from "@/lib/facebook-capi";
+import { notifyNegativeBalance } from "@/lib/debt-fulfillment";
 
 // Shared by the Debito Pay webhook and the admin "mark as paid" fallback —
 // whichever one gets there first does the crediting; the `credited_at`
@@ -259,6 +260,15 @@ export async function creditOrder(orderId: string): Promise<void> {
         currency: order.currency,
       });
     }
+
+    // Debt is deducted automatically just by this sale's ownerNet being
+    // added to the wallet above — if that still leaves it negative (the
+    // sale wasn't enough to cover the existing debt), let the producer
+    // know how much is still owed.
+    await notifyNegativeBalance({
+      producerId: order.producer_id,
+      walletField: order.source === "api" ? "balance_available_dev" : "balance_available",
+    });
 
     const accessUrl = `${siteUrl()}/pedido/${order.id}`;
 

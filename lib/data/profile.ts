@@ -5,10 +5,11 @@ import type { Profile } from "@/types/database";
 // Called at the top of every /dashboard, /account, and /admin layout — the
 // single choke point that also enforces account suspension. A suspension
 // set mid-session (see suspendUser() in lib/actions/admin.ts) takes effect
-// on this account's very next page load, not just on its next login. Just
-// signs out and drops them back on /login with no explanation — same
-// silence policy as signIn() itself, nothing here should confirm to a
-// suspended/fraud-flagged account that it was caught.
+// on this account's very next page load, not just on its next login.
+// Redirects to /conta-suspensa, which shows the reason and a "Falar com
+// Suporte" / "Terminar sessão" screen — the session itself is left intact
+// (see signIn() for the equivalent behavior on login) so that page can
+// still identify who's asking and let them end it themselves.
 export async function getCurrentUserAndProfile() {
   const supabase = await createClient();
   const {
@@ -23,8 +24,7 @@ export async function getCurrentUserAndProfile() {
     .single();
 
   if (profile?.suspended_at) {
-    await supabase.auth.signOut();
-    redirect("/login");
+    redirect("/conta-suspensa");
   }
 
   return { user, profile: profile as Profile | null };

@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { Zap, Wallet, TrendingUp, Clock, CreditCard, AlertTriangle, Wrench, MessageCircle } from "lucide-react";
+import { Zap, Wallet, TrendingUp, Clock, CreditCard, Wrench, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { WithdrawalForm } from "@/components/withdrawals/withdrawal-form";
@@ -8,6 +8,7 @@ import { WithdrawalsTabs } from "@/components/withdrawals/withdrawals-tabs";
 import { ConfirmReceiptButton } from "@/components/withdrawals/confirm-receipt-button";
 import { B2CPayoutButton } from "@/components/withdrawals/b2c-payout-button";
 import { WithdrawalDetailsToggle } from "@/components/withdrawals/withdrawal-details-toggle";
+import { DebtCard } from "@/components/dashboard/debt-card";
 import { getCurrentUserAndProfile } from "@/lib/data/profile";
 import {
   getMyWithdrawals,
@@ -51,19 +52,24 @@ export default async function WithdrawalsPage() {
     </div>
   );
 
-  const negativeBalanceBanner = (profile.balance_available < 0 || profile.balance_available_dev < 0) && (
+  const devWalletNegativeBanner = profile.balance_available_dev < 0 && (
     <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
-      <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+      <Wallet className="h-5 w-5 shrink-0 text-destructive" />
       <p className="text-destructive">
-        O seu saldo está negativo — uma ou mais vendas já pagas foram reembolsadas/estornadas depois de já terem sido
-        creditadas. O valor em falta será descontado automaticamente das próximas vendas.
+        A sua Carteira Programador (API) está negativa em {formatCurrency(Math.abs(profile.balance_available_dev), currency)} — o valor
+        será descontado automaticamente das próximas cobranças feitas via API.
       </p>
     </div>
   );
 
+  const debtCard = profile.balance_available < 0 && (
+    <DebtCard debtAmount={Math.abs(profile.balance_available)} currency={currency} phone={profile.phone} />
+  );
+
   const overview = (
     <div className="space-y-6">
-      {negativeBalanceBanner}
+      {debtCard}
+      {devWalletNegativeBanner}
       {b2cBanner}
 
       <div className={`grid gap-4 sm:grid-cols-2${profile.is_cto || profile.is_sponsor ? " lg:grid-cols-3" : ""}`}>

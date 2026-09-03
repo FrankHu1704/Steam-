@@ -119,3 +119,14 @@ export async function sendWithdrawalApprovedSms(input: { phone: string; netAmoun
 
   await sendEasyhostSms(input.phone, body);
 }
+
+// Sent by notifyNegativeBalance() (lib/debt-fulfillment.ts) — on every
+// sale that leaves the wallet still negative, on an admin debit, on the
+// daily negative-balance cron, and on-demand via the "Lembrar" button on
+// the dashboard debt card.
+export async function sendNegativeBalanceSms(input: { phone: string; debtAmount: number; currency: string }) {
+  const amountLabel = `${input.debtAmount % 1 === 0 ? input.debtAmount : input.debtAmount.toFixed(2)} ${input.currency}`;
+  const body = `⚠️ SALDO NEGATIVO: a sua conta PayNow está com -${amountLabel} em dívida. Pague no painel ou aguarde o desconto automático nas próximas vendas. — PayNow`;
+
+  await sendEasyhostSms(input.phone, body);
+}

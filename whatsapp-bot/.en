@@ -1,0 +1,17 @@
+
+# Copie os MESMOS valores das variáveis de ambiente do site PagaJá na Vercel.
+NEXT_PUBLIC_SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Prefira GROQ_API_KEYS (separadas por vírgula) para alternar automaticamente
+# se uma chave atingir o limite; GROQ_API_KEY (uma só) também funciona.
+GROQ_API_KEYS=
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# Opcional — número com DDI (ex: 258849311757) para ligar sem perguntar no
+# terminal. Se vazio, o script pergunta ao iniciar.
+PAGAJA_BOT_PHONE_NUMBER=
+
+# Opcional — só muda se o site não estiver em pagaja.site.
+PAGAJA_SITE_URL=https://pagaja.site

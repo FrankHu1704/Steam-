@@ -121,14 +121,15 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: "Email ou palavra-passe incorretos." };
 
-  // A suspended/fraud-flagged account never gets to know it was detected —
-  // this deliberately looks identical to "this account doesn't exist"
-  // rather than confirming the suspension (see suspendUser()/
-  // markUserAsFraud() in lib/actions/admin.ts, which never notify either).
+  // A suspended/fraud-flagged account logs in normally, but lands on
+  // /conta-suspensa instead of /dashboard — same redirect target as
+  // getCurrentUserAndProfile() (lib/data/profile.ts) uses for a
+  // suspension that happens mid-session. The session is kept (not signed
+  // out here) since that screen needs it to identify the account and to
+  // let the person end the session themselves.
   const { data: profile } = await supabase.from("profiles").select("suspended_at").eq("id", data.user.id).single();
   if (profile?.suspended_at) {
-    await supabase.auth.signOut();
-    return { error: "Esta conta não existe." };
+    redirect("/conta-suspensa");
   }
 
   redirect(next);

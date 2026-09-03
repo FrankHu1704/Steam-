@@ -973,3 +973,53 @@ export async function sendProductRejectedEmail(input: {
     }),
   });
 }
+
+// Fired by notifyNegativeBalance() (lib/debt-fulfillment.ts) — every time
+// a sale only partly covers existing debt, an admin debit leaves the
+// wallet negative, or the daily negative-balance cron runs. Points at
+// the debt card on /dashboard/withdrawals, where "Pagar Dívida" lives.
+export async function sendNegativeBalanceEmail(input: { to: string; name?: string; debtAmount: number; currency: string }) {
+  const money = `${input.debtAmount.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+  await sendEmail({
+    to: input.to,
+    subject: `Saldo negativo na sua conta — ${money} em dívida`,
+    html: emailBannerCard({
+      bannerColor: "#DC2626",
+      icon: "⚠️",
+      title: "Saldo negativo",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}. A sua conta apresenta saldo negativo de <strong>-${money}</strong>.`
+        ) +
+        emailInfoBox([{ label: "Valor em dívida", value: money, emphasize: true, color: "#DC2626" }]) +
+        emailParagraph(
+          "Este valor vai sendo descontado automaticamente das suas próximas vendas. Também pode regularizar a dívida imediatamente pelo painel."
+        ) +
+        emailButton("Pagar Dívida Agora", `${siteUrl()}/dashboard/withdrawals`, "#DC2626") +
+        emailParagraph(
+          `<span style="color:#9ca3af;font-size:12px;">Enquanto o saldo estiver negativo, os levantamentos ficam bloqueados. Dúvidas? Fale com o suporte: +258 84 931 1757.</span>`
+        ),
+    }),
+  });
+}
+
+export async function sendDebtPaidEmail(input: { to: string; name?: string; amountPaid: number; remainingDebt: number; currency: string }) {
+  const money = (v: number) => `${v.toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${input.currency}`;
+  await sendEmail({
+    to: input.to,
+    subject: input.remainingDebt > 0 ? "Pagamento de dívida recebido" : "Dívida totalmente paga 🎉",
+    html: emailBannerCard({
+      bannerColor: "#059669",
+      icon: "✅",
+      title: input.remainingDebt > 0 ? "Pagamento recebido" : "Dívida paga",
+      bodyHtml:
+        emailParagraph(
+          `Olá${input.name ? `, <strong>${input.name}</strong>` : ""}! Recebemos o seu pagamento de <strong>${money(input.amountPaid)}</strong>.`
+        ) +
+        (input.remainingDebt > 0
+          ? emailInfoBox([{ label: "Ainda em dívida", value: money(input.remainingDebt), color: "#DC2626" }])
+          : emailParagraph("A sua conta já não tem nenhuma dívida pendente. Obrigado!")) +
+        emailButton("Ver Painel", `${siteUrl()}/dashboard`),
+    }),
+  });
+}
